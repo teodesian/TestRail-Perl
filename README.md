@@ -1,4 +1,4 @@
-TestRail-Perl
+TestRail::API
 =============
 
 Perl interface to TestRail's REST API
@@ -19,6 +19,6 @@ TODO: alter tests so that you can keep in sync.
 > 
 > my $pw = 'password';
 > 
-> my $apiClient = new TestLink::API($url,$user,$pass);
+> my $apiClient = new TestRail::API($url,$user,$pass);
 
 See POD for more info.
