@@ -133,4 +133,4 @@ skip: {
     #Delete project now that we are done with it
     ok($tr->deleteProject($new_project->{'id'}),"Can delete project");
 }
-0;
+1;
