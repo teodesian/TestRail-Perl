@@ -1,6 +1,6 @@
 package TestRail::API;
 {
-    $TestRail::API::VERSION = '0.001';
+    $TestRail::API::VERSION = '0.002';
 }
 
 =head1 NAME
@@ -31,8 +31,6 @@ use Try::Tiny;
 use JSON::XS;
 use HTTP::Request;
 use LWP::UserAgent;
-
-use Test::More;
 
 =head1 CONSTRUCTOR
 
@@ -103,33 +101,22 @@ sub _doRequest {
     $req->method($method);
     $req->url($self->apiurl.'/'.$path);
 
-    note "$method ".$self->apiurl."/$path" if $self->debug;
+    warn "$method ".$self->apiurl."/$path" if $self->debug;
 
     #Data sent is JSON
     my $content = $data ? encode_json($data) : '';
-
-    if ($self->debug) {
-        note "Query Data:";
-        diag explain $content;
-    }
 
     $req->content($content);
     $req->header( "Content-Type" => "application/json" );
 
     my $response = $self->browser->request($req);
-    if ($self->debug) {
-        note "RESPONSE:";
-        note "CODE ".$response->code;
-        diag explain $response->headers;
-        note $response->content;
-    }
 
     if ($response->code == 403) {
-        note "ERROR: Access Denied.";
+        warn "ERROR: Access Denied.";
         return 0;
     }
     if ($response->code != 200) {
-        note "ERROR: Arguments Bad: ".$response->content;
+        warn "ERROR: Arguments Bad: ".$response->content;
         return 0;
     }
 
@@ -139,11 +126,11 @@ sub _doRequest {
         if ($response->code == 200 && !$response->content) {
             return 1; #This function probably just returns no data
         } else {
-            note "ERROR: Malformed JSON returned by API.";
-            note $@;
+            warn "ERROR: Malformed JSON returned by API.";
+            warn $@;
             if (!$self->debug) { #Otherwise we've already printed this, but we need to know if we encounter this
-                note "RAW CONTENT:";
-                note $response->content
+                warn "RAW CONTENT:";
+                warn $response->content
             }
             return 0;
         }
@@ -719,7 +706,6 @@ Returns ARRAYREF of case type definition HASHREFs.
 sub getCaseTypes {
     my $self = shift;
     $self->{'type_cache'} = $self->_doRequest("index.php?/api/v2/get_case_types") if !$self->type_cache; #We can't change this with API, so assume it is static
-    diag explain $self->{'type_cache'};
     return $self->{'type_cache'};
 }
 
