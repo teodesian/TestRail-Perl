@@ -1,0 +1,6 @@
+Makefile.PL
+MANIFEST
+README
+Changes
+lib/TestRail/API.pm
+t/TestRail-API.t
