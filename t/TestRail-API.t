@@ -10,16 +10,23 @@ my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
 my $pw     = $ENV{'TESTRAIL_PASSWORD'};
 
-$apiurl //= prompt("Please type the URL to your testrail installation:",undef,15);
-$login  //= prompt("Please type the testrail User you would like to use for this session",undef,15);
-$pw     //= prompt("Please type the user's password",undef,15);
+#This monkey business seems odd, but can be seen when done with TEST_VERBOSE=1
+note "Please type the URL to your testrail installation:" if !$apiurl;
+$apiurl //= prompt("",undef,15);
+print "\n";
+note "Please type the testrail User you would like to use for this session" if !$login;
+$login  //= prompt("",undef,15);
+print "\n";
+note "Please type the user's password" if !$pw;
+$pw     //= prompt("",undef,15);
+print "\n";
 
 #EXAMPLE:
 #my $apiurl = 'http://testrails.cpanel.qa/testrail';
 #my $login = 'some.guyb@whee.net';
 #my $pw = '5gP77MdrSIB68UFWvhIK';
 
-skip: {
+SKIP: {
     skip("Insufficient credentials",46) if (!$apiurl || !$login || !$pw);
 
     my $tr = new TestRail::API($apiurl,$login,$pw,0);
