@@ -1,8 +1,10 @@
+use 5.010; #Perl 5.10 minimum due to usage of undef or (//)
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME              => "TestRail::API",
     VERSION_FROM      => "lib/TestRail/API.pm",
+    MIN_PERL_VERSION  => '5.010',
     TEST_REQUIRES     => {
         "Test::More"      => 0,
         "Scalar::Util"    => 0,
