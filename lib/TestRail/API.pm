@@ -1,6 +1,6 @@
 package TestRail::API;
 {
-    $TestRail::API::VERSION = '0.005';
+    $TestRail::API::VERSION = '0.006';
 }
 
 =head1 NAME
@@ -1427,8 +1427,14 @@ http://docs.gurock.com/testrail-api2/start
 
 =head1 AUTHOR
 
-George Baugh (george@troglodyne.net)
+George Baugh <teodesian@cpan.org>
 
 =head1 SPECIAL THANKS
 
 Thanks to cPanel Inc, for graciously funding the creation of this module.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2014 by George S. Baugh.
+
+This is free software; you can redistribute it and/or modify it under the same terms as the Perl 5 programming language system itself.
