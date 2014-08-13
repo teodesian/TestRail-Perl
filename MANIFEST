@@ -2,5 +2,6 @@ Makefile.PL
 MANIFEST
 README
 Changes
+LICENSE
 lib/TestRail/API.pm
 t/TestRail-API.t
