@@ -19,5 +19,15 @@ WriteMakefile(
         "JSON::XS"            => 0,
         "HTTP::Request"       => 0,
         "LWP::UserAgent"      => 0
+    },
+    META_MERGE => {
+        'meta-spec' => { version => 2 },
+         resources => {
+             repository => {
+                 type => 'git',
+                 url  => 'https://github.com/teodesian/TestRail-Perl.git',
+                 web  => 'https://github.com/teodesian/TestRail-Perl',
+             },
+         },
     }
 );
