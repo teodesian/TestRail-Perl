@@ -22,12 +22,44 @@ WriteMakefile(
     },
     META_MERGE => {
         'meta-spec' => { version => 2 },
-         resources => {
+        name        => 'TestRail::API',
+        abstract    => "Provides an interface to TestRail's REST api via HTTP",
+        author      => ['George S. Baugh <teodesian@cpan.org>'],
+        resources   => {
              repository => {
                  type => 'git',
                  url  => 'https://github.com/teodesian/TestRail-Perl.git',
                  web  => 'https://github.com/teodesian/TestRail-Perl',
              },
-         },
+        },
+        license => ['artistic_2'],
+        prereqs => {
+            runtime => {
+                requires => {
+                    'perl'                => '5.010',
+                    "Carp"                => 0,
+                    "Scalar::Util"        => 0,
+                    "Data::Validate::URI" => 0,
+                    "Clone"               => 0,
+                    "Try::Tiny"           => 0,
+                    "JSON::XS"            => 0,
+                    "HTTP::Request"       => 0,
+                    "LWP::UserAgent"      => 0
+                }
+            },
+            test => {
+                requires => {
+                    "Test::More"      => 0,
+                    "Scalar::Util"    => 0,
+                    "Prompt::Timeout" => 0
+                },
+            }
+        },
+        provides => {
+            'TestRail::API' => {
+                file    => 'lib/TestRail/API.pm',
+                version => '0.006'
+            }
+        }
     }
 );
