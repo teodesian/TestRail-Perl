@@ -58,7 +58,7 @@ WriteMakefile(
         provides => {
             'TestRail::API' => {
                 file    => 'lib/TestRail/API.pm',
-                version => '0.006'
+                version => '0.007'
             }
         }
     }
