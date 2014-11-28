@@ -1,2 +1,3 @@
 v0.001-0.007 - More or less the pursuit of Kwalitee
 v0.008 - Explicitly include Types::Serialiser, correct some POD issues
+v0.009 - Oops, forgot my Test deps
