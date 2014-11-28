@@ -6,9 +6,11 @@ WriteMakefile(
     VERSION_FROM      => "lib/TestRail/API.pm",
     MIN_PERL_VERSION  => '5.010',
     TEST_REQUIRES     => {
-        "Test::More"      => 0,
-        "Scalar::Util"    => 0,
-        "Prompt::Timeout" => 0
+        "Test::More"          => 0,
+        "Scalar::Util"        => 0,
+        "Prompt::Timeout"     => 0,
+        "Test::Pod"           => 0,
+        "Test::Pod::Coverage" => 0
     },
     PREREQ_PM => {
         "Carp"                => 0,
@@ -51,16 +53,18 @@ WriteMakefile(
             },
             test => {
                 requires => {
-                    "Test::More"      => 0,
-                    "Scalar::Util"    => 0,
-                    "Prompt::Timeout" => 0
+                    "Test::More"          => 0,
+                    "Scalar::Util"        => 0,
+                    "Prompt::Timeout"     => 0,
+                    "Test::Pod"           => 0,
+                    "Test::Pod::Coverage" => 0
                 },
             }
         },
         provides => {
             'TestRail::API' => {
                 file    => 'lib/TestRail/API.pm',
-                version => '0.008'
+                version => '0.009'
             }
         }
     }

@@ -1,6 +1,6 @@
 package TestRail::API;
 {
-    $TestRail::API::VERSION = '0.008';
+    $TestRail::API::VERSION = '0.009';
 }
 
 =head1 NAME
