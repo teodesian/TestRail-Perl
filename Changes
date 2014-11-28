@@ -1,1 +1,2 @@
 v0.001-0.007 - More or less the pursuit of Kwalitee
+v0.008 - Explicitly include Types::Serialiser, correct some POD issues

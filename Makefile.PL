@@ -18,7 +18,8 @@ WriteMakefile(
         "Try::Tiny"           => 0,
         "JSON::XS"            => 0,
         "HTTP::Request"       => 0,
-        "LWP::UserAgent"      => 0
+        "LWP::UserAgent"      => 0,
+        "Types::Serialiser"   => 0
     },
     META_MERGE => {
         'meta-spec' => { version => 2 },
@@ -44,7 +45,8 @@ WriteMakefile(
                     "Try::Tiny"           => 0,
                     "JSON::XS"            => 0,
                     "HTTP::Request"       => 0,
-                    "LWP::UserAgent"      => 0
+                    "LWP::UserAgent"      => 0,
+                    "Types::Serialiser"   => 0
                 }
             },
             test => {
@@ -58,7 +60,7 @@ WriteMakefile(
         provides => {
             'TestRail::API' => {
                 file    => 'lib/TestRail/API.pm',
-                version => '0.007'
+                version => '0.008'
             }
         }
     }

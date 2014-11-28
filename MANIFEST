@@ -5,3 +5,4 @@ Changes
 LICENSE
 lib/TestRail/API.pm
 t/TestRail-API.t
+t/pod.t

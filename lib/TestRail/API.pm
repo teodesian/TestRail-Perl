@@ -1,6 +1,6 @@
 package TestRail::API;
 {
-    $TestRail::API::VERSION = '0.007';
+    $TestRail::API::VERSION = '0.008';
 }
 
 =head1 NAME
@@ -31,6 +31,7 @@ use Try::Tiny;
 use JSON::XS;
 use HTTP::Request;
 use LWP::UserAgent;
+use Types::Serialiser; #Not necesarily shared by JSON::XS on all platforms
 
 =head1 CONSTRUCTOR
 
@@ -82,6 +83,16 @@ sub new {
     bless $self, $class;
     return $self;
 }
+
+=head1 GETTERS
+
+=head2 B<browser>
+=head2 B<apiurl>
+=head2 B<debug>
+
+Accessors for these parameters you pass into the constructor, in case you forget.
+
+=cut
 
 #EZ access of obj vars
 sub browser {$_[0]->{'browser'}}
@@ -229,7 +240,7 @@ sub createProject {
 
 }
 
-=head2 B<deleteProjectByID (id)>
+=head2 B<deleteProject (id)>
 
 Deletes specified project by ID.
 Requires TestRail admin login.
@@ -896,6 +907,28 @@ sub deleteRun {
     return $result;
 }
 
+=head2 B<getRuns (project_id)>
+
+Get all runs for specified project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of parent project
+
+=back
+
+Returns ARRAYREF of run definition HASHREFs.
+
+    $allRuns = $tr->getRuns(6969);
+
+=cut
+
+sub getRuns {
+    my ($self,$project_id) = @_;
+    return $self->_doRequest("index.php?/api/v2/get_runs/$project_id");
+}
+
+
 =head2 B<getRunByName (project_id,name)>
 
 Gets run by name.
@@ -913,11 +946,6 @@ Returns run definition HASHREF.
     $tr->getRunByName(1,'gravy');
 
 =cut
-
-sub getRuns {
-    my ($self,$project_id) = @_;
-    return $self->_doRequest("index.php?/api/v2/get_runs/$project_id");
-}
 
 sub getRunByName {
     my ($self,$project_id,$name) = @_;
@@ -951,7 +979,7 @@ sub getRunByID {
 
 =head1 PLAN METHODS
 
-=head2 B<createRun (project_id,name,description,milestone_id,entries)>
+=head2 B<createPlan (project_id,name,description,milestone_id,entries)>
 
 Create a run.
 
