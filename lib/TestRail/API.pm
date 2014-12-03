@@ -1452,7 +1452,7 @@ L<LWP::UserAgent>
 
 L<JSON::XS>
 
-http://docs.gurock.com/testrail-api2/start
+L<http://docs.gurock.com/testrail-api2/start>
 
 =head1 AUTHOR
 

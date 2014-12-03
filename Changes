@@ -4,6 +4,7 @@ Revision history for Perl module TestRail::API
     - Dist name was being set to TestRail::API instead of TestRail-API
     - Reformatted this file as per CPAN::Changes::Spec
     - Added "use 5.010" to the module, to match min perl in metadata
+    - Made URL in SEE ALSO a hyperlink with L<...>
 
 0.009 2014-11-28 TEODESIAN
     - Oops, forgot my Test deps
