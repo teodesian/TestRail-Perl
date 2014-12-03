@@ -1454,6 +1454,10 @@ L<JSON::XS>
 
 L<http://docs.gurock.com/testrail-api2/start>
 
+=head1 REPOSITORY
+
+L<https://github.com/teodesian/TestRail-Perl>
+
 =head1 AUTHOR
 
 George Baugh <teodesian@cpan.org>

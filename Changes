@@ -5,6 +5,7 @@ Revision history for Perl module TestRail::API
     - Reformatted this file as per CPAN::Changes::Spec
     - Added "use 5.010" to the module, to match min perl in metadata
     - Made URL in SEE ALSO a hyperlink with L<...>
+    - Added link to github repo in pod
 
 0.009 2014-11-28 TEODESIAN
     - Oops, forgot my Test deps
