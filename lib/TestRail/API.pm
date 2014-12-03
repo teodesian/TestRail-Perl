@@ -1,6 +1,6 @@
 package TestRail::API;
 {
-    $TestRail::API::VERSION = '0.009';
+    $TestRail::API::VERSION = '0.010';
 }
 
 =head1 NAME
@@ -21,6 +21,7 @@ It is by no means exhaustively implementing every TestRail API function.
 =cut
 
 
+use 5.010;
 use strict;
 use warnings;
 use Carp;
