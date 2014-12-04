@@ -1462,6 +1462,10 @@ L<https://github.com/teodesian/TestRail-Perl>
 
 George Baugh <teodesian@cpan.org>
 
+=head1 CONTRIBUTORS
+
+Neil Bowers <neil@bowers.com> - Fixed minor distribution issues for 0.010
+
 =head1 SPECIAL THANKS
 
 Thanks to cPanel Inc, for graciously funding the creation of this module.
