@@ -1,7 +1,7 @@
 dist/*
 MANIFEST.SKIP
 dist.ini
+weaver.ini
 README.md
-perlcriticrc
 .git/*
 .gitignore

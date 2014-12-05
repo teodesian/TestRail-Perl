@@ -1,5 +1,10 @@
 Revision history for Perl module TestRail::API
 
+0.011 2014-12-04 TEODESIAN
+    - Converted to using dzil, and testing using TestingMania
+    - Fixed spelling errors thanks to more extensive testing so enabled
+    - Started signing the module
+
 0.010 2014-12-03 TEODESIAN
     - Dist name was being set to TestRail::API instead of TestRail-API
     - Reformatted this file as per CPAN::Changes::Spec
