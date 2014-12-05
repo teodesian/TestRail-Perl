@@ -1,1 +1,7 @@
 dist/*
+MANIFEST.SKIP
+dist.ini
+README.md
+perlcriticrc
+.git/*
+.gitignore

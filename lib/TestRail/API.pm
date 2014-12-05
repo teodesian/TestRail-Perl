@@ -1,8 +1,7 @@
+# ABSTRACT: Provides an interface to TestRail's REST api via HTTP
+# PODNAME: TestRail::API
+
 package TestRail::API;
-
-=head1 NAME
-
-TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 SYNOPSIS
 
@@ -85,7 +84,9 @@ sub new {
 =head1 GETTERS
 
 =head2 B<browser>
+
 =head2 B<apiurl>
+
 =head2 B<debug>
 
 Accessors for these parameters you pass into the constructor, in case you forget.
@@ -1451,24 +1452,6 @@ L<JSON::XS>
 
 L<http://docs.gurock.com/testrail-api2/start>
 
-=head1 REPOSITORY
-
-L<https://github.com/teodesian/TestRail-Perl>
-
-=head1 AUTHOR
-
-George Baugh <teodesian@cpan.org>
-
-=head1 CONTRIBUTORS
-
-Neil Bowers <neil@bowers.com> - Fixed minor distribution issues for 0.010
-
 =head1 SPECIAL THANKS
 
 Thanks to cPanel Inc, for graciously funding the creation of this module.
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2014 by George S. Baugh.
-
-This is free software; you can redistribute it and/or modify it under the same terms as the Perl 5 programming language system itself.
