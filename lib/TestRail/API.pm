@@ -7,6 +7,7 @@ package TestRail::API;
 
     use TestRail::API;
 
+    my ($username,$password,$host) = ('foo','bar','testlink.baz.foo');
     my $tr = TestRail::API->new($username, $password, $host);
 
 =head1 DESCRIPTION
@@ -16,10 +17,11 @@ It is by no means exhaustively implementing every TestRail API function.
 
 =cut
 
-
 use 5.010;
+
 use strict;
 use warnings;
+
 use Carp;
 use Scalar::Util 'reftype';
 use Clone 'clone';
@@ -40,7 +42,7 @@ Creates new C<TestRail::API> object.
 
 =item STRING C<API URL> - base url for your TestRail api server.
 
-=item STRING C<USER> - Your testRail User.
+=item STRING C<USER> - Your TestRail User.
 
 =item STRING C<PASSWORD> - Your TestRail password.
 
@@ -473,7 +475,7 @@ Gets the testsuite with the given ID.
 
 =over 4
 
-=item STRING C<TESTSUITE_ID> - Testsuite ID.
+=item STRING C<TESTSUITE_ID> - TestSuite ID.
 
 =back
 
@@ -500,7 +502,7 @@ Creates a section.
 
 =item INTEGER C<PROJECT ID> - Parent Project ID.
 
-=item INTEGER C<SUITE ID> - Parent Testsuite ID.
+=item INTEGER C<SUITE ID> - Parent TestSuite ID.
 
 =item STRING C<NAME> - desired section name.
 
@@ -992,7 +994,7 @@ Create a run.
 
 =item INTEGER C<MILESTONE_ID> (optional) - ID of milestone
 
-=item ARRAYREF C<ENTRIES> (optional) - New Runs to initially populate the plan with -- See TestLink API documentation for more advanced inputs here.
+=item ARRAYREF C<ENTRIES> (optional) - New Runs to initially populate the plan with -- See TestRail API documentation for more advanced inputs here.
 
 =back
 
@@ -1230,7 +1232,7 @@ Gets specified milestone by ID.
 
 =back
 
-Returns milestione definition HASHREF.
+Returns milestone definition HASHREF.
 
     $tr->getMilestoneByID(2);
 
