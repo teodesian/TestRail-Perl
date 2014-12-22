@@ -2,12 +2,14 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More tests => 50;
+use Test::More tests => 51;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
 
 #XXX mock in the future...
+# ->{'browser'} and ->{'default_request'} would be the idea there...
+
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
 my $pw     = $ENV{'TESTRAIL_PASSWORD'};
@@ -27,6 +29,8 @@ SKIP: {
     like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
 
     my $tr = new TestRail::API($apiurl,$login,$pw,0);
+
+    is($tr->_doRequest('noSuchMethod'),-404,'Requesting bad URI returns 404');
 
     #Test USER methods
     my $userlist = $tr->getUsers();

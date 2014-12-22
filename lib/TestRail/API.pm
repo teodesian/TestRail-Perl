@@ -15,6 +15,12 @@ package TestRail::API;
 C<TestRail::API> provides methods to access an existing TestRail account using API v2.  You can then do things like look up tests, set statuses and create runs from lists of cases.
 It is by no means exhaustively implementing every TestRail API function.
 
+=head1 IMPORTANT
+
+All the methods aside from the constructor should not die, but return a false value upon failure.
+When the server is not responsive, expect a -500 response, and retry accordingly.
+I recommend using the excellent L<Attempt> module for this purpose.
+
 =cut
 
 use 5.010;
@@ -55,7 +61,7 @@ Returns C<TestRail::API> object if login is successful.
 
     my $tr = TestRail::API->new('http://tr.test/testrail', 'moo','M000000!');
 
-Dies if an access error is encountered when checking that your user provided exists, or if your user doesn't exist on the TestRail Installation.
+Dies on all communication errors with the TestRail server.
 Does not do above checks if debug is passed.
 
 =cut
@@ -111,8 +117,6 @@ sub new {
 
 =head1 GETTERS
 
-=head2 B<browser>
-
 =head2 B<apiurl>
 
 =head2 B<debug>
@@ -121,12 +125,6 @@ Accessors for these parameters you pass into the constructor, in case you forget
 
 =cut
 
-#EZ access of obj vars
-sub browser {
-  my $self = shift;
-  confess("Object methods must be called by an instance") unless ref($self);
-  return $self->{'browser'};
-}
 sub apiurl {
   my $self = shift;
   confess("Object methods must be called by an instance") unless ref($self);
@@ -156,7 +154,7 @@ sub _doRequest {
     $req->content($content);
     $req->header( "Content-Type" => "application/json" );
 
-    my $response = $self->browser->request($req);
+    my $response = $self->{'browser'}->request($req);
     return $response if !defined($response); #worst case
 
     if ($response->code == 403) {
@@ -165,7 +163,7 @@ sub _doRequest {
     }
     if ($response->code != 200) {
         cluck "ERROR: Arguments Bad: ".$response->content;
-        return -$response->code;
+        return -int($response->code);
     }
 
     try {
@@ -198,7 +196,7 @@ sub getUsers {
     my $self = shift;
     confess("Object methods must be called by an instance") unless ref($self);
     my $res = $self->_doRequest('index.php?/api/v2/get_users');
-    return 0 if !$res || reftype($res) ne 'ARRAY';
+    return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
     $self->{'user_cache'} = $res;
     return $res;
 }
@@ -219,7 +217,7 @@ sub getUserByID {
     my ($self,$user) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     $self->getUsers() if !defined($self->{'user_cache'});
-    return 0 if (!scalar(@{$self->{'user_cache'}}));
+    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'id'} == $user;
     }
@@ -230,7 +228,7 @@ sub getUserByName {
     my ($self,$user) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     $self->getUsers() if !defined($self->{'user_cache'});
-    return 0 if (!scalar(@{$self->{'user_cache'}}));
+    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'name'} eq $user;
     }
@@ -241,7 +239,7 @@ sub getUserByEmail {
     my ($self,$user) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     $self->getUsers() if !defined($self->{'user_cache'});
-    return 0 if (!scalar(@{$self->{'user_cache'}}));
+    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'email'} eq $user;
     }
@@ -330,15 +328,13 @@ sub getProjects {
     my $result = $self->_doRequest('index.php?/api/v2/get_projects');
 
     #Save state for future use, if needed
-    if (!scalar(@{$self->{'testtree'}})) {
-        $self->{'testtree'} = $result if $result;
-    }
+    return -500 if !$result || (reftype($result) || 'undef') ne 'ARRAY';
+    $self->{'testtree'} = $result;
 
-    if ($result) {
-        #Note that it's a project for future reference by recursive tree search
-        for my $pj (@{$result}) {
-            $pj->{'type'} = 'project';
-        }
+    #Note that it's a project for future reference by recursive tree search
+    return -500 if !$result || (reftype($result) || 'undef') ne 'ARRAY';
+    foreach my $pj (@{$result}) {
+        $pj->{'type'} = 'project';
     }
 
     return $result;
@@ -356,7 +352,7 @@ Gets some project definition hash by it's name
 
 Returns desired project def HASHREF, false otherwise.
 
-    $projects = $tl->getProjectByName('FunProject');
+    $project = $tl->getProjectByName('FunProject');
 
 =cut
 
@@ -367,9 +363,11 @@ sub getProjectByName {
 
     #See if we already have the project list...
     my $projects = $self->{'testtree'};
+    return -500 if !$projects || (reftype($projects) || 'undef') ne 'ARRAY';
     $projects = $self->getProjects() unless scalar(@$projects);
 
     #Search project list for project
+    return -500 if !$projects || (reftype($projects) || 'undef') ne 'ARRAY';
     for my $candidate (@$projects) {
         return $candidate if ($candidate->{'name'} eq $project);
     }
@@ -403,6 +401,7 @@ sub getProjectByID {
     $projects = $self->getProjects() unless scalar(@$projects);
 
     #Search project list for project
+    return -500 if !$projects || (reftype($projects) || 'undef') ne 'ARRAY';
     for my $candidate (@$projects) {
         return $candidate if ($candidate->{'id'} eq $project);
     }
@@ -517,8 +516,7 @@ sub getTestSuiteByName {
 
     #TODO cache
     my $suites = $self->getTestSuites($project_id);
-    return 0 if !$suites; #No suites for project, or no project
-
+    return -500 if !$suites || (reftype($suites) || 'undef') ne 'ARRAY'; #No suites for project, or no project
     foreach my $suite (@$suites) {
         return  $suite if $suite->{'name'} eq $testsuite_name;
     }
@@ -685,6 +683,7 @@ sub getSectionByName {
     my ($self,$project_id,$suite_id,$section_name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $sections = $self->getSections($project_id,$suite_id);
+    return -500 if !$sections || (reftype($sections) || 'undef') ne 'ARRAY';
     foreach my $sec (@$sections) {
         return $sec if $sec->{'name'} eq $section_name;
     }
@@ -706,7 +705,9 @@ Returns ARRAYREF of case type definition HASHREFs.
 sub getCaseTypes {
     my $self = shift;
     confess("Object methods must be called by an instance") unless ref($self);
-    $self->{'type_cache'} = $self->_doRequest("index.php?/api/v2/get_case_types") if !$self->type_cache; #We can't change this with API, so assume it is static
+    my $types = $self->_doRequest("index.php?/api/v2/get_case_types");
+    return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
+    $self->{'type_cache'} = $types if !$self->{'type_cache'}; #We can't change this with API, so assume it is static
     return $self->{'type_cache'};
 }
 
@@ -731,6 +732,7 @@ sub getCaseTypeByName {
     my ($self,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $types = $self->getCaseTypes();
+    return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
     foreach my $type (@$types) {
         return $type if $type->{'name'} eq $name;
     }
@@ -879,6 +881,7 @@ sub getCaseByName {
     my ($self,$project_id,$suite_id,$section_id,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $cases = $self->getCases($project_id,$suite_id,$section_id);
+    return -500 if !$cases || (reftype($cases) || 'undef') ne 'ARRAY';
     foreach my $case (@$cases) {
         return $case if $case->{'title'} eq $name;
     }
@@ -1024,6 +1027,7 @@ sub getRunByName {
     my ($self,$project_id,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $runs = $self->getRuns($project_id);
+    return -500 if !$runs || (reftype($runs) || 'undef') ne 'ARRAY';
     foreach my $run (@$runs) {
         return $run if $run->{'name'} eq $name;
     }
@@ -1166,6 +1170,7 @@ sub getPlanByName {
     my ($self,$project_id,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $plans = $self->getPlans($project_id);
+    return -500 if !$plans || (reftype($plans) || 'undef') ne 'ARRAY';
     foreach my $plan (@$plans) {
         return $plan if $plan->{'name'} eq $name;
     }
@@ -1300,6 +1305,7 @@ sub getMilestoneByName {
     my ($self,$project_id,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $milestones = $self->getMilestones($project_id);
+    return -500 if !$milestones || (reftype($milestones) || 'undef') ne 'ARRAY';
     foreach my $milestone (@$milestones) {
         return $milestone if $milestone->{'name'} eq $name;
     }
@@ -1374,6 +1380,7 @@ sub getTestByName {
     my ($self,$run_id,$name) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     my $tests = $self->getTests($run_id);
+    return -500 if !$tests || (reftype($tests) || 'undef') ne 'ARRAY';
     foreach my $test (@$tests) {
         return $test if $test->{'title'} eq $name;
     }

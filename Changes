@@ -4,6 +4,7 @@ Revision history for Perl module TestRail::API
     - DZIL tidying
     - Improve safety of constructor, try to die with helpful messages as soon as possible
     - Add class usage checks and test for that as author tests
+    - Add tests for the server going away, and fix issues encountered therein.
 
 0.011 2014-12-04 TEODESIAN
     - Converted to using dzil, and testing using TestingMania
