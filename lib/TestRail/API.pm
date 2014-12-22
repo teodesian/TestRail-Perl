@@ -22,8 +22,8 @@ use 5.010;
 use strict;
 use warnings;
 
-use Carp;
-use Scalar::Util 'reftype';
+use Carp qw{cluck confess};
+use Scalar::Util qw{reftype looks_like_number};
 use Clone 'clone';
 use Try::Tiny;
 
@@ -31,6 +31,7 @@ use JSON::XS;
 use HTTP::Request;
 use LWP::UserAgent;
 use Types::Serialiser; #Not necesarily shared by JSON::XS on all platforms
+use Data::Validate::URI qw{is_uri};
 
 =head1 CONSTRUCTOR
 
@@ -54,10 +55,15 @@ Returns C<TestRail::API> object if login is successful.
 
     my $tr = TestRail::API->new('http://tr.test/testrail', 'moo','M000000!');
 
+Dies if an access error is encountered when checking that your user provided exists, or if your user doesn't exist on the TestRail Installation.
+Does not do above checks if debug is passed.
+
 =cut
 
 sub new {
     my ($class,$apiurl,$user,$pass,$debug) = @_;
+    confess("Constructor must be called statically, not by an instance") if ref($class);
+    confess("Invalid URI passed to constructor") if !is_uri($apiurl);
     $user //= $ENV{'TESTRAIL_USER'};
     $pass //= $ENV{'TESTRAIL_PASSWORD'};
     $debug //= 0;
@@ -79,7 +85,27 @@ sub new {
     $self->{'default_request'} = new HTTP::Request();
     $self->{'default_request'}->authorization_basic($user,$pass);
 
-    bless $self, $class;
+    bless( $self, $class );
+    return $self if $self->debug; #For easy class testing without mocks
+
+    #Manually do the get_users call to check HTTP status
+    my $res = $self->_doRequest('index.php?/api/v2/get_users');
+    confess "Error: network unreachable" if !defined($res);
+    if ( (reftype($res) || 'undef') ne 'ARRAY') {
+      confess "Unexpected return from _doRequest: $res" if !looks_like_number($res);
+      confess "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly." if $res == -500;
+      confess "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct" if $res == -403;
+      confess "Bad user credentials!" if $res == -401;
+      confess "HTTP error $res encountered while communicating with TestRail server.  Resolve issue and try again." if !$res;
+      confess "Unknown error occurred: $res";
+    }
+    confess "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
+    $self->{'user_cache'} = $res;
+
+    #Check that the User is actually in the list
+    my $usr = $self->getUserByEmail($user);
+    confess "Could not find your TestRail user on the system!" if !(reftype($usr) eq 'HASH');
+
     return $self;
 }
 
@@ -96,13 +122,26 @@ Accessors for these parameters you pass into the constructor, in case you forget
 =cut
 
 #EZ access of obj vars
-sub browser {$_[0]->{'browser'}}
-sub apiurl {$_[0]->{'apiurl'}}
-sub debug {$_[0]->{'debug'}}
+sub browser {
+  my $self = shift;
+  confess("Object methods must be called by an instance") unless ref($self);
+  return $self->{'browser'};
+}
+sub apiurl {
+  my $self = shift;
+  confess("Object methods must be called by an instance") unless ref($self);
+  return $self->{'apiurl'}
+}
+sub debug {
+  my $self = shift;
+  confess("Object methods must be called by an instance") unless ref($self);
+  return $self->{'debug'};
+}
 
 #Convenient JSON-HTTP fetcher
 sub _doRequest {
     my ($self,$path,$method,$data) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $req = clone $self->{'default_request'};
     $method //= 'GET';
 
@@ -118,14 +157,15 @@ sub _doRequest {
     $req->header( "Content-Type" => "application/json" );
 
     my $response = $self->browser->request($req);
+    return $response if !defined($response); #worst case
 
     if ($response->code == 403) {
-        warn "ERROR: Access Denied.";
-        return 0;
+        cluck "ERROR: Access Denied.";
+        return -403;
     }
     if ($response->code != 200) {
-        warn "ERROR: Arguments Bad: ".$response->content;
-        return 0;
+        cluck "ERROR: Arguments Bad: ".$response->content;
+        return -$response->code;
     }
 
     try {
@@ -134,11 +174,11 @@ sub _doRequest {
         if ($response->code == 200 && !$response->content) {
             return 1; #This function probably just returns no data
         } else {
-            warn "ERROR: Malformed JSON returned by API.";
-            warn $@;
+            cluck "ERROR: Malformed JSON returned by API.";
+            cluck $@;
             if (!$self->debug) { #Otherwise we've already printed this, but we need to know if we encounter this
-                warn "RAW CONTENT:";
-                warn $response->content
+                cluck "RAW CONTENT:";
+                cluck $response->content
             }
             return 0;
         }
@@ -156,8 +196,11 @@ Returns ARRAYREF of user definition HASHREFs.
 
 sub getUsers {
     my $self = shift;
-    $self->{'user_cache'} = $self->_doRequest('index.php?/api/v2/get_users');
-    return $self->{'user_cache'};
+    confess("Object methods must be called by an instance") unless ref($self);
+    my $res = $self->_doRequest('index.php?/api/v2/get_users');
+    return 0 if !$res || reftype($res) ne 'ARRAY';
+    $self->{'user_cache'} = $res;
+    return $res;
 }
 
 =head2 B<getUserByID(id)>
@@ -171,12 +214,12 @@ Returns user def HASHREF.
 
 =cut
 
-
 #I'm just using the cache for the following methods because it's more straightforward and faster past 1 call.
 sub getUserByID {
     my ($self,$user) = @_;
-    $self->getUsers() if (!scalar(@{$self->{'user_cache'}}));
-
+    confess("Object methods must be called by an instance") unless ref($self);
+    $self->getUsers() if !defined($self->{'user_cache'});
+    return 0 if (!scalar(@{$self->{'user_cache'}}));
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'id'} == $user;
     }
@@ -185,7 +228,9 @@ sub getUserByID {
 
 sub getUserByName {
     my ($self,$user) = @_;
-    $self->getUsers() if (!scalar(@{$self->{'user_cache'}}));
+    confess("Object methods must be called by an instance") unless ref($self);
+    $self->getUsers() if !defined($self->{'user_cache'});
+    return 0 if (!scalar(@{$self->{'user_cache'}}));
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'name'} eq $user;
     }
@@ -194,7 +239,9 @@ sub getUserByName {
 
 sub getUserByEmail {
     my ($self,$user) = @_;
-    $self->getUsers() if (!scalar(@{$self->{'user_cache'}}));
+    confess("Object methods must be called by an instance") unless ref($self);
+    $self->getUsers() if !defined($self->{'user_cache'});
+    return 0 if (!scalar(@{$self->{'user_cache'}}));
     foreach my $usr (@{$self->{'user_cache'}}) {
         return $usr if $usr->{'email'} eq $user;
     }
@@ -227,6 +274,7 @@ Returns project definition HASHREF on success, false otherwise.
 
 sub createProject {
     my ($self,$name,$desc,$announce) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     $desc     //= 'res ipsa loquiter';
     $announce //= 0;
 
@@ -260,6 +308,7 @@ Returns BOOLEAN.
 
 sub deleteProject {
     my ($self,$proj) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $result = $self->_doRequest('index.php?/api/v2/delete_project/'.$proj,'POST');
     return $result;
 }
@@ -276,6 +325,7 @@ Returns array of project definition HASHREFs, false otherwise.
 
 sub getProjects {
     my $self = shift;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $result = $self->_doRequest('index.php?/api/v2/get_projects');
 
@@ -312,6 +362,7 @@ Returns desired project def HASHREF, false otherwise.
 
 sub getProjectByName {
     my ($self,$project) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     confess "No project provided." unless $project;
 
     #See if we already have the project list...
@@ -344,6 +395,7 @@ Returns desired project def HASHREF, false otherwise.
 
 sub getProjectByID {
     my ($self,$project) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     confess "No project provided." unless $project;
 
     #See if we already have the project list...
@@ -381,6 +433,7 @@ Returns TS definition HASHREF on success, false otherwise.
 
 sub createTestSuite {
     my ($self,$project_id,$name,$details) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     $details ||= 'res ipsa loquiter';
 
     my $input = {
@@ -411,6 +464,7 @@ Returns BOOLEAN.
 
 sub deleteTestSuite {
     my ($self,$suite_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $result = $self->_doRequest('index.php?/api/v2/delete_suite/'.$suite_id,'POST');
     return $result;
@@ -435,6 +489,7 @@ Returns ARRAYREF of testsuite definition HASHREFs, 0 on error.
 
 sub getTestSuites {
     my ($self,$proj) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest('index.php?/api/v2/get_suites/'.$proj);
 }
 
@@ -458,6 +513,7 @@ Returns desired testsuite definition HASHREF, false otherwise.
 
 sub getTestSuiteByName {
     my ($self,$project_id,$testsuite_name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     #TODO cache
     my $suites = $self->getTestSuites($project_id);
@@ -487,6 +543,7 @@ Returns desired testsuite definition HASHREF, false otherwise.
 
 sub getTestSuiteByID {
     my ($self,$testsuite_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $result = $self->_doRequest('index.php?/api/v2/get_suite/'.$testsuite_id);
     return $result;
@@ -518,6 +575,7 @@ Returns new section definition HASHREF, false otherwise.
 
 sub createSection {
     my ($self,$project_id,$suite_id,$name,$parent_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $input = {
         name     => $name,
@@ -548,6 +606,7 @@ Returns BOOLEAN.
 
 sub deleteSection {
     my ($self,$section_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $result = $self->_doRequest('index.php?/api/v2/delete_section/'.$section_id,'POST');
     return $result;
@@ -574,6 +633,7 @@ Returns ARRAYREF of section definition HASHREFs.
 
 sub getSections {
     my ($self,$project_id,$suite_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
 }
 
@@ -597,6 +657,7 @@ Returns section definition HASHREF.
 
 sub getSectionByID {
     my ($self,$section_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_section/$section_id");
 }
 
@@ -622,6 +683,7 @@ Returns section definition HASHREF.
 
 sub getSectionByName {
     my ($self,$project_id,$suite_id,$section_name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $sections = $self->getSections($project_id,$suite_id);
     foreach my $sec (@$sections) {
         return $sec if $sec->{'name'} eq $section_name;
@@ -643,6 +705,7 @@ Returns ARRAYREF of case type definition HASHREFs.
 
 sub getCaseTypes {
     my $self = shift;
+    confess("Object methods must be called by an instance") unless ref($self);
     $self->{'type_cache'} = $self->_doRequest("index.php?/api/v2/get_case_types") if !$self->type_cache; #We can't change this with API, so assume it is static
     return $self->{'type_cache'};
 }
@@ -666,6 +729,7 @@ Returns case type definition HASHREF.
 sub getCaseTypeByName {
     #Useful for marking automated tests, etc
     my ($self,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $types = $self->getCaseTypes();
     foreach my $type (@$types) {
         return $type if $type->{'name'} eq $name;
@@ -712,6 +776,7 @@ Returns new case definition HASHREF, false otherwise.
 
 sub createCase {
     my ($self,$section_id,$title,$type_id,$opts,$extras) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $stuff = {
         title   => $title,
@@ -755,6 +820,7 @@ Returns BOOLEAN.
 
 sub deleteCase {
     my ($self,$case_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $result = $self->_doRequest("index.php?/api/v2/delete_case/$case_id",'POST');
     return $result;
 }
@@ -781,6 +847,7 @@ Returns ARRAYREF of test case definition HASHREFs.
 
 sub getCases {
     my ($self,$project_id,$suite_id,$section_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
     $url .= "&section_id=$section_id" if $section_id;
     return $self->_doRequest($url);
@@ -810,6 +877,7 @@ Returns test case definition HASHREF.
 
 sub getCaseByName {
     my ($self,$project_id,$suite_id,$section_id,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $cases = $self->getCases($project_id,$suite_id,$section_id);
     foreach my $case (@$cases) {
         return $case if $case->{'title'} eq $name;
@@ -835,6 +903,7 @@ Returns test case definition HASHREF.
 
 sub getCaseByID {
     my ($self,$case_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_case/$case_id");
 }
 
@@ -871,6 +940,7 @@ Returns run definition HASHREF.
 #If you pass an array of case ids, it implies include_all is false
 sub createRun {
     my ($self,$project_id,$suite_id,$name,$desc,$milestone_id,$assignedto_id,$case_ids) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $stuff = {
         suite_id      => $suite_id,
@@ -904,6 +974,7 @@ Returns BOOLEAN.
 
 sub deleteRun {
     my ($self,$suite_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $result = $self->_doRequest("index.php?/api/v2/delete_run/$suite_id",'POST');
     return $result;
 }
@@ -926,6 +997,7 @@ Returns ARRAYREF of run definition HASHREFs.
 
 sub getRuns {
     my ($self,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_runs/$project_id");
 }
 
@@ -950,6 +1022,7 @@ Returns run definition HASHREF.
 
 sub getRunByName {
     my ($self,$project_id,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $runs = $self->getRuns($project_id);
     foreach my $run (@$runs) {
         return $run if $run->{'name'} eq $name;
@@ -975,6 +1048,7 @@ Returns run definition HASHREF.
 
 sub getRunByID {
     my ($self,$run_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
@@ -1012,6 +1086,7 @@ Returns test plan definition HASHREF, or false on failure.
 
 sub createPlan {
     my ($self,$project_id,$name,$desc,$milestone_id,$entries) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $stuff = {
         name          => $name,
@@ -1042,6 +1117,7 @@ Returns BOOLEAN.
 
 sub deletePlan {
     my ($self,$plan_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $result = $self->_doRequest("index.php?/api/v2/delete_plan/$plan_id",'POST');
     return $result;
 }
@@ -1064,6 +1140,7 @@ Returns ARRAYREF of plan definition HASHREFs.
 
 sub getPlans {
     my ($self,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_plans/$project_id");
 }
 
@@ -1087,6 +1164,7 @@ Returns plan definition HASHREF.
 
 sub getPlanByName {
     my ($self,$project_id,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $plans = $self->getPlans($project_id);
     foreach my $plan (@$plans) {
         return $plan if $plan->{'name'} eq $name;
@@ -1112,6 +1190,7 @@ Returns plan definition HASHREF.
 
 sub getPlanByID {
     my ($self,$plan_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
 }
 
@@ -1141,6 +1220,7 @@ Returns milestone definition HASHREF, or false on failure.
 
 sub createMilestone {
     my ($self,$project_id,$name,$desc,$due_on) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
 
     my $stuff = {
         name        => $name,
@@ -1170,6 +1250,7 @@ Returns BOOLEAN.
 
 sub deleteMilestone {
     my ($self,$milestone_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $result = $self->_doRequest("index.php?/api/v2/delete_milestone/$milestone_id",'POST');
     return $result;
 }
@@ -1188,10 +1269,12 @@ Returns ARRAYREF of milestone definition HASHREFs.
 
     $tr->getMilestones(8);
 
+
 =cut
 
 sub getMilestones {
     my ($self,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_milestones/$project_id");
 }
 
@@ -1215,6 +1298,7 @@ Returns milestone definition HASHREF.
 
 sub getMilestoneByName {
     my ($self,$project_id,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $milestones = $self->getMilestones($project_id);
     foreach my $milestone (@$milestones) {
         return $milestone if $milestone->{'name'} eq $name;
@@ -1240,6 +1324,7 @@ Returns milestone definition HASHREF.
 
 sub getMilestoneByID {
     my ($self,$milestone_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_milestone/$milestone_id");
 }
 
@@ -1263,6 +1348,7 @@ Returns ARRAYREF of test definition HASHREFs.
 
 sub getTests {
     my ($self,$run_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_tests/$run_id");
 }
 
@@ -1286,6 +1372,7 @@ Returns test definition HASHREF.
 
 sub getTestByName {
     my ($self,$run_id,$name) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $tests = $self->getTests($run_id);
     foreach my $test (@$tests) {
         return $test if $test->{'title'} eq $name;
@@ -1311,6 +1398,7 @@ Returns test definition HASHREF.
 
 sub getTestByID {
     my ($self,$test_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest("index.php?/api/v2/get_test/$test_id");
 }
 
@@ -1324,6 +1412,7 @@ Returns ARRAYREF of result definition HASHREFs.
 
 sub getTestResultFields {
     my $self = shift;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest('index.php?/api/v2/get_result_fields');
 }
 
@@ -1337,6 +1426,7 @@ Returns ARRAYREF of status definition HASHREFs.
 
 sub getPossibleTestStatuses {
     my $self = shift;
+    confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest('index.php?/api/v2/get_statuses');
 }
 
@@ -1375,6 +1465,7 @@ Returns result definition HASHREF.
 
 sub createTestResults {
     my ($self,$test_id,$status_id,$comment,$opts,$custom_fields) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $stuff = {
         status_id     => $status_id,
         comment       => $comment
@@ -1416,10 +1507,13 @@ Returns ARRAYREF of result definition HASHREFs.
 
 sub getTestResults {
     my ($self,$test_id,$limit) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
     my $url = "index.php?/api/v2/get_results/$test_id";
     $url .= "&limit=$limit" if defined($limit);
     return $self->_doRequest($url);
 }
+
+=head1 STATIC METHODS
 
 =head2 B<buildStepResults(content,expected,actual,status_id)>
 
@@ -1443,8 +1537,6 @@ sub buildStepResults {
 __END__
 
 =head1 SEE ALSO
-
-L<Test::More>
 
 L<HTTP::Request>
 

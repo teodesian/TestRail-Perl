@@ -2,37 +2,35 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More tests => 46;
+use Test::More tests => 50;
+use Test::Fatal;
 use Scalar::Util 'reftype';
-use Prompt::Timeout;
+use ExtUtils::MakeMaker qw{prompt};
 
+#XXX mock in the future...
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
 my $pw     = $ENV{'TESTRAIL_PASSWORD'};
-
-#This monkey business seems odd, but can be seen when done with TEST_VERBOSE=1
-note "Please type the URL to your testrail installation:" if !$apiurl;
-$apiurl //= prompt("",undef,15);
-print "\n";
-note "Please type the testrail User you would like to use for this session" if !$login;
-$login  //= prompt("",undef,15);
-print "\n";
-note "Please type the user's password" if !$pw;
-$pw     //= prompt("",undef,15);
-print "\n";
 
 #EXAMPLE:
 #my $apiurl = 'http://testrails.cpanel.qa/testrail';
 #my $login = 'some.guyb@whee.net';
 #my $pw = '5gP77MdrSIB68UFWvhIK';
 
+like(exception {TestRail::API->new('trash');}, qr/invalid uri/i, "Non-URIs bounce constructor");
+like(exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',0); }, qr/Could not communicate with TestRail Server/i,"Bogus Testrail URI rejected");
+
 SKIP: {
     skip("Insufficient credentials",46) if (!$apiurl || !$login || !$pw);
+
+    like(exception {TestRail::API->new($apiurl,'lies','moreLies',0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
+    like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
 
     my $tr = new TestRail::API($apiurl,$login,$pw,0);
 
     #Test USER methods
-    ok($tr->getUsers(),"Get Users returns list");
+    my $userlist = $tr->getUsers();
+    ok(@$userlist,"Get Users returns list");
     my $myuser = $tr->getUserByEmail($login);
     is($myuser->{'email'},$login,"Can get user by email");
     is($tr->getUserByID($myuser->{'id'})->{'id'},$myuser->{'id'},"Can get user by ID");
