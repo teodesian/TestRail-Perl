@@ -777,7 +777,7 @@ Creates a test case.
 
 =item STRING C<TITLE> - Case title.
 
-=item INTEGER C<TYPE_ID> - desired test type's ID.
+=item INTEGER C<TYPE_ID> (optional) - desired test type's ID.  Defaults to whatever your TR install considers the default type.
 
 =item HASHREF C<OPTIONS> (optional) - Custom fields in the case are the keys, set to the values provided.  See TestRail API documentation for more info.
 
@@ -809,7 +809,7 @@ sub createCase {
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Section ID ($section_id) must be integer") unless $self->_checkInteger($section_id);
     confess("title must be string") unless $self->_checkString($title);
-    confess("Type ID must be integer") unless $self->_checkInteger($type_id);
+    confess("Type ID must be integer") unless !defined($type_id) || $self->_checkInteger($type_id);
     confess("Options must be HASHREF") unless !defined($opts) || (reftype($opts) || 'undef') ne 'HASH';
     confess("Extras must be HASHREF") unless !defined($extras) || (reftype($extras) || 'undef') ne 'HASH';
 
@@ -1599,7 +1599,9 @@ Get the recorded results for desired test, limiting output to 'limit' entries.
 
 =item INTEGER C<TEST_ID> - ID of desired test
 
-=item POSITIVE INTEGER C<LIMIT> - provide no more than this number of results.
+=item POSITIVE INTEGER C<LIMIT> (OPTIONAL) - provide no more than this number of results.
+
+=item INTEGER C<OFFSET> (OPTIONAL) - Offset to begin viewing resultset at.
 
 =back
 
@@ -1608,12 +1610,14 @@ Returns ARRAYREF of result definition HASHREFs.
 =cut
 
 sub getTestResults {
-    my ($self,$test_id,$limit) = @_;
+    my ($self,$test_id,$limit,$offset) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Test ID must be positive integer") unless $self->_checkInteger($test_id);
-    confess("Result limitation must be positive integer") unless $self->_checkInteger($limit) && $limit > 0;
+    confess("Result limitation must be positive integer") unless !defined($limit) || ($self->_checkInteger($limit) && $limit > 0);
+    confess("Result offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
     my $url = "index.php?/api/v2/get_results/$test_id";
     $url .= "&limit=$limit" if defined($limit);
+    $url .= "&offset=$offset" if defined($offset);
     return $self->_doRequest($url);
 }
 
