@@ -21,7 +21,7 @@ foreach my $module (@excludeModules) {
 }
 
 foreach my $method (@{$methods[0]}) {
-    next if grep {$method eq $_} qw{new buildStepResults};
+    next if grep {$method eq $_} qw{new buildStepResults _checkInteger _checkString};
     next if grep {$_ eq $method} @excludedMethods;
     like( exception {TestRail::API->$method}, qr/.*called by an instance.*/ , "Calling $method requires an instance");
 }

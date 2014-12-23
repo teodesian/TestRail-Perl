@@ -1,0 +1,64 @@
+use strict;
+use warnings;
+
+use TestRail::API;
+use Test::More 'tests' => 48;
+use Test::Fatal;
+use Class::Inspector;
+use Test::LWP::UserAgent;
+use HTTP::Response;
+
+my $tr = TestRail::API->new('http://hokum.bogus','bogus','bogus',1);
+$tr->{'browser'} = Test::LWP::UserAgent->new();
+$tr->{'browser'}->map_response(qr/.*/, HTTP::Response->new('500', 'ERROR', ['Content-Type' => 'text/plain'], ''));
+
+is( exception {$tr->getCaseTypes() },undef,'getCaseTypes returns no error when no arguments are passed');
+is( exception {$tr->getPossibleTestStatuses() },undef,'getPossibleTestStatuses returns no error when no arguments are passed');
+is( exception {$tr->getProjects() },undef,'getProjects returns no error when no arguments are passed');
+is( exception {$tr->getTestResultFields() },undef,'getTestResultFields returns no error when no arguments are passed');
+is( exception {$tr->getUsers() },undef,'getUsers returns no error when no arguments are passed');
+
+isnt( exception {$tr->createCase() },undef,'createCase returns error when no arguments are passed');
+isnt( exception {$tr->createMilestone() },undef,'createMilestone returns error when no arguments are passed');
+isnt( exception {$tr->createPlan() },undef,'createPlan returns error when no arguments are passed');
+isnt( exception {$tr->createProject() },undef,'createProject returns error when no arguments are passed');
+isnt( exception {$tr->createRun() },undef,'createRun returns error when no arguments are passed');
+isnt( exception {$tr->createSection() },undef,'createSection returns error when no arguments are passed');
+isnt( exception {$tr->createTestResults() },undef,'createTestResults returns error when no arguments are passed');
+isnt( exception {$tr->createTestSuite() },undef,'createTestSuite returns error when no arguments are passed');
+isnt( exception {$tr->deleteCase() },undef,'deleteCase returns error when no arguments are passed');
+isnt( exception {$tr->deleteMilestone() },undef,'deleteMilestone returns error when no arguments are passed');
+isnt( exception {$tr->deletePlan() },undef,'deletePlan returns error when no arguments are passed');
+isnt( exception {$tr->deleteProject() },undef,'deleteProject returns error when no arguments are passed');
+isnt( exception {$tr->deleteRun() },undef,'deleteRun returns error when no arguments are passed');
+isnt( exception {$tr->deleteSection() },undef,'deleteSection returns error when no arguments are passed');
+isnt( exception {$tr->deleteTestSuite() },undef,'deleteTestSuite returns error when no arguments are passed');
+isnt( exception {$tr->getCaseByID() },undef,'getCaseByID returns error when no arguments are passed');
+isnt( exception {$tr->getCaseByName() },undef,'getCaseByName returns error when no arguments are passed');
+isnt( exception {$tr->getCaseTypeByName() },undef,'getCaseTypeByName returns error when no arguments are passed');
+isnt( exception {$tr->getCases() },undef,'getCases returns error when no arguments are passed');
+isnt( exception {$tr->getMilestoneByID() },undef,'getMilestoneByID returns error when no arguments are passed');
+isnt( exception {$tr->getMilestoneByName() },undef,'getMilestoneByName returns error when no arguments are passed');
+isnt( exception {$tr->getPlanByID() },undef,'getPlanByID returns error when no arguments are passed');
+isnt( exception {$tr->getPlanByName() },undef,'getPlanByName returns error when no arguments are passed');
+isnt( exception {$tr->getProjectByID() },undef,'getProjectByID returns error when no arguments are passed');
+isnt( exception {$tr->getProjectByName() },undef,'getProjectByName returns error when no arguments are passed');
+isnt( exception {$tr->getRunByID() },undef,'getRunByID returns error when no arguments are passed');
+isnt( exception {$tr->getRunByName() },undef,'getRunByName returns error when no arguments are passed');
+isnt( exception {$tr->getSectionByID() },undef,'getSectionByID returns error when no arguments are passed');
+isnt( exception {$tr->getSectionByName() },undef,'getSectionByName returns error when no arguments are passed');
+isnt( exception {$tr->getTestByID() },undef,'getTestByID returns error when no arguments are passed');
+isnt( exception {$tr->getTestByName() },undef,'getTestByName returns error when no arguments are passed');
+isnt( exception {$tr->getTestResults() },undef,'getTestResults returns error when no arguments are passed');
+isnt( exception {$tr->getTestSuiteByID() },undef,'getTestSuiteByID returns error when no arguments are passed');
+isnt( exception {$tr->getTestSuiteByName() },undef,'getTestSuiteByName returns error when no arguments are passed');
+isnt( exception {$tr->getUserByEmail() },0,'getUserByEmail returns error when no arguments are passed');
+isnt( exception {$tr->getUserByID() },0,'getUserByID returns error when no arguments are passed');
+isnt( exception {$tr->getUserByName() },0,'getUserByName returns error when no arguments are passed');
+isnt( exception {$tr->getTests() },undef,'getTests returns error when no arguments are passed');
+isnt( exception {$tr->getTestSuites() },undef,'getTestSuites returns error when no arguments are passed');
+isnt( exception {$tr->getSections() },undef,'getSections returns error when no arguments are passed');
+isnt( exception {$tr->getRuns() },undef,'getRuns returns error when no arguments are passed');
+isnt( exception {$tr->getPlans() },undef,'getPlans returns error when no arguments are passed');
+isnt( exception {$tr->getMilestones() },undef,'getMilestones returns error when no arguments are passed');
+
