@@ -155,6 +155,7 @@ sub _doRequest {
     $req->header( "Content-Type" => "application/json" );
 
     my $response = $self->{'browser'}->request($req);
+
     return $response if !defined($response); #worst case
 
     if ($response->code == 403) {

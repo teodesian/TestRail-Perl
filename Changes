@@ -8,6 +8,7 @@ Revision history for Perl module TestRail::API
     - Add tests for the server going away, and fix issues encountered therein.
     - Add fatal type checking of inputs for all methods, add test to make sure exceptions thrown correctly
     - Add offset argument to getTestResults call.
+    - Add (auto-generated) mock class so we don't have to skip practically all of TestRail-API.t
 
 0.011 2014-12-04 TEODESIAN
     - Converted to using dzil, and testing using TestingMania
