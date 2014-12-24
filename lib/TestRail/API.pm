@@ -887,6 +887,7 @@ sub getCases {
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Project ID must be integer") unless $self->_checkInteger($project_id);
     confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
+    confess("Section ID must be integer") unless $self->_checkInteger($section_id);
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
     $url .= "&section_id=$section_id" if $section_id;
     return $self->_doRequest($url);
@@ -1384,7 +1385,7 @@ sub getMilestoneByName {
     return 0;
 }
 
-=head2 B<getMilestoneByID (plan_id)>
+=head2 B<getMilestoneByID (milestone_id)>
 
 Gets specified milestone by ID.
 
