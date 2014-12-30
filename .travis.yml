@@ -19,6 +19,8 @@ before_install:
    - perl -V
    - git config --global user.name "TravisCI"
    - git config --global user.email $HOSTNAME":not-for-mail@travis-ci.org"
+install:
+    - cpanm --quiet --notest --skip-satisfied Test::Perl::Critic Test::Spelling Test::NoTabs Test::EOL
 branches:
    only:
       - /^build/
