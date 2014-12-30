@@ -1759,21 +1759,11 @@ Thanks to cPanel Inc, for graciously funding the creation of this module.
 
 George S. Baugh <teodesian@cpan.org>
 
-=head1 CONTRIBUTORS
+=head1 CONTRIBUTOR
 
-=for stopwords George S. Baugh Neil Bowers
-
-=over 4
-
-=item *
-
-George S. Baugh <george@troglodyne.com>
-
-=item *
+=for stopwords Neil Bowers
 
 Neil Bowers <neil@bowers.com>
-
-=back
 
 =head1 SOURCE
 

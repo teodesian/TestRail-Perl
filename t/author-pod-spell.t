@@ -80,7 +80,6 @@ testrailrc
 George
 Baugh
 teodesian
-george
 Neil
 Bowers
 neil

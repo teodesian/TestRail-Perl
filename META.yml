@@ -66,5 +66,4 @@ resources:
   repository: git://github.com/teodesian/TestRail-Perl.git
 version: 0.012
 x_contributors:
-  - 'George S. Baugh <george@troglodyne.com>'
   - 'Neil Bowers <neil@bowers.com>'
