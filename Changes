@@ -1,0 +1,39 @@
+Revision history for Perl module TestRail::API
+
+0.012 2014-12-30 TEODESIAN
+    - DZIL tidying
+    - Re-enabled some of the critic tests, fixed a few related issues
+    - Improve safety of constructor, try to die with helpful messages as soon as possible
+    - Add class usage checks and test for that as author tests
+    - Add tests for the server going away, and fix issues encountered therein.
+    - Add fatal type checking of inputs for all methods, add test to make sure exceptions thrown correctly
+    - Add offset argument to getTestResults call.
+    - Add (auto-generated) mock class so we don't have to skip practically all of TestRail-API.t
+    - Add getTestResultFieldByName method and relevant tests
+    - Add Test::Rail::Parser and App::Prove::Plugin::TestRail so you can upload results
+    - Add testrail-report binary for those who want to run on static TAP rather than 'do it live' with prove -P
+
+0.011 2014-12-04 TEODESIAN
+    - Converted to using dzil, and testing using TestingMania
+    - Fixed spelling errors thanks to more extensive testing so enabled
+    - Started signing the module
+
+0.010 2014-12-03 TEODESIAN
+    - Dist name was being set to TestRail::API instead of TestRail-API
+    - Reformatted this file as per CPAN::Changes::Spec
+    - Added "use 5.010" to the module, to match min perl in metadata
+    - Made URL in SEE ALSO a hyperlink with L<...>
+    - Added link to github repo in pod
+
+0.009 2014-11-28 TEODESIAN
+    - Oops, forgot my Test deps
+
+0.008 2014-11-28 TEODESIAN
+    - Explicitly include Types::Serialiser, correct some POD issues
+
+0.007 2014-08-17 TEODESIAN
+    - 0.002 to this release: More or less the pursuit of Kwalitee
+
+0.001 2014-07-25 TEODESIAN
+    - First release to CPAN
+
