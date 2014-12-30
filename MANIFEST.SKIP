@@ -4,6 +4,7 @@ dist.ini
 weaver.ini
 README.md
 .git/*
+.build/*
 .gitignore
 tidyall.ini
 enivronment.sh
