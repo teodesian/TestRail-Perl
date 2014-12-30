@@ -12,7 +12,7 @@ matrix:
       - perl: 'blead'
    fast_finish: true
 before_install:
-   - export AUTOMATED_TESTING=1 NONINTERACTIVE_TESTING=1 HARNESS_OPTIONS=j10:c HARNESS_TIMER=1
+   - export AUTOMATED_TESTING=1 NONINTERACTIVE_TESTING=1 HARNESS_OPTIONS=j10:c HARNESS_TIMER=1 AUTHOR_TESTING=0
    - git clone git://github.com/haarg/perl-travis-helper
    - source perl-travis-helper/init
    - build-perl
@@ -20,7 +20,7 @@ before_install:
    - git config --global user.name "TravisCI"
    - git config --global user.email $HOSTNAME":not-for-mail@travis-ci.org"
 install:
-    - cpanm --quiet --notest --skip-satisfied Test::Perl::Critic Test::Spelling Test::NoTabs Test::EOL
+    - cpanm --quiet --notest --skip-satisfied Test::Perl::Critic Test::Spelling Test::NoTabs Test::EOL Carp Clone Data::Validate::URI File::Basename Getopt::Long HTTP::Headers HTTP::Request HTTP::Response IO::Interactive::Tiny JSON::XS LWP::UserAgent Scalar::Util TAP::Harness TAP::Parser Term::ANSIColor Test::LWP::UserAgent Try::Tiny Types::Serialiser
 branches:
    only:
       - /^build/
