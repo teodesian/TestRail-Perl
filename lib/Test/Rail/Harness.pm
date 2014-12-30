@@ -11,6 +11,14 @@ use base qw/TAP::Harness/;
 
 Connective tissue for App::Prove::Plugin::TestRail.  Nothing to see here...
 
+Subclass of TAP::Harness.
+
+=head1 OVERRIDDEN METHODS
+
+=head2 new
+
+Tells the harness to use Test::Rail::Parser and passes off to the parent.
+
 =cut
 
 # inject parser_class as Test::Rail::Parser.
@@ -21,6 +29,12 @@ sub new {
     my $self = $class->SUPER::new($arg_for);
     return $self;
 }
+
+=head2 make_parser
+
+Picks the arguments passed to App::Prove::Plugin::TestRail out of $ENV and shuttles them to it's constructor.
+
+=cut
 
 sub make_parser {
     my ($self, $job) = @_;

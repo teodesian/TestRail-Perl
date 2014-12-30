@@ -24,7 +24,7 @@ Has several options as to how you might want to upload said results.
 
 Subclass of L<TAP::Parser>, see that for usage past the constructor.
 
-You should probably use L<App::Prove::Plugin::TestRail> or L<testrail-report> for day-to-day usage...
+You should probably use L<App::Prove::Plugin::TestRail> or the bundled program testrail-report for day-to-day usage...
 unless you need to subclass this.  In that case a couple of options have been exposed for your convenience.
 
 =cut
@@ -41,7 +41,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =over 4
 
-=item B<apiurl> - STRING: Full URI to your testRail's indexDocument.
+=item B<apiurl> - STRING: Full URI to your TestRail installation.
 
 =item B<user> - STRING: Name of your TestRail user.
 
@@ -63,9 +63,9 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<case_per_ok> - BOOLEAN (optional): Consider test files to correspond to section names, and test steps (OKs) to correspond to tests in TestRail.  Mutually exclusive with step_results.
 
-=item B<result_options> - HASHREF (optional): Extra options to set with your result.  See L<TestRail::API>'s createTestResult function for more information.
+=item B<result_options> - HASHREF (optional): Extra options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.
 
-=item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResult function for more information.  step_results will be set here, if the option is passed.
+=item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
 
 =back
 
@@ -171,6 +171,14 @@ sub new {
     return $self;
 }
 
+=head1 PARSER CALLBACKS
+
+=head2 unknownCallback
+
+Called whenever we encounter an unknown line in TAP.  Only useful for prove output, as we might pick a filename out of there.
+Stores said filename for future use if encountered.
+
+=cut
 
 # Look for file boundaries, etc.
 sub unknownCallback {
@@ -180,7 +188,7 @@ sub unknownCallback {
 
     #try to pick out the filename if we are running this on TAP in files
 
-    #old cpprove
+    #old prove
     if ($line =~ /^Running\s(.*)/) {
         #TODO figure out which testsuite this implies
         $self->{'file'} = $1;
@@ -193,6 +201,13 @@ sub unknownCallback {
     }
     print "$line\n" if ($line =~ /^error/i);
 }
+
+=head2 commentCallback
+
+Grabs comments preceding a test so that we can include that as the test's notes.
+Especially useful when merge=1 is passed to the constructor.
+
+=cut
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
 sub commentCallback {
@@ -207,8 +222,16 @@ sub commentCallback {
     }
 
     #keep all comments before a test that aren't these special directives to save in NOTES field of reportTCResult
-    $self->{'tr_opts'}->{'test_notes'} .= $line;
+    $self->{'tr_opts'}->{'test_notes'} .= "$line\n";
 }
+
+=head2 testCallback
+
+If we are using step_results, append it to the step results array for use at EOF.
+If we are using case_per_ok, update TestRail per case.
+Otherwise, do nothing.
+
+=cut
 
 sub testCallback {
     my (@args) = @_;
@@ -275,6 +298,14 @@ sub testCallback {
     $self->{'tr_opts'}->{'test_notes'} = undef;
     $self->{'tr_opts'}->{'test_desc'} = undef;
 }
+
+=head2 EOFCallback
+
+If we are running in step_results mode, send over all the step results to TestRail.
+If we are running in case_per_ok mode, do nothing.
+Otherwise, upload the overall results of the test to TestRail.
+
+=cut
 
 sub EOFCallback {
     our $self;

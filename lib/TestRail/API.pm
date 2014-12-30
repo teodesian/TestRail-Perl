@@ -1561,7 +1561,7 @@ Creates a result entry for a test.
 
 =item HASHREF C<OPTIONS> (optional) - Various "Baked-In" options that can be set for test results.  See TR docs for more information.
 
-=item HASHREF C<CUSTOM OPTIONS> (optional) - Options to set for custom fields.  See L<TestRail::API::buildStepResults> for a simple way to post up custom steps.
+=item HASHREF C<CUSTOM OPTIONS> (optional) - Options to set for custom fields.  See buildStepResults for a simple way to post up custom steps.
 
 =back
 
@@ -1635,7 +1635,7 @@ Get the recorded results for desired test, limiting output to 'limit' entries.
 
 =item POSITIVE INTEGER C<LIMIT> (OPTIONAL) - provide no more than this number of results.
 
-=item INTEGER C<OFFSET> (OPTIONAL) - Offset to begin viewing resultset at.
+=item INTEGER C<OFFSET> (OPTIONAL) - Offset to begin viewing result set at.
 
 =back
 
@@ -1660,6 +1660,7 @@ sub getTestResults {
 =head2 B<buildStepResults(content,expected,actual,status_id)>
 
 Convenience method to build the stepResult hashes seen in the custom options for getTestResults.
+
 =over 4
 
 =item STRING C<CONTENT> (optional) - The step itself.

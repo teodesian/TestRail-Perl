@@ -31,6 +31,13 @@ If ~/.testrailrc exists, it will be parsed for any of these values in a newline 
 
 Be aware that if you do so, it will look for any unsatisfied arguments in the order of their appearance above.
 
+=head1 OVERRIDDEN METHODS
+
+=head2 load(parser)
+
+Shoves the arguments passed to the prove plugin into $ENV so that Test::Rail::Parser can get at them.
+Not the most elegant solution, but I see no other clear path to get those variables downrange to it's constructor.
+
 =cut
 
 sub load {
@@ -61,7 +68,7 @@ sub load {
     $ENV{'TESTRAIL_RUN'}    = $run;
     $ENV{'TESTRAIL_CASEOK'} = $case_per_ok;
     $ENV{'TESTRAIL_STEPS'}  = $step_results;
-
+    return $class;
 }
 
 sub _parseConfig {

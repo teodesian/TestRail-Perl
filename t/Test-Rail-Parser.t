@@ -61,7 +61,7 @@ if (!$res) {
 undef $tap;
 $res = exception {
     $tap = Test::Rail::Parser->new({
-        'source'              => 'fake.test',
+        'source'              => 't/fake.test',
         'apiurl'              => $apiurl,
         'user'                => $login,
         'pass'                => $pw,
@@ -85,7 +85,7 @@ if (!$res) {
 undef $tap;
 $res = exception {
     $tap = Test::Rail::Parser->new({
-        'source'              => 'faker.test',
+        'source'              => 't/faker.test',
         'apiurl'              => $apiurl,
         'user'                => $login,
         'pass'                => $pw,
@@ -109,7 +109,7 @@ if (!$res) {
 undef $tap;
 $res = exception {
     $tap = Test::Rail::Parser->new({
-        'source'              => 'faker.test',
+        'source'              => 't/faker.test',
         'apiurl'              => $apiurl,
         'user'                => $login,
         'pass'                => $pw,
