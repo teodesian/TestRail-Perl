@@ -6,6 +6,9 @@ use Test::More;
 use Test::Fatal;
 use Class::Inspector;
 
+plan( 'skip_all' => "these tests are for testing by the author" )
+  unless $ENV{'AUTHOR_TESTING'};
+
 my $tr = TestRail::API->new( 'http://hokum.bogus', 'bogus', 'bogus', 1 );
 
 #Call instance methods as class and vice versa
