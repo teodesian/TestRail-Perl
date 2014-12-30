@@ -40,7 +40,6 @@ my @files = (
     't/release-pod-coverage.t',
     't/release-pod-linkcheck.t',
     't/release-pod-syntax.t',
-    't/release-portability.t',
     't/release-synopsis.t',
     't/release-test-version.t',
     't/release-unused-vars.t',

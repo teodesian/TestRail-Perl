@@ -7,6 +7,7 @@ META.yml
 Makefile.PL
 README
 SIGNATURE
+TestRail-API-0.012/TestRail-API-0.012/TestRail-API-0.012/.travis.yml
 bin/testrail-report
 lib/App/Prove/Plugin/TestRail.pm
 lib/Test/LWP/UserAgent/TestRailMock.pm
@@ -32,7 +33,6 @@ t/release-mojibake.t
 t/release-pod-coverage.t
 t/release-pod-linkcheck.t
 t/release-pod-syntax.t
-t/release-portability.t
 t/release-synopsis.t
 t/release-test-version.t
 t/release-unused-vars.t
