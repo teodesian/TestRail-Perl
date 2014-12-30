@@ -4,8 +4,8 @@ dist.ini
 weaver.ini
 README.md
 .git/*
-.build/*
 .gitignore
 tidyall.ini
 enivronment.sh
-TestRail-API-*/*
+.build/*
+TestRail-API-*/
