@@ -7,7 +7,6 @@ META.yml
 Makefile.PL
 README
 SIGNATURE
-TestRail-API-0.012/TestRail-API-0.012/TestRail-API-0.012/.travis.yml
 bin/testrail-report
 lib/App/Prove/Plugin/TestRail.pm
 lib/Test/LWP/UserAgent/TestRailMock.pm
