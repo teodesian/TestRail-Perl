@@ -1,0 +1,197 @@
+#! /usr/bin/env perl
+# ABSTRACT: Upload your TAP results to TestRail after they've finished
+# PODNAME: testrail-report
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Term::ANSIColor qw(colorstrip);
+use Test::Rail::Parser;
+
+print "testrail-report\n----------------------\n";
+
+sub help {
+    print "testrail-report - report raw TAP results to a TestRail install
+
+USAGE:
+  testrail-report [OPTIONS] tapfile
+  prove -v sometest.t > results.tap && testrail-report [OPTIONS] \\
+  results.tap
+
+  prove -v sometest.t | testrail-report [OPTIONS]
+
+  prove -PTestRail='http://some.testlink.install/','someUser',\\
+  'somePassword' sometest.t
+
+PARAMETERS:
+  [MANDATORY PARAMETERS]
+  --project [someproject] : associate results (if any) with the
+                            provided project name.
+
+  --run [somerun] : associates results (if any) with the provided run
+                    name.
+
+  IF none of these options are provided, you will be asked to type
+  these in as needed, supposing you are not redirecting input
+  (such as piping into this command).
+
+  [OPTIONS]
+
+  [CONFIG OVERRIDES]
+  In your \$HOME, put a file called .testrailrc with key=value
+  syntax separated by newlines.  Valid Keys are: apiurl,user,password
+
+  [CONFIG OPTIONS] - These override the config, if present.
+                     If neither are used, you will be prompted.
+
+  --apiurl   [url] : full URL to get to TestRail index document
+  --password [key] : Your TestRail Password.
+  --user    [name] : Your TestRail User Name.
+
+  [BEHAVIOR]
+  --case-ok      : Whether to consider each OK to correspond to
+                   a test in TestRail
+
+  --step-results [name] : 'System Name' of a 'step_results' type field
+                    to set for your tests.
+
+  These options are mutually exclusive.  If neither is set, the
+  overall result of the test will be used as the pass/fail for the test.
+
+PROVE PLUGIN:
+
+  passing -PTestRail=apiurl,user,pass,project,run to prove will
+  automatically upload your test results while the test is running if
+  real-time results are desired.
+
+REQUIREMENTS:
+  Your TestRail install must have 3 custom statuses with the internal
+  names 'skip', 'todo_pass', and 'todo_fail', to represent those
+  states which TAP can have.
+
+";
+    exit 0;
+}
+
+sub userInput {
+ $| = 1;
+ my $rt = <STDIN>;
+ chomp $rt;
+ return $rt;
+}
+
+sub parseConfig {
+    my $results = {};
+    my $arr =[];
+
+    open(my $fh, '<', $ENV{"HOME"} . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
+    while (<$fh>) {
+        chomp;
+        @$arr = split(/=/,$_);
+        if (scalar(@$arr) != 2) {
+            warn("Could not parse $_ in tlreport config\n");
+            next;
+        }
+        $results->{lc($arr->[0])} = $arr->[1];
+    }
+    close($fh);
+    return ($results->{'apiurl'},$results->{'password'},$results->{'user'});
+}
+
+#Main loop------------
+
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results);
+
+#parse switches
+GetOptions(
+    'run=s'          => \$run,
+    'apiurl=s'       => \$apiurl,
+    'password=s'     => \$password,
+    'user=s'         => \$user,
+    'project=s'      => \$project,
+    'case-ok'        => \$case_per_ok,
+    'step-results=s' => \$step_results,
+    'help'           => \$help
+);
+
+if ($help) { help(); }
+
+#Parse config file if we are missing api url/key or user
+if (-e $ENV{"HOME"} . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
+    ($apiurl,$password,$user) = parseConfig();
+}
+
+#If argument is passed use it instead of stdin
+my $file = $ARGV[0];
+die "No Such File $file" if ($file && !-e $file);
+my ($fh,$fcontents);
+if ($file) {
+    open($fh,'<',$file);
+    while (<$fh>) {
+        $_ = colorstrip($_); #strip prove brain damage
+        s/^\s*//g; #Fix more brain damage
+        $fcontents .= $_;
+    }
+    close($fh);
+} else {
+    #Just read STDIN, print help if no file was passed
+    if (-t STDIN) { help(); }
+    if ( !$run || !$apiurl || !$password || !$user || !$project ) { print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n"; exit 0;};
+    while (<>) {
+        $_ = colorstrip($_); #strip prove brain damage
+        s/^\s*//g; #Fix prove brain damage
+        $fcontents .= $_;
+    }
+}
+
+#Interrogate user if they didn't provide info
+if (!$apiurl) {
+    print "Type the API endpoint url for your testLink install below:\n";
+    $apiurl = userInput();
+}
+
+if (!$user) {
+    print "Type your testLink user name below:\n";
+    $user = userInput();
+}
+
+if (!$password) {
+    print "Type the password for your testLink user below:\n";
+    $password = userInput();
+}
+
+if (!$apiurl || !$password || !$user) {
+    print "ERROR: api url, username and password cannot be blank.\n";
+    exit 1;
+}
+
+#Interrogate user if they didn't provide info
+if (!$project) {
+    print "Type the name of the project you are testing under:\n";
+    $project = userInput();
+}
+
+# Interrogate user if options were not passed
+if (!$run) {
+    print "Type the name of the existing run you would like to run against:\n";
+    $run = userInput();
+}
+
+my $tap = Test::Rail::Parser->new({
+    'tap'                 => $fcontents,
+    'apiurl'              => $apiurl,
+    'user'                => $user,
+    'pass'                => $password,
+    'run'                 => $run,
+    'project'             => $project,
+    'case_per_ok'         => $case_per_ok,
+    'step_results'        => $step_results,
+    'merge'               => 1
+});
+$tap->run();
+
+print "Done.\n";
+
+#all done
+0;

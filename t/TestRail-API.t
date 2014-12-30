@@ -18,7 +18,6 @@ my $pw     = $ENV{'TESTRAIL_PASSWORD'};
 
 #Mock if nothing is provided
 my $is_mock = (!$apiurl && !$login && !$pw);
-#$is_mock = 1;
 
 #EXAMPLE:
 #my $apiurl = 'http://testrails.cpanel.qa/testrail';

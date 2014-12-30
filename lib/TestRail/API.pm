@@ -83,6 +83,7 @@ sub new {
         flattree         => [],
         user_cache       => [],
         type_cache       => [],
+        tr_fields        => undef,
         default_request  => undef,
         browser          => new LWP::UserAgent()
     };
@@ -1071,7 +1072,7 @@ Gets run by name.
 
 Returns run definition HASHREF.
 
-    $tr->getRunByName(1,'gravy');
+    $tr->getRunByName(1,'R2');
 
 =cut
 
@@ -1498,7 +1499,38 @@ Returns ARRAYREF of result definition HASHREFs.
 sub getTestResultFields {
     my $self = shift;
     confess("Object methods must be called by an instance") unless ref($self);
-    return $self->_doRequest('index.php?/api/v2/get_result_fields');
+    return $self->{'tr_fields'} if defined($self->{'tr_fields'}); #cache
+    $self->{'tr_fields'} = $self->_doRequest('index.php?/api/v2/get_result_fields');
+    return $self->{'tr_fields'};
+}
+
+=head2 B<getTestResultFieldByName(SYSTEM_NAME,PROJECT_ID)>
+
+Gets a test result field by it's system name.  Optionally filter by project ID.
+
+=over 4
+
+=item B<SYSTEM NAME> - STRING: system name of a result field.
+
+=item B<PROJECT ID> - INTEGER (optional): Filter by whether or not the field is enabled for said project
+
+=back
+
+=cut
+
+sub getTestResultFieldByName {
+    my ($self,$system_name,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("System name must be string") unless $self->_checkString($system_name);
+    my @candidates = grep {$_->{'name'} eq $system_name} @{$self->getTestResultFields()};
+    return 0 if !scalar(@candidates);
+    if (defined $project_id) {
+        @candidates = grep {
+            $_->{'configs'}->[0]->{'context'}->{'is_global'} ||
+            ( grep {$_ == $project_id} @{ $_->{'configs'}->[0]->{'context'}->{'project_ids'} } )
+        } @candidates;
+    }
+    return $candidates[0];
 }
 
 =head2 B<getPossibleTestStatuses()>

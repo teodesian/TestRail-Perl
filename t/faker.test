@@ -1,0 +1,11 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Test::More 'tests' => 2;
+
+is('expected','expected','Expected result OK');
+is('expected','unexpected','Unexpected result not OK');
+
+0;
