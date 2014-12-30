@@ -5,3 +5,5 @@ weaver.ini
 README.md
 .git/*
 .gitignore
+tidyall.ini
+enivronment.sh
