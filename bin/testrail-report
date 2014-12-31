@@ -203,8 +203,14 @@ if ($file) {
     close($fh);
 } else {
     #Just read STDIN, print help if no file was passed
-    if (IO::Interactive::Tiny::is_interactive()) { print "ERROR: no file passed, and no data piped in! See --help for usage." }
-    if ( !$run || !$apiurl || !$password || !$user || !$project ) { print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n"; exit 0;};
+    if (IO::Interactive::Tiny::is_interactive()) {
+        print "ERROR: no file passed, and no data piped in! See --help for usage.";
+        exit(1);
+    }
+    if ( !$run || !$apiurl || !$password || !$user || !$project ) {
+        print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n";
+        exit(1);
+    }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
         s/^\s*//g; #Fix prove brain damage
