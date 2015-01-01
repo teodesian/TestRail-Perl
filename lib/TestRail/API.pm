@@ -109,10 +109,6 @@ sub new {
     confess "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
     $self->{'user_cache'} = $res;
 
-    #Check that the User is actually in the list
-    my $usr = $self->getUserByEmail($user);
-    confess "Could not find your TestRail user on the system!" if !(reftype($usr) eq 'HASH');
-
     return $self;
 }
 
