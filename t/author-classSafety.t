@@ -14,7 +14,7 @@ my $tr = TestRail::API->new('http://hokum.bogus','bogus','bogus',1);
 like( exception {$tr->new();}, qr/.*must be called statically.*/, "Calling constructor on instance dies");
 
 my @methods = Class::Inspector->methods('TestRail::API');
-my @excludeModules = qw{Scalar::Util Carp Clone Try::Tiny JSON::XS HTTP::Request LWP::UserAgent Types::Serialiser Data::Validate::URI};
+my @excludeModules = qw{Scalar::Util Carp Clone Try::Tiny HTTP::Request LWP::UserAgent Data::Validate::URI};
 my @tmp = ();
 my @excludedMethods = ();
 foreach my $module (@excludeModules) {

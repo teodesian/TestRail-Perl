@@ -1708,7 +1708,7 @@ L<HTTP::Request>
 
 L<LWP::UserAgent>
 
-L<Cpanel::JSON::XS>
+L<JSON::MaybeXS>
 
 L<http://docs.gurock.com/testrail-api2/start>
 
