@@ -20,7 +20,7 @@ like(
 
 my @methods = Class::Inspector->methods('TestRail::API');
 my @excludeModules =
-  qw{Scalar::Util Carp Clone Try::Tiny JSON::XS HTTP::Request LWP::UserAgent Types::Serialiser Data::Validate::URI};
+  qw{Scalar::Util Carp Clone Try::Tiny HTTP::Request LWP::UserAgent Data::Validate::URI};
 my @tmp             = ();
 my @excludedMethods = ();
 foreach my $module (@excludeModules) {

@@ -2,7 +2,7 @@
 # PODNAME: Test::LWP::UserAgent::TestRailMock
 
 package Test::LWP::UserAgent::TestRailMock;
-$Test::LWP::UserAgent::TestRailMock::VERSION = '0.012';
+$Test::LWP::UserAgent::TestRailMock::VERSION = '0.013';
 use strict;
 use warnings;
 
@@ -1561,7 +1561,7 @@ Test::LWP::UserAgent::TestRailMock - Provides an interface to something like Tes
 
 =head1 VERSION
 
-version 0.012
+version 0.013
 
 =head1 SYNOPSIS
 
@@ -1591,7 +1591,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2014 by George S. Baugh.
+This software is copyright (c) 2015 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -22,19 +22,19 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.012
+    version: 0.013
   Test::LWP::UserAgent::TestRailMock:
     file: lib/Test/LWP/UserAgent/TestRailMock.pm
-    version: 0.012
+    version: 0.013
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.012
+    version: 0.013
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.012
+    version: 0.013
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.012
+    version: 0.013
 requires:
   Carp: 0
   Clone: 0
@@ -45,7 +45,7 @@ requires:
   HTTP::Request: 0
   HTTP::Response: 0
   IO::Interactive::Tiny: 0
-  JSON::XS: 0
+  JSON::MaybeXS: 0
   LWP::UserAgent: 0
   Scalar::Util: 0
   TAP::Harness: 0
@@ -53,7 +53,6 @@ requires:
   Term::ANSIColor: 0
   Test::LWP::UserAgent: 0
   Try::Tiny: 0
-  Types::Serialiser: 0
   base: 0
   parent: 0
   perl: 5.010
@@ -64,6 +63,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.012
+version: 0.013
 x_contributors:
   - 'Neil Bowers <neil@bowers.com>'

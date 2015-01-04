@@ -138,8 +138,14 @@ if ($file) {
     close($fh);
 } else {
     #Just read STDIN, print help if no file was passed
-    if (IO::Interactive::Tiny::is_interactive()) { print "ERROR: no file passed, and no data piped in! See --help for usage." }
-    if ( !$run || !$apiurl || !$password || !$user || !$project ) { print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n"; exit 0;};
+    if (IO::Interactive::Tiny::is_interactive()) {
+        print "ERROR: no file passed, and no data piped in! See --help for usage.";
+        exit(1);
+    }
+    if ( !$run || !$apiurl || !$password || !$user || !$project ) {
+        print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n";
+        exit(1);
+    }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
         s/^\s*//g; #Fix prove brain damage
@@ -211,7 +217,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.012
+version 0.013
 
 =head1 SYNOPSIS
 
@@ -300,7 +306,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2014 by George S. Baugh.
+This software is copyright (c) 2015 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

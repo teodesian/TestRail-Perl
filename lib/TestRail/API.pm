@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.012';
+$TestRail::API::VERSION = '0.013';
 
 use 5.010;
 
@@ -14,10 +14,9 @@ use Scalar::Util qw{reftype looks_like_number};
 use Clone 'clone';
 use Try::Tiny;
 
-use JSON::XS;
+use JSON::MaybeXS ();
 use HTTP::Request;
 use LWP::UserAgent;
-use Types::Serialiser;    #Not necesarily shared by JSON::XS on all platforms
 use Data::Validate::URI qw{is_uri};
 
 sub new {
@@ -73,11 +72,6 @@ sub new {
       if !scalar(@$res);
     $self->{'user_cache'} = $res;
 
-    #Check that the User is actually in the list
-    my $usr = $self->getUserByEmail($user);
-    confess "Could not find your TestRail user on the system!"
-      if !( reftype($usr) eq 'HASH' );
-
     return $self;
 }
 
@@ -105,8 +99,10 @@ sub _doRequest {
 
     warn "$method " . $self->apiurl . "/$path" if $self->debug;
 
+    my $coder = JSON::MaybeXS->new;
+
     #Data sent is JSON
-    my $content = $data ? encode_json($data) : '';
+    my $content = $data ? $coder->encode($data) : '';
 
     $req->content($content);
     $req->header( "Content-Type" => "application/json" );
@@ -125,7 +121,7 @@ sub _doRequest {
     }
 
     try {
-        return decode_json( $response->content );
+        return $coder->decode( $response->content );
     }
     catch {
         if ( $response->code == 200 && !$response->content ) {
@@ -210,8 +206,6 @@ sub createProject {
         name              => $name,
         announcement      => $desc,
         show_announcement => $announce
-        ? Types::Serialiser::true
-        : Types::Serialiser::false
     };
 
     my $result =
@@ -569,10 +563,8 @@ sub createRun {
         description   => $desc,
         milestone_id  => $milestone_id,
         assignedto_id => $assignedto_id,
-        include_all   => $case_ids
-        ? Types::Serialiser::false
-        : Types::Serialiser::true,
-        case_ids => $case_ids
+        include_all   => defined($case_ids) ? 0 : 1,
+        case_ids      => $case_ids
     };
 
     my $result = $self->_doRequest( "index.php?/api/v2/add_run/$project_id",
@@ -907,7 +899,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.012
+version 0.013
 
 =head1 SYNOPSIS
 
@@ -1448,7 +1440,7 @@ Returns test plan definition HASHREF, or false on failure.
 
     $entries = {
         suite_id => 345,
-        include_all => Types::Serialiser::true,
+        include_all => 1,
         assignedto_id => 1
     }
 
@@ -1747,7 +1739,7 @@ L<HTTP::Request>
 
 L<LWP::UserAgent>
 
-L<JSON::XS>
+L<JSON::MaybeXS>
 
 L<http://docs.gurock.com/testrail-api2/start>
 
@@ -1772,7 +1764,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2014 by George S. Baugh.
+This software is copyright (c) 2015 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
