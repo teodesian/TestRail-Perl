@@ -33,10 +33,9 @@ use Scalar::Util qw{reftype looks_like_number};
 use Clone 'clone';
 use Try::Tiny;
 
-use JSON::XS;
+use JSON::MaybeXS ();
 use HTTP::Request;
 use LWP::UserAgent;
-use Types::Serialiser; #Not necesarily shared by JSON::XS on all platforms
 use Data::Validate::URI qw{is_uri};
 
 =head1 CONSTRUCTOR
@@ -145,8 +144,10 @@ sub _doRequest {
 
     warn "$method ".$self->apiurl."/$path" if $self->debug;
 
+    my $coder = JSON::MaybeXS->new;
+
     #Data sent is JSON
-    my $content = $data ? encode_json($data) : '';
+    my $content = $data ? $coder->encode($data) : '';
 
     $req->content($content);
     $req->header( "Content-Type" => "application/json" );
@@ -165,7 +166,7 @@ sub _doRequest {
     }
 
     try {
-        return decode_json($response->content);
+        return $coder->decode($response->content);
     } catch {
         if ($response->code == 200 && !$response->content) {
             return 1; #This function probably just returns no data
@@ -283,7 +284,7 @@ sub createProject {
     my $input = {
         name              => $name,
         announcement      => $desc,
-        show_announcement => $announce ? Types::Serialiser::true : Types::Serialiser::false
+        show_announcement => $announce
     };
 
     my $result = $self->_doRequest('index.php?/api/v2/add_project','POST',$input);
@@ -998,7 +999,7 @@ sub createRun {
         description   => $desc,
         milestone_id  => $milestone_id,
         assignedto_id => $assignedto_id,
-        include_all   => $case_ids ? Types::Serialiser::false : Types::Serialiser::true,
+        include_all   => defined($case_ids) ? 0 : 1,
         case_ids      => $case_ids
     };
 
@@ -1132,7 +1133,7 @@ Returns test plan definition HASHREF, or false on failure.
 
     $entries = {
         suite_id => 345,
-        include_all => Types::Serialiser::true,
+        include_all => 1,
         assignedto_id => 1
     }
 
@@ -1707,7 +1708,7 @@ L<HTTP::Request>
 
 L<LWP::UserAgent>
 
-L<JSON::XS>
+L<Cpanel::JSON::XS>
 
 L<http://docs.gurock.com/testrail-api2/start>
 

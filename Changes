@@ -1,5 +1,9 @@
 Revision history for Perl module TestRail::API
 
+0.013 2015-01-?? TEODESIAN
+    - Remove usage of Types::Serialiser, and use JSON::MaybeXS (odd intermittent errors on testers)
+    - Remove checking of user being in getUsers, this won't work with external (LDAP) auth
+
 0.012 2014-12-30 TEODESIAN
     - DZIL tidying
     - Re-enabled some of the critic tests, fixed a few related issues
