@@ -6,7 +6,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 12;
+use Test::More 'tests' => 15;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -127,5 +127,41 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
+
+#Default mode
+undef $tap;
+$fcontents = "
+fake.test ..
+1..2
+ok 1 - STORAGE TANKS SEARED
+    #Subtest NOT SO SEARED AFTER ARR
+    ok 1 - STROGGIFY POPULATION CENTERS
+    not ok 2 - STROGGIFY POPULATION CENTERS
+#goo
+not ok 2 - NOT SO SEARED AFTER ARR
+";
+
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'tap'         => $fcontents,
+        'apiurl'      => $apiurl,
+        'user'        => $login,
+        'pass'        => $pw,
+        'debug'       => $debug,
+        'browser'     => $browser,
+        'run'         => 'TestingSuite',
+        'project'     => 'TestProject',
+        'case_per_ok' => 1,
+        'merge'       => 1
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+}
+
 
 0;

@@ -208,7 +208,6 @@ if ($file) {
     open($fh,'<',$file);
     while (<$fh>) {
         $_ = colorstrip($_); #strip prove brain damage
-        s/^\s*//g; #Fix more brain damage
         if ($_ =~ /(.*)\s\.\.$/) {
             #File marker from default prove
             unless ($_ =~ /^[ok|not ok] - /) {
@@ -232,7 +231,6 @@ if ($file) {
     }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
-        s/^\s*//g; #Fix prove brain damage
         if ($_ =~ /(.*)\s\.\.$/) {
             #File marker from default prove
             unless ($_ =~ /^[ok|not ok] - /) {
