@@ -3,6 +3,8 @@ TestRail::API
 
 Perl interface to TestRail's REST API
 
+<img alt="TravisCI Build Status" src="https://travis-ci.org/teodesian/TestRail-Perl.svg"></img>
+
 Doesn't implement every method provided (yet), just the ones *I* needed:
 
 * Making Projects,Suites,Sections,Cases,Plans and Runs
