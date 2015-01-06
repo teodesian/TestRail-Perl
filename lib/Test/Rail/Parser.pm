@@ -262,15 +262,35 @@ sub testCallback {
 
     print "Assuming test name is '$test_name'...\n" if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
 
+    my $todo_reason;
     #Setup args to pass to function
     my $status = $self->{'tr_opts'}->{'not_ok'}->{'id'};
     if ($test->is_actual_ok()) {
         $status = $self->{'tr_opts'}->{'ok'}->{'id'};
-        $status = $self->{'tr_opts'}->{'skip'}->{'id'} if $test->has_skip();
-        $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $test->has_todo();
+        if ($test->has_skip()) {
+            $status = $self->{'tr_opts'}->{'skip'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/^# skip //gi;
+        }
+        if ($test->has_todo()) {
+            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/(^# todo & skip )//gi; #handle todo_skip
+            $test_name =~ s/ # todo\s(.*)$//gi;
+            $todo_reason = $1;
+        }
     } else {
-        $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'} if $test->has_todo();
+        if ($test->has_todo()) {
+            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/^# todo & skip //gi; #handle todo_skip
+            $test_name =~ s/# todo\s(.*)$//gi;
+            $todo_reason = $1;
+        }
     }
+
+    #If this is a TODO, set the reason in the notes
+    $self->{'tr_opts'}->{'test_notes'} .= "\nTODO reason: $todo_reason\n" if $todo_reason;
 
     #Setup step options and exit if that's the mode we be rollin'
     if ($self->{'tr_opts'}->{'step_results'}) {
@@ -327,6 +347,7 @@ sub EOFCallback {
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
+    $status = $self->{'tr_opts'}->{'skip'}->{'id'} if $self->skip_all();
 
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};
@@ -376,6 +397,10 @@ sub _set_result {
 1;
 
 __END__
+
+=head1 NOTES
+
+When using SKIP: {} (or TODO skip) blocks, you may want to consider naming your skip reasons the same as your test names when running in test_per_ok mode.
 
 =head1 SEE ALSO
 
