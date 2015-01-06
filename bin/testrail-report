@@ -66,6 +66,10 @@ Your TestRail install must have 3 custom statuses with the internal
 names 'skip', 'todo_pass', and 'todo_fail', to represent those
 states which TAP can have.
 
+=head2 TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
+
 =cut
 
 use strict;
@@ -137,6 +141,10 @@ REQUIREMENTS:
   names 'skip', 'todo_pass', and 'todo_fail', to represent those
   states which TAP can have.
 
+TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
+
 ";
     exit 0;
 }
@@ -168,7 +176,7 @@ sub parseConfig {
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock);
 
 #parse switches
 GetOptions(
@@ -179,6 +187,7 @@ GetOptions(
     'project=s'      => \$project,
     'case-ok'        => \$case_per_ok,
     'step-results=s' => \$step_results,
+    'mock'           => \$mock,
     'help'           => \$help
 );
 
@@ -189,18 +198,28 @@ if (-e $ENV{"HOME"} . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
     ($apiurl,$password,$user) = parseConfig();
 }
 
+#XXX not even close to optimized, don't slurp in the future
 #If argument is passed use it instead of stdin
 my $file = $ARGV[0];
 die "No Such File $file" if ($file && !-e $file);
-my ($fh,$fcontents);
+my ($fh,$fcontents,@files);
+
 if ($file) {
     open($fh,'<',$file);
     while (<$fh>) {
         $_ = colorstrip($_); #strip prove brain damage
         s/^\s*//g; #Fix more brain damage
+        if ($_ =~ /(.*)\s\.\.$/) {
+            #File marker from default prove
+            unless ($_ =~ /^[ok|not ok] - /) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+        }
         $fcontents .= $_;
     }
     close($fh);
+    push(@files,$fcontents) if $fcontents;
 } else {
     #Just read STDIN, print help if no file was passed
     if (IO::Interactive::Tiny::is_interactive()) {
@@ -214,9 +233,17 @@ if ($file) {
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
         s/^\s*//g; #Fix prove brain damage
+        if ($_ =~ /(.*)\s\.\.$/) {
+            #File marker from default prove
+            unless ($_ =~ /^[ok|not ok] - /) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+        }
         $fcontents .= $_;
     }
     help() if !$fcontents; #Nothing passed to stdin!
+    push(@files,$fcontents) if $fcontents;
 }
 
 #Interrogate user if they didn't provide info
@@ -252,18 +279,33 @@ if (!$run) {
     $run = userInput();
 }
 
-my $tap = Test::Rail::Parser->new({
-    'tap'                 => $fcontents,
-    'apiurl'              => $apiurl,
-    'user'                => $user,
-    'pass'                => $password,
-    'run'                 => $run,
-    'project'             => $project,
-    'case_per_ok'         => $case_per_ok,
-    'step_results'        => $step_results,
-    'merge'               => 1
-});
-$tap->run();
+my $debug = 0;
+my $browser;
+if ($mock) {
+    use Test::LWP::UserAgent::TestRailMock;
+    $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $debug = 1;
+}
+
+my $tap;
+foreach my $phil (@files) {
+    print "Processing $phil...\n";
+    $tap = Test::Rail::Parser->new({
+        'tap'                 => $phil,
+        'apiurl'              => $apiurl,
+        'user'                => $user,
+        'pass'                => $password,
+        'run'                 => $run,
+        'project'             => $project,
+        'case_per_ok'         => $case_per_ok,
+        'step_results'        => $step_results,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'merge'               => 1
+    });
+    $tap->run();
+
+}
 
 print "Done.\n";
 
