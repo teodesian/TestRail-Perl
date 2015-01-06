@@ -204,7 +204,7 @@ if ($file) {
 } else {
     #Just read STDIN, print help if no file was passed
     if (IO::Interactive::Tiny::is_interactive()) {
-        print "ERROR: no file passed, and no data piped in! See --help for usage.";
+        print "ERROR: no file passed, and no data piped in! See --help for usage.\n";
         exit(1);
     }
     if ( !$run || !$apiurl || !$password || !$user || !$project ) {
