@@ -1,6 +1,12 @@
 Revision history for Perl module TestRail::API
 
-0.013 2015-01-?? TEODESIAN
+0.014 2015-01-06 TEODESIAN
+    - Fixed issue where testrail-report would not parse the results of multiple tests in a TAP file or stream.
+    - Fixed issue where testrail-report would erroneously attempt to report the results of subtests.
+    - Parse TODO/SKIP messages correctly, add todo reason to the test notes
+    - Set SKIP_ALL tests status correctly
+
+0.013 2015-01-04 TEODESIAN
     - Remove usage of Types::Serialiser, and use JSON::MaybeXS (odd intermittent errors on testers)
     - Remove checking of user being in getUsers, this won't work with external (LDAP) auth
 
