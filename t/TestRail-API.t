@@ -4,13 +4,10 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 51;
+use Test::More tests => 52;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
-
-#XXX mock in the future...
-# ->{'browser'} and ->{'default_request'} would be the idea there...
 
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
@@ -132,6 +129,10 @@ my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'
 ok(defined($result->{'id'}),"Can add test results");
 my $results = $tr->getTestResults($tests->[0]->{'id'});
 is($results->[0]->{'id'},$result->{'id'},"Can get results for test");
+
+#Test configuration methods
+my $configs = $tr->getConfigurations($new_project->{'id'});
+is(reftype($configs),'ARRAY',"Can get configurations for a project");
 
 #Delete a plan
 ok($tr->deletePlan($new_plan->{'id'}),"Can delete plan");

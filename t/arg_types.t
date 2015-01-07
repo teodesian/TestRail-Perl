@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 113;
+use Test::More 'tests' => 115;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -62,6 +62,7 @@ isnt( exception {$tr->getSections() },undef,'getSections returns error when no a
 isnt( exception {$tr->getRuns() },undef,'getRuns returns error when no arguments are passed');
 isnt( exception {$tr->getPlans() },undef,'getPlans returns error when no arguments are passed');
 isnt( exception {$tr->getMilestones() },undef,'getMilestones returns error when no arguments are passed');
+isnt( exception {$tr->getConfigurations() },undef,'getConfigurations returns error when no arguments are passed');
 
 #1-arg functions
 is(exception {$tr->deleteCase(1)},            undef,'deleteCase returns no error when int arg passed');
@@ -91,6 +92,7 @@ is(exception {$tr->getCaseTypeByName('zap')}, undef,'getCaseTypeByName returns n
 is(exception {$tr->createProject('zippy')},   undef,'createProject returns no error when string arg passed');
 is(exception {$tr->getTestResults(1)},        undef,'getTestResults with 1 arg returns no error');
 is(exception {$tr->getMilestoneByID(1)},      undef,'getMilestoneByID with 1 arg returns no error');
+is(exception {$tr->getConfigurations(1)},     undef,'getConfigurations with 1 arg returns no error');
 
 isnt(exception {$tr->createCase(1)}, undef,'createCase with 1 arg returns error');
 isnt(exception {$tr->createMilestone(1)}, undef,'createMilestone with 1 arg returns error');

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 51;
+use Test::More 'tests' => 52;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -68,3 +68,4 @@ is($tr->getUserByEmail('tickle'),0,'getUserByEmail returns error');
 is($tr->getUserByID(1),0,'getUserByID returns error');
 is($tr->getUserByName('zap'),0,'getUserByName returns error');
 is($tr->getUsers(),-500,'getUsers returns error');
+is($tr->getConfigurations(1),-500,'getConfigurations returns error');

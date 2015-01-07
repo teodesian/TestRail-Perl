@@ -1652,6 +1652,30 @@ sub getTestResults {
     return $self->_doRequest($url);
 }
 
+=head1 CONFIGURATION METHODS
+
+=head2 B<getConfigurations(project_id)>
+
+Gets the available configurations for a project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of relevant project
+
+=back
+
+Returns ARRAYREF of configuration definition HASHREFs.
+
+=cut
+
+sub getConfigurations {
+    my ($self,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Test ID must be positive integer") unless $self->_checkInteger($project_id);
+    my $url = "index.php?/api/v2/get_configs/$project_id";
+    return $self->_doRequest($url);
+}
+
 =head1 STATIC METHODS
 
 =head2 B<buildStepResults(content,expected,actual,status_id)>
