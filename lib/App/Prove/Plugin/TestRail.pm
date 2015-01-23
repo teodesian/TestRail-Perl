@@ -48,11 +48,9 @@ Not the most elegant solution, but I see no other clear path to get those variab
 sub load {
     my ($class, $p) = @_;
 
-    my ($apiurl,$password,$user,$project,$run,$case_per_ok,$step_results) = _parseConfig();
-
     my $app = $p->{app_prove};
     my $args = $p->{'args'};
-    my $params = {};
+    my $params = _parseConfig();
 
     my @kvp = ();
     my ($key,$value);
@@ -99,7 +97,7 @@ sub _parseConfig {
         $results->{lc($arr->[0])} = $arr->[1];
     }
     close($fh);
-    return ($results->{'apiurl'},$results->{'password'},$results->{'user'},$results->{'project'},$results->{'run'},$results->{'case_per_ok'},$results->{'step_results'});
+    return $results;
 }
 
 1;

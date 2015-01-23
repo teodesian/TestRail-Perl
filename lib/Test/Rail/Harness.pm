@@ -39,6 +39,7 @@ Picks the arguments passed to App::Prove::Plugin::TestRail out of $ENV and shutt
 sub make_parser {
     my ($self, $job) = @_;
     my $args = $self->SUPER::_get_parser_args($job);
+    my @configs = ();
 
     #XXX again, don't see any way of getting this downrange to my parser :(
     $args->{'apiurl'}  = $ENV{'TESTRAIL_APIURL'};
@@ -47,7 +48,7 @@ sub make_parser {
     $args->{'project'} = $ENV{'TESTRAIL_PROJ'};
     $args->{'run'}     = $ENV{'TESTRAIL_RUN'};
     $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
-    my @configs =  split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
+    @configs = split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
     $args->{'configs'} = \@configs;
     $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};

@@ -119,7 +119,7 @@ is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan b
 my $prun = $new_plan->{'entries'}->[0]->{'runs'}->[0];
 is($tr->getRunByID($prun->{'id'})->{'name'},"Executing the great plan","Can get child run of plan by ID");
 is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{'id'},"Can find child run of plan by name");
-is($tr->getChildRunByName($namePlan,"Executing the great plan")->{'id'},$prun->{'id'},"Getting run by name returns child runs");
+isnt($tr->getChildRunByName($namePlan,"Executing the great plan")->{'id'},undef,"Getting run by name returns child runs");
 
 #Test TEST/RESULT methods
 my $tests = $tr->getTests($new_run->{'id'});

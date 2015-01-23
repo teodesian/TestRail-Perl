@@ -1122,7 +1122,7 @@ Extract the child runs from a plan.  Convenient, as the structure of this hash i
 
 =back
 
-Returns ARRAYREF of run definition HASHREFs.  Returns undef upon failure to extract the data.
+Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract the data.
 
 =cut
 
@@ -1130,8 +1130,8 @@ sub getChildRuns {
     my ($self,$plan) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
-    return undef unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
-    return undef unless defined($plan->{'entries'}->[0]->{'runs'}) && (reftype($plan->{'entries'}->[0]->{'runs'}) || 'undef') eq 'ARRAY';
+    return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
+    return 0 unless defined($plan->{'entries'}->[0]->{'runs'}) && (reftype($plan->{'entries'}->[0]->{'runs'}) || 'undef') eq 'ARRAY';
     return $plan->{'entries'}->[0]->{'runs'};
 }
 
@@ -1159,14 +1159,14 @@ sub getChildRunByName {
     confess("Run name must be STRING") unless $self->_checkString($name);
     confess("Configurations must be ARRAYREF") unless !defined($configurations) || (reftype($configurations) || 'undef') eq 'ARRAY';
     my $runs = $self->getChildRuns($plan);
-    return 0 if !defined($runs);
+    return 0 if !$runs;
 
     my @pconfigs = ();
 
     #Figure out desired config IDs
     if (defined $configurations) {
         my $avail_configs = $self->getConfigurations($plan->{'project_id'});
-        my ($cname,$cid,@rconfigs);
+        my ($cname);
         @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @$configurations } @$avail_configs; #Get a list of IDs from the names passed
     }
     foreach my $run (@$runs) {
