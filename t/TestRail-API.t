@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 52;
+use Test::More tests => 55;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
@@ -111,8 +111,15 @@ my $new_plan = $tr->createPlan($new_project->{'id'},$plan_name,"Soviet 5-year ag
 is($new_plan->{'name'},$plan_name,"Can create new plan");
 
 ok($tr->getPlans($new_project->{'id'}),"Can get list of plans");
-is($tr->getPlanByName($new_project->{'id'},$plan_name)->{'name'},$plan_name,"Can get plan by name");
+my $namePlan = $tr->getPlanByName($new_project->{'id'},$plan_name);
+is($namePlan->{'name'},$plan_name,"Can get plan by name");
 is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan by ID");
+
+#Get runs per plan, create runs in plan
+my $prun = $new_plan->{'entries'}->[0]->{'runs'}->[0];
+is($tr->getRunByID($prun->{'id'})->{'name'},"Executing the great plan","Can get child run of plan by ID");
+is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{'id'},"Can find child run of plan by name");
+is($tr->getChildRunByName($namePlan,"Executing the great plan")->{'id'},$prun->{'id'},"Getting run by name returns child runs");
 
 #Test TEST/RESULT methods
 my $tests = $tr->getTests($new_run->{'id'});
@@ -125,6 +132,7 @@ my $statusTypes = $tr->getPossibleTestStatuses();
 ok($resTypes,"Can get test result fields");
 ok($statusTypes,"Can get possible test statuses");
 
+#TODO make more thorough tests for options, custom options
 my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'},"REAPER FORCES INBOUND");
 ok(defined($result->{'id'}),"Can add test results");
 my $results = $tr->getTestResults($tests->[0]->{'id'});

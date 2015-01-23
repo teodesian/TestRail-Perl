@@ -28,9 +28,23 @@ IF none of these options are provided, you will be asked to type
 these in as needed, supposing you are not redirecting input
 (such as piping into this command).
 
+=head3 SEMI-OPTIONAL PARAMETERS
+
+    --plan [someplan] : look for the provided run name within the provided plan.
+
+    --config [someconfig] : filter run by the provided configuration.
+      This option can be passed multiple times for detailed filtering.
+
+Test plans can have runs with the same name, but different configurations, which is understandably confusing.
+You can do the same outside of plans, and without configurations; but doing so is ill advised, and the only option from there is to use IDs.
+So, try not to do that if you want to use this tool, and want sanity in your Test management system.
+
+The way around this is to specify what plan and configuration you want to set results for.
+This should provide sufficient uniqueness to get to any run using names.
+
 =head3 CONFIG OVERRIDES
 
-In your \$HOME, put a file called .testrailrc with key=value
+In your $HOME, put a file called .testrailrc with key=value
 syntax separated by newlines.  Valid Keys are: apiurl,user,password
 
 =head3 CONFIG OPTIONS
@@ -45,12 +59,16 @@ These override the config, if present.  If neither are used, you will be prompte
 
 =head3 BEHAVIOR
 
-    --case-ok      : Whether to consider each OK to correspond to a test in TestRail
+    --case-ok : Whether to consider each OK to correspond to a test in TestRail
 
     --step-results [name] : 'System Name' of a 'step_results' type field to set for your tests.
 
 These options are mutually exclusive.  If neither is set, the
 overall result of the test will be used as the pass/fail for the test.
+
+=head3 RESULT OPTIONS
+
+    --version : String describing the version of the system under test.
 
 =head2 PROVE PLUGIN:
 
@@ -107,6 +125,25 @@ PARAMETERS:
   these in as needed, supposing you are not redirecting input
   (such as piping into this command).
 
+  [SEMI-OPTIONAL PARAMETERS]
+
+    --plan [someplan] : look for the provided run name within
+      the provided plan.
+
+    --configs [someconfigs] : filter run by the provided configuration.
+      This option can be passed multiple times for detailed filtering.
+
+  Test plans can have runs with the same name, but different
+  configurations, which is understandably confusing.  You can do the
+  same outside of plans, and without configurations; but doing so is
+  ill-advised, and the only option from there is to use IDs.  So, try
+  not to do that if you want to use this tool, and want sanity in your
+  Test Management System.
+
+  The way around this is to specify what plan and configuration
+  you want to set results for.  This should provide sufficient
+  uniqueness to get to any run using words.
+
   [CONFIG OVERRIDES]
   In your \$HOME, put a file called .testrailrc with key=value
   syntax separated by newlines.  Valid Keys are: apiurl,user,password
@@ -127,6 +164,10 @@ PARAMETERS:
 
   These options are mutually exclusive.  If neither is set, the
   overall result of the test will be used as the pass/fail for the test.
+
+  [RESULT OPTIONS]
+
+    --version : String describing the version of the system under test.
 
 PROVE PLUGIN:
 
@@ -176,7 +217,7 @@ sub parseConfig {
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version);
 
 #parse switches
 GetOptions(
@@ -188,6 +229,9 @@ GetOptions(
     'case-ok'        => \$case_per_ok,
     'step-results=s' => \$step_results,
     'mock'           => \$mock,
+    'config=s@'      => \$configs,
+    'plan=s'         => \$plan,
+    'version=s'      => \$version,
     'help'           => \$help
 );
 
@@ -285,21 +329,28 @@ if ($mock) {
     $debug = 1;
 }
 
+my $result_options = undef;
+$result_options = {'version' => $version} if $version;
+
 my $tap;
 foreach my $phil (@files) {
     print "Processing $phil...\n";
     $tap = Test::Rail::Parser->new({
-        'tap'                 => $phil,
-        'apiurl'              => $apiurl,
-        'user'                => $user,
-        'pass'                => $password,
-        'run'                 => $run,
-        'project'             => $project,
-        'case_per_ok'         => $case_per_ok,
-        'step_results'        => $step_results,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'merge'               => 1
+        'tap'          => $phil,
+        'apiurl'       => $apiurl,
+        'user'         => $user,
+        'pass'         => $password,
+        'run'          => $run,
+        'project'      => $project,
+        'case_per_ok'  => $case_per_ok,
+        'step_results' => $step_results,
+        'debug'        => $debug,
+        'browser'      => $browser,
+        'version'      => $version,
+        'plan'         => $plan,
+        'configs'      => $configs,
+        'result_options' => $result_options,
+        'merge'        => 1
     });
     $tap->run();
 

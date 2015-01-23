@@ -100,6 +100,8 @@ sub new {
         'project_id'   => delete $opts->{'project_id'},
         'step_results' => delete $opts->{'step_results'},
         'case_per_ok'  => delete $opts->{'case_per_ok'},
+        'plan'         => delete $opts->{'plan'},
+        'configs'      => delete $opts->{'configs'},
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'}
@@ -143,18 +145,37 @@ sub new {
     $tropts->{'todo_fail'} = $todof[0];
     $tropts->{'todo_pass'} = $todop[0];
 
-    #Grab suite from run
+    #Grab run
     my $run_id = $tropts->{'run_id'};
+    my $run;
+
+    #TODO check if configs passed are defined for project
+
     if ($tropts->{'run'}) {
-        my $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
-        if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
-            $tropts->{'run'} = $run;
-            $tropts->{'run_id'} = $run->{'id'};
+        if ($tropts->{'plan'}) {
+            #Attempt to find run, filtered by configurations
+            my $plan = $tr->getPlanByName($tropts->{'project_id'},$tropts->{'plan'});
+            if ($plan) {
+                $tropts->{'plan'} = $plan; #XXX Save for later just in case?
+                $run = $tr->getChildRunByName($plan,$tropts->{'run'},$tropts->{'configs'}); #Find plan filtered by configs
+                if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
+                    $tropts->{'run'} = $run;
+                    $tropts->{'run_id'} = $run->{'id'};
+                }
+            } else {
+                confess("Could not find plan ".$tropts->{'plan'}." in provided project!");
+            }
+        } else {
+            $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
+            if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
+                $tropts->{'run'} = $run;
+                $tropts->{'run_id'} = $run->{'id'};
+            }
         }
     } else {
         $tropts->{'run'} = $tr->getRunByID($run_id);
     }
-    confess("No run ID provided, and no run with specified name exists!") if !$tropts->{'run_id'};
+    confess("No run ID provided, and no run with specified name exists in provided project/plan!") if !$tropts->{'run_id'};
 
     $self = $class->SUPER::new($opts);
     if (defined($self->{'_iterator'}->{'command'}) && reftype($self->{'_iterator'}->{'command'}) eq 'ARRAY' ) {

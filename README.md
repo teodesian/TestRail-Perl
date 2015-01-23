@@ -13,7 +13,6 @@ Doesn't implement every method provided (yet), just the ones *I* needed:
 * Setting test run statuses
 
 Basically everything needed to sync up automated test runs to the test management DB.
-TODO: alter tests so that you can keep in sync.
 
 > my $url = "http://some.testrail.install/";
 > 
@@ -22,5 +21,9 @@ TODO: alter tests so that you can keep in sync.
 > my $pw = 'password';
 > 
 > my $apiClient = new TestRail::API($url,$user,$pass);
+
+Also provides a prove plugin and TAP analyzer so that you can upload results on-the-fly or after it's logged to a file.
+
+TODO: alter tests so that you can keep in sync.
 
 See POD for more info.

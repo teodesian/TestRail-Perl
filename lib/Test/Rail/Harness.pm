@@ -46,8 +46,19 @@ sub make_parser {
     $args->{'pass'}    = $ENV{'TESTRAIL_PASS'};
     $args->{'project'} = $ENV{'TESTRAIL_PROJ'};
     $args->{'run'}     = $ENV{'TESTRAIL_RUN'};
-    $args->{'case_per_ok'}  = $ENV{'TESTRAIL_CASEOK'};
-    $args->{'step_results'} = $ENV{'TESTRAIL_STEPS'};
+    $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
+    my @configs =  split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
+    $args->{'configs'} = \@configs;
+    $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
+    $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};
+    $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
+
+    #for Testability of plugin
+    if ($ENV{'TESTRAIL_MOCKED'}) {
+        use Test::LWP::UserAgent::TestRailMock;
+        $args->{'debug'} = 1;
+        $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    }
 
     $self->SUPER::_make_callback( 'parser_args', $args, $job->as_array_ref );
     my $parser = $self->SUPER::_construct( $self->SUPER::parser_class, $args );

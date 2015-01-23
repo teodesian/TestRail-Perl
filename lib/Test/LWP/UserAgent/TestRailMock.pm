@@ -638,6 +638,34 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
+$VAR1 = 'index.php?/api/v2/get_run/24';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:10 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '654',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:10 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":22,"suite_id":9,"name":"Executing the great plan","description":"ACQUIRE CLOTHES, BOOTS AND MOTORCYCLE","milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":null,"created_on":1419364929,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/22"}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+
+{
+
 $VAR1 = 'index.php?/api/v2/get_run/1';
 $VAR2 = '200';
 $VAR3 = 'OK';
@@ -828,7 +856,7 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
-$VAR1 = 'index.php?/api/v2/get_plans/9';
+$VAR1 = 'index.php?/api/v2/get_plans/10';
 $VAR2 = '200';
 $VAR3 = 'OK';
 $VAR4 = bless( {
@@ -875,7 +903,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '{"id":23,"name":"GosPlan","description":"Soviet 5-year agriculture plan to liquidate Kulaks","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/23","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":24,"suite_id":9,"name":"Executing the great plan","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":null,"config_ids":[],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
+$VAR5 = '{"id":23,"name":"GosPlan","description":"Soviet 5-year agriculture plan to liquidate Kulaks","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/23","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":1,"suite_id":9,"name":"Executing the great plan","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":"testConfig","config_ids":[1],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -1369,5 +1397,31 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 }
 
+{
+
+$VAR1 = 'index.php?/api/v2/get_configs/10';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:12 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '0',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:12 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '["testConfig"]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
 
 1;

@@ -9,7 +9,7 @@ use utf8;
 
 =head1 SYNOPSIS
 
-`prove -PTestRail='http://some.testlink.install/,someUser,somePassword,TestProject,TestRun' sometest.t`
+`prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
 
 =cut
 
@@ -17,7 +17,8 @@ use utf8;
 
 Prove plugin to upload test results to TestRail installations.
 
-Accepts input in the standard Prove plugin fashion (-Ppluginname=value,value,value...), but will also parse a config file.
+Accepts input in the standard Prove plugin fashion (-Ppluginname='key=value,key=value,key=value...'), but will also parse a config file.
+When fed in prove plugin style, key=value input is expected.
 
 If ~/.testrailrc exists, it will be parsed for any of these values in a newline separated key=value list.  Example:
 
@@ -26,10 +27,14 @@ If ~/.testrailrc exists, it will be parsed for any of these values in a newline 
     password=superS3cret
     project=TestProject
     run=TestRun
+    plan=GosPlan
+    configs=config1:config2:config3: ... :configN
+    version=xx.xx.xx.xx
     case_per_ok=0
     step_results=sr_sys_name
 
-Be aware that if you do so, it will look for any unsatisfied arguments in the order of their appearance above.
+Note that passing configurations as filters for runs inside of plans are separated by colons.
+Values passed in via query string will override values in ~/.testrailrc.
 
 =head1 OVERRIDDEN METHODS
 
@@ -47,27 +52,35 @@ sub load {
 
     my $app = $p->{app_prove};
     my $args = $p->{'args'};
+    my $params = {};
 
-    $apiurl   //= shift @$args;
-    $user     //= shift @$args;
-    $password //= shift @$args;
-    $project  //= shift @$args;
-    $run      //= shift @$args;
-
-    $case_per_ok  //= shift @$args;
-    $step_results //= shift @$args;
+    my @kvp = ();
+    my ($key,$value);
+    foreach my $arg (@$args) {
+        @kvp = split(/=/,$arg);
+        if (scalar(@kvp) < 2) {
+            print "Unrecognized Argument '$arg' to App::Prove::Plugin::Testrail, ignoring\n";
+            next;
+        }
+        $key = shift @kvp;
+        $value = join('',@kvp);
+        $params->{$key} = $value;
+    }
 
     $app->harness('Test::Rail::Harness');
     $app->merge(1);
 
     #XXX I can't figure out for the life of me any other way to pass this data. #YOLO
-    $ENV{'TESTRAIL_APIURL'} = $apiurl;
-    $ENV{'TESTRAIL_USER'}   = $user;
-    $ENV{'TESTRAIL_PASS'}   = $password;
-    $ENV{'TESTRAIL_PROJ'}   = $project;
-    $ENV{'TESTRAIL_RUN'}    = $run;
-    $ENV{'TESTRAIL_CASEOK'} = $case_per_ok;
-    $ENV{'TESTRAIL_STEPS'}  = $step_results;
+    $ENV{'TESTRAIL_APIURL'}  = $params->{apiurl};
+    $ENV{'TESTRAIL_USER'}    = $params->{user};
+    $ENV{'TESTRAIL_PASS'}    = $params->{password};
+    $ENV{'TESTRAIL_PROJ'}    = $params->{project};
+    $ENV{'TESTRAIL_RUN'}     = $params->{run};
+    $ENV{'TESTRAIL_PLAN'}    = $params->{plan};
+    $ENV{'TESTRAIL_CONFIGS'} = $params->{configs};
+    $ENV{'TESTRAIL_VERSION'} = $params->{version};
+    $ENV{'TESTRAIL_CASEOK'}  = $params->{case_per_ok};
+    $ENV{'TESTRAIL_STEPS'}   = $params->{step_results};
     return $class;
 }
 

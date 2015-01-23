@@ -82,6 +82,7 @@ sub new {
         flattree         => [],
         user_cache       => [],
         type_cache       => [],
+        configurations   => undef,
         tr_fields        => undef,
         default_request  => undef,
         browser          => new LWP::UserAgent()
@@ -1109,6 +1110,75 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+=head1 RUN AS CHILD OF PLAN METHODS
+
+=head2 B<getChildRuns(plan)>
+
+Extract the child runs from a plan.  Convenient, as the structure of this hash is deep, and correct error handling can be tedious.
+
+=over 4
+
+=item HASHREF C<PLAN> - Test Plan definition HASHREF returned by any of the PLAN methods below.
+
+=back
+
+Returns ARRAYREF of run definition HASHREFs.  Returns undef upon failure to extract the data.
+
+=cut
+
+sub getChildRuns {
+    my ($self,$plan) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
+    return undef unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
+    return undef unless defined($plan->{'entries'}->[0]->{'runs'}) && (reftype($plan->{'entries'}->[0]->{'runs'}) || 'undef') eq 'ARRAY';
+    return $plan->{'entries'}->[0]->{'runs'};
+}
+
+=head2 B<getChildRunByName(plan,name,configurations)>
+
+=over 4
+
+=item HASHREF C<PLAN> - Test Plan definition HASHREF returned by any of the PLAN methods below.
+
+=item STRING C<NAME> - Name of run to search for within plan.
+
+=item ARRAYREF C<CONFIGURATIONS> (optional) - Names of configurations to filter runs by.
+
+=back
+
+Returns run definition HASHREF, or false if no such run is found.
+Convenience method using getChildRuns.
+
+=cut
+
+sub getChildRunByName {
+    my ($self,$plan,$name,$configurations) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
+    confess("Run name must be STRING") unless $self->_checkString($name);
+    confess("Configurations must be ARRAYREF") unless !defined($configurations) || (reftype($configurations) || 'undef') eq 'ARRAY';
+    my $runs = $self->getChildRuns($plan);
+    return 0 if !defined($runs);
+
+    my @pconfigs = ();
+
+    #Figure out desired config IDs
+    if (defined $configurations) {
+        my $avail_configs = $self->getConfigurations($plan->{'project_id'});
+        my ($cname,$cid,@rconfigs);
+        @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @$configurations } @$avail_configs; #Get a list of IDs from the names passed
+    }
+    foreach my $run (@$runs) {
+        #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        foreach my $cid (@{$run->{'config_ids'}}) {
+            next unless List::Util::all {$_ eq $cid} @pconfigs;
+        }
+        return $run if $run->{name} eq $name;
+    }
+    return 0;
+}
+
 =head1 PLAN METHODS
 
 =head2 B<createPlan (project_id,name,description,milestone_id,entries)>
@@ -1185,9 +1255,9 @@ sub deletePlan {
     return $result;
 }
 
-=head2 B<getPlans (project_id)>
+=head2 B<getPlans (project_id,get_runs)>
 
-Deletes specified plan.
+Gets specified test plans.
 
 =over 4
 
@@ -1198,6 +1268,9 @@ Deletes specified plan.
 Returns ARRAYREF of plan definition HASHREFs.
 
     $tr->getPlans(8);
+
+Does not contain any information about child test runs.
+Use getRunByID or getRunByName if you want that, in particular if you are interested in using getChildRunByName.
 
 =cut
 
@@ -1234,7 +1307,9 @@ sub getPlanByName {
     my $plans = $self->getPlans($project_id);
     return -500 if !$plans || (reftype($plans) || 'undef') ne 'ARRAY';
     foreach my $plan (@$plans) {
-        return $plan if $plan->{'name'} eq $name;
+        if ($plan->{'name'} eq $name) {
+            return $self->getPlanByID($plan->{'id'});
+        }
     }
     return 0;
 }
@@ -1622,7 +1697,7 @@ sub createTestResults {
     return $self->_doRequest("index.php?/api/v2/add_result/$test_id",'POST',$stuff);
 }
 
-=head2 B<getTestResults(test_id,limit)>
+=head2 B<getTestResults(test_id,limit,offset)>
 
 Get the recorded results for desired test, limiting output to 'limit' entries.
 
@@ -1673,7 +1748,9 @@ sub getConfigurations {
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Test ID must be positive integer") unless $self->_checkInteger($project_id);
     my $url = "index.php?/api/v2/get_configs/$project_id";
-    return $self->_doRequest($url);
+    return $self->{'configurations'} if $self->{'configurations'}; #cache this since we can't change it with the API
+    $self->{'configurations'} = $self->_doRequest($url);
+    return $self->{'configurations'};
 }
 
 =head1 STATIC METHODS

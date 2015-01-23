@@ -6,6 +6,8 @@ Revision history for Perl module TestRail::API
     - Parse TODO/SKIP messages correctly, add todo reason to the test notes
     - Set SKIP_ALL tests status correctly
     - Add TestRail::API::getConfigurations method
+    - Add TestRail::API::getChildRuns and getChildRunByName methods to extract runs from plans when passed names
+    - Add ability to pass version to testrail-report & App::Prove::Plugin::TestRail
 
 0.013 2015-01-04 TEODESIAN
     - Remove usage of Types::Serialiser, and use JSON::MaybeXS (odd intermittent errors on testers)
