@@ -64,6 +64,8 @@ getTestSuiteByName
 getTestSuites
 getTests
 getUsers
+getChildRunByName
+getChildRuns
 stepResult
 testsuites
 api
@@ -77,6 +79,7 @@ testCallback
 unknownCallback
 buildStepResults
 testrailrc
+TODO
 George
 Baugh
 teodesian

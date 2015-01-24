@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.013';
+$Test::Rail::Parser::VERSION = '0.014';
 use strict;
 use warnings;
 use utf8;
@@ -41,6 +41,8 @@ sub new {
         'project_id'   => delete $opts->{'project_id'},
         'step_results' => delete $opts->{'step_results'},
         'case_per_ok'  => delete $opts->{'case_per_ok'},
+        'plan'         => delete $opts->{'plan'},
+        'configs'      => delete $opts->{'configs'},
 
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
@@ -99,21 +101,49 @@ sub new {
     $tropts->{'todo_fail'} = $todof[0];
     $tropts->{'todo_pass'} = $todop[0];
 
-    #Grab suite from run
+    #Grab run
     my $run_id = $tropts->{'run_id'};
+    my $run;
+
+    #TODO check if configs passed are defined for project
+
     if ( $tropts->{'run'} ) {
-        my $run =
-          $tr->getRunByName( $tropts->{'project_id'}, $tropts->{'run'} );
-        if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
-            $tropts->{'run'}    = $run;
-            $tropts->{'run_id'} = $run->{'id'};
+        if ( $tropts->{'plan'} ) {
+
+            #Attempt to find run, filtered by configurations
+            my $plan =
+              $tr->getPlanByName( $tropts->{'project_id'}, $tropts->{'plan'} );
+            if ($plan) {
+                $tropts->{'plan'} = $plan;    #XXX Save for later just in case?
+                $run =
+                  $tr->getChildRunByName( $plan, $tropts->{'run'},
+                    $tropts->{'configs'} );    #Find plan filtered by configs
+                if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
+                    $tropts->{'run'}    = $run;
+                    $tropts->{'run_id'} = $run->{'id'};
+                }
+            }
+            else {
+                confess("Could not find plan "
+                      . $tropts->{'plan'}
+                      . " in provided project!" );
+            }
+        }
+        else {
+            $run =
+              $tr->getRunByName( $tropts->{'project_id'}, $tropts->{'run'} );
+            if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
+                $tropts->{'run'}    = $run;
+                $tropts->{'run_id'} = $run->{'id'};
+            }
         }
     }
     else {
         $tropts->{'run'} = $tr->getRunByID($run_id);
     }
-    confess("No run ID provided, and no run with specified name exists!")
-      if !$tropts->{'run_id'};
+    confess(
+        "No run ID provided, and no run with specified name exists in provided project/plan!"
+    ) if !$tropts->{'run_id'};
 
     $self = $class->SUPER::new($opts);
     if ( defined( $self->{'_iterator'}->{'command'} )
@@ -151,10 +181,10 @@ sub unknownCallback {
         print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
     }
 
-    #RAW tap
-    if ( $line =~ /(.*)\s\.\./ ) {
-        $self->{'file'} = $1;
-        print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+    #RAW tap #XXX this regex could be improved
+    if ( $line =~ /(.*)\s\.\.$/ ) {
+        $self->{'file'} = $1
+          unless $line =~ /^[ok|not ok] - /;    #a little more careful
     }
     print "$line\n" if ( $line =~ /^error/i );
 }
@@ -221,18 +251,38 @@ sub testCallback {
     print "Assuming test name is '$test_name'...\n"
       if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
 
+    my $todo_reason;
+
     #Setup args to pass to function
     my $status = $self->{'tr_opts'}->{'not_ok'}->{'id'};
     if ( $test->is_actual_ok() ) {
         $status = $self->{'tr_opts'}->{'ok'}->{'id'};
-        $status = $self->{'tr_opts'}->{'skip'}->{'id'} if $test->has_skip();
-        $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'}
-          if $test->has_todo();
+        if ( $test->has_skip() ) {
+            $status = $self->{'tr_opts'}->{'skip'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/^# skip //gi;
+        }
+        if ( $test->has_todo() ) {
+            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/(^# todo & skip )//gi;    #handle todo_skip
+            $test_name =~ s/ # todo\s(.*)$//gi;
+            $todo_reason = $1;
+        }
     }
     else {
-        $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'}
-          if $test->has_todo();
+        if ( $test->has_todo() ) {
+            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name =~ s/^# todo & skip //gi;      #handle todo_skip
+            $test_name =~ s/# todo\s(.*)$//gi;
+            $todo_reason = $1;
+        }
     }
+
+    #If this is a TODO, set the reason in the notes
+    $self->{'tr_opts'}->{'test_notes'} .= "\nTODO reason: $todo_reason\n"
+      if $todo_reason;
 
     #Setup step options and exit if that's the mode we be rollin'
     if ( $self->{'tr_opts'}->{'step_results'} ) {
@@ -299,6 +349,7 @@ sub EOFCallback {
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
+    $status = $self->{'tr_opts'}->{'skip'}->{'id'}   if $self->skip_all();
 
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};
@@ -366,7 +417,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.013
+version 0.014
 
 =head1 DESCRIPTION
 
@@ -446,6 +497,10 @@ Otherwise, do nothing.
 If we are running in step_results mode, send over all the step results to TestRail.
 If we are running in case_per_ok mode, do nothing.
 Otherwise, upload the overall results of the test to TestRail.
+
+=head1 NOTES
+
+When using SKIP: {} (or TODO skip) blocks, you may want to consider naming your skip reasons the same as your test names when running in test_per_ok mode.
 
 =head1 SEE ALSO
 

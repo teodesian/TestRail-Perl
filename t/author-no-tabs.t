@@ -23,6 +23,7 @@ my @files = (
     'lib/Test/Rail/Parser.pm',
     'lib/TestRail/API.pm',
     't/00-compile.t',
+    't/App-Prove-Plugin-Testrail.t',
     't/Test-Rail-Parser.t',
     't/TestRail-API.t',
     't/arg_types.t',
@@ -43,7 +44,12 @@ my @files = (
     't/release-synopsis.t',
     't/release-test-version.t',
     't/release-unused-vars.t',
-    't/server_dead.t'
+    't/server_dead.t',
+    't/skip.test',
+    't/skipall.test',
+    't/test_multiple_files.tap',
+    't/test_subtest.tap',
+    't/testrail-report.t'
 );
 
 notabs_ok($_) foreach @files;

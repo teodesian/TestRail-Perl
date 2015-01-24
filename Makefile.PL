@@ -47,15 +47,17 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "App::Prove" => 0,
     "Class::Inspector" => 0,
     "ExtUtils::MakeMaker" => 0,
     "File::Spec" => 0,
+    "IO::Capture::Stdout" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
     "Test::Fatal" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.013",
+  "VERSION" => "0.014",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -63,6 +65,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "App::Prove" => 0,
   "Carp" => 0,
   "Class::Inspector" => 0,
   "Clone" => 0,
@@ -74,6 +77,7 @@ my %FallbackPrereqs = (
   "HTTP::Headers" => 0,
   "HTTP::Request" => 0,
   "HTTP::Response" => 0,
+  "IO::Capture::Stdout" => 0,
   "IO::Handle" => 0,
   "IO::Interactive::Tiny" => 0,
   "IPC::Open3" => 0,

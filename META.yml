@@ -3,9 +3,11 @@ abstract: "Provides an interface to TestRail's REST api via HTTP"
 author:
   - 'George S. Baugh <teodesian@cpan.org>'
 build_requires:
+  App::Prove: 0
   Class::Inspector: 0
   ExtUtils::MakeMaker: 0
   File::Spec: 0
+  IO::Capture::Stdout: 0
   IO::Handle: 0
   IPC::Open3: 0
   Test::Fatal: 0
@@ -22,19 +24,19 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.013
+    version: 0.014
   Test::LWP::UserAgent::TestRailMock:
     file: lib/Test/LWP/UserAgent/TestRailMock.pm
-    version: 0.013
+    version: 0.014
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.013
+    version: 0.014
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.013
+    version: 0.014
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.013
+    version: 0.014
 requires:
   Carp: 0
   Clone: 0
@@ -63,6 +65,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.013
+version: 0.014
 x_contributors:
   - 'Neil Bowers <neil@bowers.com>'

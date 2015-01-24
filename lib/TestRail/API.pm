@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.013';
+$TestRail::API::VERSION = '0.014';
 
 use 5.010;
 
@@ -37,6 +37,7 @@ sub new {
         flattree        => [],
         user_cache      => [],
         type_cache      => [],
+        configurations  => undef,
         tr_fields       => undef,
         default_request => undef,
         browser         => new LWP::UserAgent()
@@ -610,6 +611,54 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+sub getChildRuns {
+    my ( $self, $plan ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan must be HASHREF")
+      unless defined($plan) && ( reftype($plan) || 'undef' ) eq 'HASH';
+    return 0
+      unless defined( $plan->{'entries'} )
+      && ( reftype( $plan->{'entries'} ) || 'undef' ) eq 'ARRAY';
+    return 0
+      unless defined( $plan->{'entries'}->[0]->{'runs'} )
+      && ( reftype( $plan->{'entries'}->[0]->{'runs'} ) || 'undef' ) eq 'ARRAY';
+    return $plan->{'entries'}->[0]->{'runs'};
+}
+
+sub getChildRunByName {
+    my ( $self, $plan, $name, $configurations ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan must be HASHREF")
+      unless defined($plan) && ( reftype($plan) || 'undef' ) eq 'HASH';
+    confess("Run name must be STRING") unless $self->_checkString($name);
+    confess("Configurations must be ARRAYREF")
+      unless !defined($configurations)
+      || ( reftype($configurations) || 'undef' ) eq 'ARRAY';
+    my $runs = $self->getChildRuns($plan);
+    return 0 if !$runs;
+
+    my @pconfigs = ();
+
+    #Figure out desired config IDs
+    if ( defined $configurations ) {
+        my $avail_configs = $self->getConfigurations( $plan->{'project_id'} );
+        my ($cname);
+        @pconfigs = map { $_->{'id'} } grep {
+            $cname = $_->{'name'};
+            grep { $_ eq $cname } @$configurations
+        } @$avail_configs;    #Get a list of IDs from the names passed
+    }
+    foreach my $run (@$runs) {
+
+        #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        foreach my $cid ( @{ $run->{'config_ids'} } ) {
+            next unless List::Util::all { $_ eq $cid } @pconfigs;
+        }
+        return $run if $run->{name} eq $name;
+    }
+    return 0;
+}
+
 sub createPlan {
     my ( $self, $project_id, $name, $desc, $milestone_id, $entries ) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
@@ -661,7 +710,9 @@ sub getPlanByName {
     my $plans = $self->getPlans($project_id);
     return -500 if !$plans || ( reftype($plans) || 'undef' ) ne 'ARRAY';
     foreach my $plan (@$plans) {
-        return $plan if $plan->{'name'} eq $name;
+        if ( $plan->{'name'} eq $name ) {
+            return $self->getPlanByID( $plan->{'id'} );
+        }
     }
     return 0;
 }
@@ -858,6 +909,19 @@ sub getTestResults {
     return $self->_doRequest($url);
 }
 
+sub getConfigurations {
+    my ( $self, $project_id ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Test ID must be positive integer")
+      unless $self->_checkInteger($project_id);
+    my $url = "index.php?/api/v2/get_configs/$project_id";
+    return $self->{'configurations'}
+      if $self->{'configurations'}
+      ;    #cache this since we can't change it with the API
+    $self->{'configurations'} = $self->_doRequest($url);
+    return $self->{'configurations'};
+}
+
 #Convenience method for building stepResults
 sub buildStepResults {
     my ( $content, $expected, $actual, $status_id ) = @_;
@@ -899,7 +963,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.013
+version 0.014
 
 =head1 SYNOPSIS
 
@@ -1416,6 +1480,35 @@ Returns run definition HASHREF.
 
     $tr->getRunByID(7779311);
 
+=head1 RUN AS CHILD OF PLAN METHODS
+
+=head2 B<getChildRuns(plan)>
+
+Extract the child runs from a plan.  Convenient, as the structure of this hash is deep, and correct error handling can be tedious.
+
+=over 4
+
+=item HASHREF C<PLAN> - Test Plan definition HASHREF returned by any of the PLAN methods below.
+
+=back
+
+Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract the data.
+
+=head2 B<getChildRunByName(plan,name,configurations)>
+
+=over 4
+
+=item HASHREF C<PLAN> - Test Plan definition HASHREF returned by any of the PLAN methods below.
+
+=item STRING C<NAME> - Name of run to search for within plan.
+
+=item ARRAYREF C<CONFIGURATIONS> (optional) - Names of configurations to filter runs by.
+
+=back
+
+Returns run definition HASHREF, or false if no such run is found.
+Convenience method using getChildRuns.
+
 =head1 PLAN METHODS
 
 =head2 B<createPlan (project_id,name,description,milestone_id,entries)>
@@ -1460,9 +1553,9 @@ Returns BOOLEAN.
 
     $tr->deletePlan(8675309);
 
-=head2 B<getPlans (project_id)>
+=head2 B<getPlans (project_id,get_runs)>
 
-Deletes specified plan.
+Gets specified test plans.
 
 =over 4
 
@@ -1473,6 +1566,9 @@ Deletes specified plan.
 Returns ARRAYREF of plan definition HASHREFs.
 
     $tr->getPlans(8);
+
+Does not contain any information about child test runs.
+Use getRunByID or getRunByName if you want that, in particular if you are interested in using getChildRunByName.
 
 =head2 B<getPlanByName (project_id,name)>
 
@@ -1699,7 +1795,7 @@ Returns result definition HASHREF.
 
     $res = $tr->createTestResults(1,2,'Test failed because it was all like WAAAAAAA when I poked it',$options,$custom_options);
 
-=head2 B<getTestResults(test_id,limit)>
+=head2 B<getTestResults(test_id,limit,offset)>
 
 Get the recorded results for desired test, limiting output to 'limit' entries.
 
@@ -1714,6 +1810,20 @@ Get the recorded results for desired test, limiting output to 'limit' entries.
 =back
 
 Returns ARRAYREF of result definition HASHREFs.
+
+=head1 CONFIGURATION METHODS
+
+=head2 B<getConfigurations(project_id)>
+
+Gets the available configurations for a project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of relevant project
+
+=back
+
+Returns ARRAYREF of configuration definition HASHREFs.
 
 =head1 STATIC METHODS
 

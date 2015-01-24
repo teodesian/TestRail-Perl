@@ -38,6 +38,25 @@ PARAMETERS:
   these in as needed, supposing you are not redirecting input
   (such as piping into this command).
 
+  [SEMI-OPTIONAL PARAMETERS]
+
+    --plan [someplan] : look for the provided run name within
+      the provided plan.
+
+    --configs [someconfigs] : filter run by the provided configuration.
+      This option can be passed multiple times for detailed filtering.
+
+  Test plans can have runs with the same name, but different
+  configurations, which is understandably confusing.  You can do the
+  same outside of plans, and without configurations; but doing so is
+  ill-advised, and the only option from there is to use IDs.  So, try
+  not to do that if you want to use this tool, and want sanity in your
+  Test Management System.
+
+  The way around this is to specify what plan and configuration
+  you want to set results for.  This should provide sufficient
+  uniqueness to get to any run using words.
+
   [CONFIG OVERRIDES]
   In your \$HOME, put a file called .testrailrc with key=value
   syntax separated by newlines.  Valid Keys are: apiurl,user,password
@@ -59,6 +78,10 @@ PARAMETERS:
   These options are mutually exclusive.  If neither is set, the
   overall result of the test will be used as the pass/fail for the test.
 
+  [RESULT OPTIONS]
+
+    --version : String describing the version of the system under test.
+
 PROVE PLUGIN:
 
   passing -PTestRail=apiurl,user,pass,project,run to prove will
@@ -71,6 +94,10 @@ REQUIREMENTS:
   Your TestRail install must have 3 custom statuses with the internal
   names 'skip', 'todo_pass', and 'todo_fail', to represent those
   states which TAP can have.
+
+TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
 
 ";
     exit 0;
@@ -103,7 +130,7 @@ sub parseConfig {
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version);
 
 #parse switches
 GetOptions(
@@ -114,6 +141,10 @@ GetOptions(
     'project=s'      => \$project,
     'case-ok'        => \$case_per_ok,
     'step-results=s' => \$step_results,
+    'mock'           => \$mock,
+    'config=s@'      => \$configs,
+    'plan=s'         => \$plan,
+    'version=s'      => \$version,
     'help'           => \$help
 );
 
@@ -124,22 +155,31 @@ if (-e $ENV{"HOME"} . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
     ($apiurl,$password,$user) = parseConfig();
 }
 
+#XXX not even close to optimized, don't slurp in the future
 #If argument is passed use it instead of stdin
 my $file = $ARGV[0];
 die "No Such File $file" if ($file && !-e $file);
-my ($fh,$fcontents);
+my ($fh,$fcontents,@files);
+
 if ($file) {
     open($fh,'<',$file);
     while (<$fh>) {
         $_ = colorstrip($_); #strip prove brain damage
-        s/^\s*//g; #Fix more brain damage
+        if ($_ =~ /(.*)\s\.\.$/) {
+            #File marker from default prove
+            unless ($_ =~ /^[ok|not ok] - /) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+        }
         $fcontents .= $_;
     }
     close($fh);
+    push(@files,$fcontents) if $fcontents;
 } else {
     #Just read STDIN, print help if no file was passed
     if (IO::Interactive::Tiny::is_interactive()) {
-        print "ERROR: no file passed, and no data piped in! See --help for usage.";
+        print "ERROR: no file passed, and no data piped in! See --help for usage.\n";
         exit(1);
     }
     if ( !$run || !$apiurl || !$password || !$user || !$project ) {
@@ -148,10 +188,17 @@ if ($file) {
     }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
-        s/^\s*//g; #Fix prove brain damage
+        if ($_ =~ /(.*)\s\.\.$/) {
+            #File marker from default prove
+            unless ($_ =~ /^[ok|not ok] - /) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+        }
         $fcontents .= $_;
     }
     help() if !$fcontents; #Nothing passed to stdin!
+    push(@files,$fcontents) if $fcontents;
 }
 
 #Interrogate user if they didn't provide info
@@ -187,18 +234,40 @@ if (!$run) {
     $run = userInput();
 }
 
-my $tap = Test::Rail::Parser->new({
-    'tap'                 => $fcontents,
-    'apiurl'              => $apiurl,
-    'user'                => $user,
-    'pass'                => $password,
-    'run'                 => $run,
-    'project'             => $project,
-    'case_per_ok'         => $case_per_ok,
-    'step_results'        => $step_results,
-    'merge'               => 1
-});
-$tap->run();
+my $debug = 0;
+my $browser;
+if ($mock) {
+    use Test::LWP::UserAgent::TestRailMock;
+    $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $debug = 1;
+}
+
+my $result_options = undef;
+$result_options = {'version' => $version} if $version;
+
+my $tap;
+foreach my $phil (@files) {
+    print "Processing $phil...\n";
+    $tap = Test::Rail::Parser->new({
+        'tap'          => $phil,
+        'apiurl'       => $apiurl,
+        'user'         => $user,
+        'pass'         => $password,
+        'run'          => $run,
+        'project'      => $project,
+        'case_per_ok'  => $case_per_ok,
+        'step_results' => $step_results,
+        'debug'        => $debug,
+        'browser'      => $browser,
+        'version'      => $version,
+        'plan'         => $plan,
+        'configs'      => $configs,
+        'result_options' => $result_options,
+        'merge'        => 1
+    });
+    $tap->run();
+
+}
 
 print "Done.\n";
 
@@ -217,7 +286,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.013
+version 0.014
 
 =head1 SYNOPSIS
 
@@ -245,9 +314,23 @@ IF none of these options are provided, you will be asked to type
 these in as needed, supposing you are not redirecting input
 (such as piping into this command).
 
+=head3 SEMI-OPTIONAL PARAMETERS
+
+    --plan [someplan] : look for the provided run name within the provided plan.
+
+    --config [someconfig] : filter run by the provided configuration.
+      This option can be passed multiple times for detailed filtering.
+
+Test plans can have runs with the same name, but different configurations, which is understandably confusing.
+You can do the same outside of plans, and without configurations; but doing so is ill advised, and the only option from there is to use IDs.
+So, try not to do that if you want to use this tool, and want sanity in your Test management system.
+
+The way around this is to specify what plan and configuration you want to set results for.
+This should provide sufficient uniqueness to get to any run using names.
+
 =head3 CONFIG OVERRIDES
 
-In your \$HOME, put a file called .testrailrc with key=value
+In your $HOME, put a file called .testrailrc with key=value
 syntax separated by newlines.  Valid Keys are: apiurl,user,password
 
 =head3 CONFIG OPTIONS
@@ -262,12 +345,16 @@ These override the config, if present.  If neither are used, you will be prompte
 
 =head3 BEHAVIOR
 
-    --case-ok      : Whether to consider each OK to correspond to a test in TestRail
+    --case-ok : Whether to consider each OK to correspond to a test in TestRail
 
     --step-results [name] : 'System Name' of a 'step_results' type field to set for your tests.
 
 These options are mutually exclusive.  If neither is set, the
 overall result of the test will be used as the pass/fail for the test.
+
+=head3 RESULT OPTIONS
+
+    --version : String describing the version of the system under test.
 
 =head2 PROVE PLUGIN:
 
@@ -282,6 +369,10 @@ See L<App::Prove::Plugin::TestRail> for more information.
 Your TestRail install must have 3 custom statuses with the internal
 names 'skip', 'todo_pass', and 'todo_fail', to represent those
 states which TAP can have.
+
+=head2 TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
 
 =head1 SEE ALSO
 

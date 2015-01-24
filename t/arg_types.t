@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 113;
+use Test::More 'tests' => 120;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -117,6 +117,12 @@ isnt( exception { $tr->getPlans() },
     undef, 'getPlans returns error when no arguments are passed' );
 isnt( exception { $tr->getMilestones() },
     undef, 'getMilestones returns error when no arguments are passed' );
+isnt( exception { $tr->getConfigurations() },
+    undef, 'getConfigurations returns error when no arguments are passed' );
+isnt( exception { $tr->getChildRuns() },
+    undef, 'getChildRuns returns error when no arguments are passed' );
+isnt( exception { $tr->getChildRunByName() },
+    undef, 'getChildRunByName returns error when no arguments are passed' );
 
 #1-arg functions
 is( exception { $tr->deleteCase(1) },
@@ -173,6 +179,10 @@ is( exception { $tr->getTestResults(1) },
     undef, 'getTestResults with 1 arg returns no error' );
 is( exception { $tr->getMilestoneByID(1) },
     undef, 'getMilestoneByID with 1 arg returns no error' );
+is( exception { $tr->getConfigurations(1) },
+    undef, 'getConfigurations with 1 arg returns no error' );
+is( exception { $tr->getChildRuns( {} ) },
+    undef, 'getChildRuns returns no error when 1 argument passed' );
 
 isnt( exception { $tr->createCase(1) },
     undef, 'createCase with 1 arg returns error' );
@@ -206,6 +216,8 @@ isnt( exception { $tr->getTestByName(1) },
     undef, 'getTestByName with 1 arg returns error' );
 isnt( exception { $tr->getTestSuiteByName(1) },
     undef, 'getTestSuiteByName with 1 arg returns error' );
+isnt( exception { $tr->getChildRunByName( {} ) },
+    undef, 'getChildRunByName returns error when 1 argument passed' );
 
 #2 arg functions
 is( exception { $tr->createMilestone( 1, 'whee' ) },
@@ -230,6 +242,8 @@ is( exception { $tr->getTestSuiteByName( 1, 'zap' ) },
     undef, 'getTestSuiteByName with 2 args returns no error' );
 is( exception { $tr->createCase( 1, 'whee' ) },
     undef, 'createCase with 2 args returns no error' );
+is( exception { $tr->getChildRunByName( {}, 'whee' ) },
+    undef, 'getChildRunByName returns no error when 2 arguments passed' );
 
 isnt( exception { $tr->createRun( 1, 1 ) },
     undef, 'createRun with 2 args returns error' );

@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.013';
+$Test::Rail::Harness::VERSION = '0.014';
 use strict;
 use warnings;
 
@@ -18,16 +18,30 @@ sub new {
 
 sub make_parser {
     my ( $self, $job ) = @_;
-    my $args = $self->SUPER::_get_parser_args($job);
+    my $args    = $self->SUPER::_get_parser_args($job);
+    my @configs = ();
 
     #XXX again, don't see any way of getting this downrange to my parser :(
-    $args->{'apiurl'}       = $ENV{'TESTRAIL_APIURL'};
-    $args->{'user'}         = $ENV{'TESTRAIL_USER'};
-    $args->{'pass'}         = $ENV{'TESTRAIL_PASS'};
-    $args->{'project'}      = $ENV{'TESTRAIL_PROJ'};
-    $args->{'run'}          = $ENV{'TESTRAIL_RUN'};
+    $args->{'apiurl'}  = $ENV{'TESTRAIL_APIURL'};
+    $args->{'user'}    = $ENV{'TESTRAIL_USER'};
+    $args->{'pass'}    = $ENV{'TESTRAIL_PASS'};
+    $args->{'project'} = $ENV{'TESTRAIL_PROJ'};
+    $args->{'run'}     = $ENV{'TESTRAIL_RUN'};
+    $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
+    @configs = split( /:/, $ENV{'TESTRAIL_CONFIGS'} )
+      if $ENV{'TESTRAIL_CONFIGS'};
+    $args->{'configs'} = \@configs;
+    $args->{'result_options'} = { 'version' => $ENV{'TESTRAIL_VERSION'} }
+      if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}  = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'} = $ENV{'TESTRAIL_STEPS'};
+
+    #for Testability of plugin
+    if ( $ENV{'TESTRAIL_MOCKED'} ) {
+        use Test::LWP::UserAgent::TestRailMock;
+        $args->{'debug'}   = 1;
+        $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    }
 
     $self->SUPER::_make_callback( 'parser_args', $args, $job->as_array_ref );
     my $parser = $self->SUPER::_construct( $self->SUPER::parser_class, $args );
@@ -53,7 +67,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.013
+version 0.014
 
 =head1 DESCRIPTION
 
