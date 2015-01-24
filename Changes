@@ -1,6 +1,6 @@
 Revision history for Perl module TestRail::API
 
-0.014 2015-01-?? TEODESIAN
+0.014 2015-01-23 TEODESIAN
     - Fixed issue where testrail-report would not parse the results of multiple tests in a TAP file or stream.
     - Fixed issue where testrail-report would erroneously attempt to report the results of subtests.
     - Parse TODO/SKIP messages correctly, add todo reason to the test notes
