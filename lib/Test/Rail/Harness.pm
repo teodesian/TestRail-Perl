@@ -12,7 +12,7 @@ sub new {
     my $class   = shift;
     my $arg_for = shift;
     $arg_for->{parser_class} = 'Test::Rail::Parser';
-    my $self = $class->SUPER::new($arg_for);
+    my $self = TAP::Harness->new($arg_for);
     return $self;
 }
 
