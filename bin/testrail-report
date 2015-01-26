@@ -94,7 +94,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Term::ANSIColor qw(colorstrip);
+use Term::ANSIColor 2.01 qw(colorstrip);
 use Test::Rail::Parser;
 use IO::Interactive::Tiny ();
 
