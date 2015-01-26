@@ -5,7 +5,7 @@ package Test::Rail::Harness;
 use strict;
 use warnings;
 
-use base qw/TAP::Harness/;
+use parent qw/TAP::Harness/;
 
 =head1 DESCRIPTION
 
