@@ -7,10 +7,6 @@ use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
 use HTTP::Response;
-use IO::Capture::Stderr;
-
-my $capture_out = IO::Capture::Stderr->new();
-$capture_out->start;
 
 my $tr = TestRail::API->new( 'http://hokum.bogus', 'bogus', 'bogus', 1 );
 $tr->{'browser'} = Test::LWP::UserAgent->new();
@@ -276,6 +272,3 @@ isnt( exception { $tr->getCaseByName( 1, 1, 1 ) },
 #4 arg functions
 is( exception { $tr->getCaseByName( 1, 1, 1, 'hug' ) },
     undef, 'getCaseByName with 4 args returns no error' );
-
-$capture_out->stop;
-
