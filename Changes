@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.015 2015-01-25 TEODESIAN
+    - Remove all usage of IO::Capture for more concise verbose test output.  Makes cpantesters/travis wig out?
+
 0.014 2015-01-23 TEODESIAN
     - Fixed issue where testrail-report would not parse the results of multiple tests in a TAP file or stream.
     - Fixed issue where testrail-report would erroneously attempt to report the results of subtests.
