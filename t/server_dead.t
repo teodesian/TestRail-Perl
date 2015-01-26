@@ -10,10 +10,6 @@ use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
 use HTTP::Response;
-use IO::Capture::Stderr;
-
-my $capture_out = IO::Capture::Stderr->new();
-$capture_out->start;
 
 my $tr = TestRail::API->new('http://hokum.bogus','bogus','bogus',1);
 $tr->{'browser'} = Test::LWP::UserAgent->new();
@@ -73,5 +69,3 @@ is($tr->getUserByID(1),0,'getUserByID returns error');
 is($tr->getUserByName('zap'),0,'getUserByName returns error');
 is($tr->getUsers(),-500,'getUsers returns error');
 is($tr->getConfigurations(1),-500,'getConfigurations returns error');
-
-$capture_out->stop();
