@@ -5,14 +5,14 @@ $Test::Rail::Harness::VERSION = '0.016';
 use strict;
 use warnings;
 
-use base qw/TAP::Harness/;
+use parent qw/TAP::Harness/;
 
 # inject parser_class as Test::Rail::Parser.
 sub new {
     my $class   = shift;
     my $arg_for = shift;
     $arg_for->{parser_class} = 'Test::Rail::Parser';
-    my $self = TAP::Harness->new($arg_for);
+    my $self = $class->SUPER::new($arg_for);
     return $self;
 }
 
