@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.016 2015-01-26 TEODESIAN
+    - Use correct perl when invoking scripts to fix cpantesters failures.
+
 0.015 2015-01-25 TEODESIAN
     - Remove all usage of IO::Capture for more concise verbose test output.  Makes cpantesters/travis wig out?
 

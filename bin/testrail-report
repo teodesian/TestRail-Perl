@@ -1,4 +1,4 @@
-#! /usr/bin/env perl
+#!/usr/bin/env perl
 # ABSTRACT: Upload your TAP results to TestRail after they've finished
 # PODNAME: testrail-report
 
