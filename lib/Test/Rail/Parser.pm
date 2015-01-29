@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.016';
+$Test::Rail::Parser::VERSION = '0.017';
 use strict;
 use warnings;
 use utf8;
@@ -182,7 +182,7 @@ sub unknownCallback {
     }
 
     #RAW tap #XXX this regex could be improved
-    if ( $line =~ /(.*)\s\.\.$/ ) {
+    if ( $line =~ /(.*)\s\.\.\s*$/ ) {
         $self->{'file'} = $1
           unless $line =~ /^[ok|not ok] - /;    #a little more careful
     }
@@ -417,7 +417,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.016
+version 0.017
 
 =head1 DESCRIPTION
 

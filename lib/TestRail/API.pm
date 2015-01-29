@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.016';
+$TestRail::API::VERSION = '0.017';
 
 use 5.010;
 
@@ -18,6 +18,7 @@ use JSON::MaybeXS ();
 use HTTP::Request;
 use LWP::UserAgent;
 use Data::Validate::URI qw{is_uri};
+use List::Util 1.33;
 
 sub new {
     my ( $class, $apiurl, $user, $pass, $debug ) = @_;
@@ -963,7 +964,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.016
+version 0.017
 
 =head1 SYNOPSIS
 

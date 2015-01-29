@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Term::ANSIColor qw(colorstrip);
+use Term::ANSIColor 2.01 qw(colorstrip);
 use Test::Rail::Parser;
 use IO::Interactive::Tiny ();
 
@@ -286,7 +286,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.016
+version 0.017
 
 =head1 SYNOPSIS
 
