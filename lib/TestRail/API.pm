@@ -37,6 +37,7 @@ use JSON::MaybeXS ();
 use HTTP::Request;
 use LWP::UserAgent;
 use Data::Validate::URI qw{is_uri};
+use List::Util 1.33;
 
 =head1 CONSTRUCTOR
 
