@@ -216,7 +216,7 @@ sub unknownCallback {
         print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
     }
     #RAW tap #XXX this regex could be improved
-    if ($line =~ /(.*)\s\.\.$/) {
+    if ($line =~ /(.*)\s\.\.\s*$/) {
         $self->{'file'} = $1 unless $line =~ /^[ok|not ok] - /; #a little more careful
     }
     print "$line\n" if ($line =~ /^error/i);
