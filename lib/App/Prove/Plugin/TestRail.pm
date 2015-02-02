@@ -7,6 +7,8 @@ use strict;
 use warnings;
 use utf8;
 
+use File::HomeDir qw{my_home};
+
 =head1 SYNOPSIS
 
 `prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
@@ -20,7 +22,7 @@ Prove plugin to upload test results to TestRail installations.
 Accepts input in the standard Prove plugin fashion (-Ppluginname='key=value,key=value,key=value...'), but will also parse a config file.
 When fed in prove plugin style, key=value input is expected.
 
-If ~/.testrailrc exists, it will be parsed for any of these values in a newline separated key=value list.  Example:
+If \$HOME/.testrailrc exists, it will be parsed for any of these values in a newline separated key=value list.  Example:
 
     apiurl=http://some.testrail.install
     user=someGuy
@@ -34,7 +36,8 @@ If ~/.testrailrc exists, it will be parsed for any of these values in a newline 
     step_results=sr_sys_name
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
-Values passed in via query string will override values in ~/.testrailrc.
+Values passed in via query string will override values in \$HOME/.testrailrc.
+If your system has no concept of user homes, it will look in the current directory for .testrailrc.
 
 =head1 OVERRIDDEN METHODS
 
@@ -86,7 +89,9 @@ sub _parseConfig {
     my $results = {};
     my $arr =[];
 
-    open(my $fh, '<', $ENV{"HOME"} . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
+    my $homedir = my_home() || '.';
+
+    open(my $fh, '<', $homedir . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
     while (<$fh>) {
         chomp;
         @$arr = split(/=/,$_);
@@ -111,6 +116,8 @@ L<TestRail::API>
 L<Test::Rail::Parser>
 
 L<App::Prove>
+
+L<File::HomeDir> for the finding of .testrailrc
 
 =head1 SPECIAL THANKS
 

@@ -44,7 +44,7 @@ This should provide sufficient uniqueness to get to any run using names.
 
 =head3 CONFIG OVERRIDES
 
-In your $HOME, put a file called .testrailrc with key=value
+In your $HOME (or the current directory, if your system has no concept of a home directory), put a file called .testrailrc with key=value
 syntax separated by newlines.  Valid Keys are: apiurl,user,password
 
 =head3 CONFIG OPTIONS
@@ -97,6 +97,7 @@ use Getopt::Long;
 use Term::ANSIColor 2.01 qw(colorstrip);
 use Test::Rail::Parser;
 use IO::Interactive::Tiny ();
+use File::HomeDir qw{my_home};
 
 print "testrail-report\n----------------------\n";
 
@@ -145,8 +146,10 @@ PARAMETERS:
   uniqueness to get to any run using words.
 
   [CONFIG OVERRIDES]
-  In your \$HOME, put a file called .testrailrc with key=value
-  syntax separated by newlines.  Valid Keys are: apiurl,user,password
+  In your \$HOME, (or the current directory, if your system has no
+  concept of a home directory) put a file called .testrailrc with
+  key=value syntax separated by newlines.
+  Valid Keys are: apiurl,user,password
 
   [CONFIG OPTIONS] - These override the config, if present.
                      If neither are used, you will be prompted.
@@ -198,10 +201,11 @@ sub userInput {
 }
 
 sub parseConfig {
+    my $homedir = shift;
     my $results = {};
     my $arr =[];
 
-    open(my $fh, '<', $ENV{"HOME"} . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
+    open(my $fh, '<', $homedir . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
     while (<$fh>) {
         chomp;
         @$arr = split(/=/,$_);
@@ -238,8 +242,9 @@ GetOptions(
 if ($help) { help(); }
 
 #Parse config file if we are missing api url/key or user
-if (-e $ENV{"HOME"} . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
-    ($apiurl,$password,$user) = parseConfig();
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
+    ($apiurl,$password,$user) = parseConfig($homedir);
 }
 
 #XXX not even close to optimized, don't slurp in the future
@@ -370,6 +375,8 @@ L<TestRail::API>
 L<App::Prove::Plugin::TestRail>
 
 L<TAP::Parser>
+
+L<File::HomeDir> for the finding of .testrailrc
 
 =head1 SPECIAL THANKS
 
