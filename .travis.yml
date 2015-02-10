@@ -9,26 +9,31 @@ perl:
 
 matrix:
    fast_finish: true
+   include:
+     - perl: 5.20
+       env: COVERAGE=1
 
+sudo: false
 before_install:
-   - export AUTOMATED_TESTING=1 NONINTERACTIVE_TESTING=1 HARNESS_OPTIONS=j10:c HARNESS_TIMER=1 AUTHOR_TESTING=1
-   - git clone git://github.com/haarg/perl-travis-helper
-   - source perl-travis-helper/init
-   - build-perl
-   - perl -V
-   - git config --global user.name "TravisCI"
-   - git config --global user.email $HOSTNAME":not-for-mail@travis-ci.org"
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - source ~/travis-perl-helpers/init
+  - build-perl
+  - perl -V
+  - build-dist
+  - cd $BUILD_DIR
 
 install:
-    - cpanm --quiet --notest Test::Perl::Critic Test::Spelling Test::NoTabs Test::EOL Carp Clone Data::Validate::URI File::Basename Getopt::Long HTTP::Headers HTTP::Request HTTP::Response IO::Interactive::Tiny Cpanel::JSON::XS JSON::MaybeXS LWP::UserAgent Scalar::Util TAP::Harness TAP::Parser Term::ANSIColor Test::LWP::UserAgent Try::Tiny IO::Capture::Stdout IO::Capture::Stderr TAP::Harness Devel::Cover::Report::Coveralls Devel::Cover
+  - cpan-install --deps       # installs prereqs, including recommends
+  - cpan-install --coverage   # installs converage prereqs, if enabled
+  - cpanm --quiet --notest Devel::Cover::Report::Coveralls #Make sure to shoot it over to coveralls
 
 branches:
    only:
       - /^build/
 
+before_script:
+  - coverage-setup
 script:
-    - PERL5OPT=-MDevel::Cover=-ignore,"t/",+ignore,"prove",-coverage,statement,branch,condition,path,subroutine prove -lrs t
-    - cover
-
+  - prove -l -j$(test-jobs) $(test-files)   # parallel testing
 after_success:
-    - cover -report coveralls
+  - coverage-report
