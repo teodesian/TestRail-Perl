@@ -2,13 +2,14 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.017';
+$Test::Rail::Parser::VERSION = '0.018';
 use strict;
 use warnings;
 use utf8;
 
 use parent qw/TAP::Parser/;
 use Carp qw{cluck confess};
+use POSIX qw{floor};
 
 use TestRail::API;
 use Scalar::Util qw{reftype};
@@ -151,6 +152,11 @@ sub new {
     {
         $self->{'file'} = $self->{'_iterator'}->{'command'}->[-1];
         print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+        $self->{'track_time'} = 1;
+    }
+    else {
+        #Not running inside of prove in real-time, don't bother with tracking elapsed times.
+        $self->{'track_time'} = 0;
     }
 
     #Make sure the step results field passed exists on the system
@@ -161,6 +167,9 @@ sub new {
 
     $self->{'tr_opts'} = $tropts;
     $self->{'errors'}  = 0;
+
+    #Start the shot clock
+    $self->{'starttime'} = time();
 
     return $self;
 }
@@ -209,6 +218,13 @@ sub testCallback {
     my (@args) = @_;
     my $test = $args[0];
     our $self;
+
+    if ( $self->{'track_time'} ) {
+
+        #Test done.  Record elapsed time.
+        $self->{'tr_opts'}->{'result_options'}->{'elapsed'} =
+          _compute_elapsed( $self->{'starttime'}, time() );
+    }
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if (
@@ -314,6 +330,9 @@ sub testCallback {
     _set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
 
+    #Re-start the shot clock
+    $self->{'starttime'} = time();
+
     #Blank out test description in anticipation of next test
     # also blank out notes
     $self->{'tr_opts'}->{'test_notes'} = undef;
@@ -323,6 +342,13 @@ sub testCallback {
 sub EOFCallback {
     our $self;
 
+    if ( $self->{'track_time'} ) {
+
+        #Test done.  Record elapsed time.
+        $self->{'tr_opts'}->{'result_options'}->{'elapsed'} =
+          _compute_elapsed( $self->{'starttime'}, time() );
+    }
+
     if (
         !(
             !$self->{'tr_opts'}->{'step_results'}
@@ -331,7 +357,7 @@ sub EOFCallback {
       )
     {
         print "Nothing left to do.\n";
-        undef $self->{'tr_opts'};
+        undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
     }
 
@@ -360,7 +386,7 @@ sub EOFCallback {
     my $cres = _set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
 
-    undef $self->{'tr_opts'};
+    undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
 
     return $cres;
 }
@@ -369,6 +395,9 @@ sub _set_result {
     my ( $run_id, $test_name, $status, $notes, $options, $custom_options ) = @_;
     our $self;
     my $tc;
+
+    print "Test elapsed: " . $options->{'elapsed'} . "\n"
+      if $options->{'elapsed'};
 
     print "Attempting to find case by title '" . $test_name . "'...\n";
     $tc =
@@ -403,6 +432,34 @@ sub _set_result {
 
 }
 
+#Compute the expected testrail date interval from 2 unix timestamps.
+sub _compute_elapsed {
+    my ( $begin, $end ) = @_;
+    my $secs_elapsed  = $end - $begin;
+    my $mins_elapsed  = floor( $secs_elapsed / 60 );
+    my $secs_remain   = $secs_elapsed % 60;
+    my $hours_elapsed = floor( $mins_elapsed / 60 );
+    my $mins_remain   = $mins_elapsed % 60;
+
+    my $datestr = "";
+
+    #You have bigger problems if your test takes days
+    if ($hours_elapsed) {
+        $datestr .= "$hours_elapsed" . "h $mins_remain" . "m";
+    }
+    else {
+        $datestr .= "$mins_elapsed" . "m";
+    }
+    if ($mins_elapsed) {
+        $datestr .= " $secs_remain" . "s";
+    }
+    else {
+        $datestr .= " $secs_elapsed" . "s";
+    }
+    undef $datestr if $datestr eq "0m 0s";
+    return $datestr;
+}
+
 1;
 
 __END__
@@ -417,7 +474,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.017
+version 0.018
 
 =head1 DESCRIPTION
 
@@ -473,6 +530,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 It is worth noting that if neither step_results or case_per_ok is passed, that the test will be passed if it has no problems of any sort, failed otherwise.
 In both this mode and step_results, the file name of the test is expected to correspond to the test name in TestRail.
+
+This module also attempts to calculate the elapsed time to run each test if it is run by a prove plugin rather than on raw TAP.
 
 =head1 PARSER CALLBACKS
 

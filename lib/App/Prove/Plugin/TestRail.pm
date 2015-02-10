@@ -2,10 +2,12 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.017';
+$App::Prove::Plugin::TestRail::VERSION = '0.018';
 use strict;
 use warnings;
 use utf8;
+
+use File::HomeDir qw{my_home};
 
 sub load {
     my ( $class, $p ) = @_;
@@ -49,7 +51,9 @@ sub _parseConfig {
     my $results = {};
     my $arr     = [];
 
-    open( my $fh, '<', $ENV{"HOME"} . '/.testrailrc' )
+    my $homedir = my_home() || '.';
+
+    open( my $fh, '<', $homedir . '/.testrailrc' )
       or return ( undef, undef, undef );    #couldn't open!
     while (<$fh>) {
         chomp;
@@ -78,7 +82,7 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.017
+version 0.018
 
 =head1 SYNOPSIS
 
@@ -91,7 +95,7 @@ Prove plugin to upload test results to TestRail installations.
 Accepts input in the standard Prove plugin fashion (-Ppluginname='key=value,key=value,key=value...'), but will also parse a config file.
 When fed in prove plugin style, key=value input is expected.
 
-If ~/.testrailrc exists, it will be parsed for any of these values in a newline separated key=value list.  Example:
+If \$HOME/.testrailrc exists, it will be parsed for any of these values in a newline separated key=value list.  Example:
 
     apiurl=http://some.testrail.install
     user=someGuy
@@ -105,7 +109,8 @@ If ~/.testrailrc exists, it will be parsed for any of these values in a newline 
     step_results=sr_sys_name
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
-Values passed in via query string will override values in ~/.testrailrc.
+Values passed in via query string will override values in \$HOME/.testrailrc.
+If your system has no concept of user homes, it will look in the current directory for .testrailrc.
 
 =head1 OVERRIDDEN METHODS
 
@@ -121,6 +126,8 @@ L<TestRail::API>
 L<Test::Rail::Parser>
 
 L<App::Prove>
+
+L<File::HomeDir> for the finding of .testrailrc
 
 =head1 SPECIAL THANKS
 

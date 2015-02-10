@@ -2,7 +2,7 @@
 # PODNAME: Test::LWP::UserAgent::TestRailMock
 
 package Test::LWP::UserAgent::TestRailMock;
-$Test::LWP::UserAgent::TestRailMock::VERSION = '0.017';
+$Test::LWP::UserAgent::TestRailMock::VERSION = '0.018';
 use strict;
 use warnings;
 
@@ -1364,6 +1364,38 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
 
 {
 
+    $VAR1 = 'index.php?/api/v2/get_results/1';
+    $VAR2 = '200';
+    $VAR3 = 'OK';
+    $VAR4 = bless(
+        {
+            'connection'          => 'close',
+            'x-powered-by'        => 'PHP/5.5.9-1ubuntu4.5',
+            'client-response-num' => 1,
+            'date'                => 'Tue, 23 Dec 2014 20:02:11 GMT',
+            'client-peer'         => '192.168.122.217:80',
+            'content-length'      => '176',
+            '::std_case'          => {
+                'client-date'         => 'Client-Date',
+                'x-powered-by'        => 'X-Powered-By',
+                'client-response-num' => 'Client-Response-Num',
+                'client-peer'         => 'Client-Peer'
+            },
+            'client-date'  => 'Tue, 23 Dec 2014 20:02:11 GMT',
+            'content-type' => 'application/json; charset=utf-8',
+            'server'       => 'Apache/2.4.7 (Ubuntu)'
+        },
+        'HTTP::Headers'
+    );
+    $VAR5 =
+      '[{"id":8,"test_id":15,"status_id":1,"created_by":1,"created_on":1419364931,"assignedto_id":null,"comment":"REAPER FORCES INBOUND","version":null,"elapsed":"2s","defects":null}]';
+    $mockObject->map_response( qr/\Q$VAR1\E/,
+        HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
+
+}
+
+{
+
     $VAR1 = 'index.php?/api/v2/delete_plan/23';
     $VAR2 = '200';
     $VAR3 = 'OK';
@@ -1655,7 +1687,7 @@ Test::LWP::UserAgent::TestRailMock - Provides an interface to something like Tes
 
 =head1 VERSION
 
-version 0.017
+version 0.018
 
 =head1 SYNOPSIS
 

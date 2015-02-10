@@ -38,7 +38,6 @@ my @files = (
     't/release-kwalitee.t',
     't/release-minimum-version.t',
     't/release-mojibake.t',
-    't/release-pod-coverage.t',
     't/release-pod-linkcheck.t',
     't/release-pod-syntax.t',
     't/release-synopsis.t',
