@@ -1,3 +1,5 @@
 *.swp
 Makefile.old
 environment.sh
+cover/
+.build/

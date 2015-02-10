@@ -9,3 +9,4 @@ tidyall.ini
 enivronment.sh
 .build/*
 TestRail-API-*/
+cover/*
