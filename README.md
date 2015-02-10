@@ -4,6 +4,7 @@ TestRail::API
 Perl interface to TestRail's REST API
 
 <img alt="TravisCI Build Status" src="https://travis-ci.org/teodesian/TestRail-Perl.svg"></img>
+<a href='https://coveralls.io/r/teodesian/TestRail-Perl'><img src='https://coveralls.io/repos/teodesian/TestRail-Perl/badge.svg' alt='Coverage Status' /></a>
 
 Doesn't implement every method provided (yet), just the ones *I* needed:
 
