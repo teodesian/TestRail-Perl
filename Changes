@@ -2,6 +2,7 @@ Revision history for Perl module TestRail::API
 
 0.018 2015-01-29 TEODESIAN
     - Better finding of $HOME in testrail-report and the prove plugin for cross-platform usage
+    - Track elapsed time of tests when run as prove plugin, and report this to testrail
 
 0.017 2015-01-29 TEODESIAN
     - Explicitly import List::Util in TestRail::API, this causes issues on some perls

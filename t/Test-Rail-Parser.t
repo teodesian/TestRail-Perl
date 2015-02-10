@@ -3,10 +3,11 @@
 use strict;
 use warnings;
 
+use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 21;
+use Test::More 'tests' => 26;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -18,8 +19,8 @@ my $is_mock = (!$apiurl && !$login && !$pw);
 ($apiurl,$login,$pw) = ('http://testrail.local','teodesian@cpan.org','fake') if $is_mock;
 my ($debug,$browser);
 
+$debug = 1;
 if ($is_mock) {
-    $debug = 1;
     $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
 }
 
@@ -80,6 +81,20 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
+
+#Check that time run is being uploaded
+my $timeResults = $tap->{'tr_opts'}->{'testrail'}->getTestResults(1);
+if ( ( reftype($timeResults) || 'undef') eq 'ARRAY') {
+    is( $timeResults->[0]->{'elapsed'}, '2s', "Plugin correctly sets elapsed time");
+} else {
+    fail("Could not get test results to check elapsed time!");
+}
+
+#Check the time formatting routine.
+is(Test::Rail::Parser::_compute_elapsed(0,0),undef,"Elapsed computation correct at second boundary");
+is(Test::Rail::Parser::_compute_elapsed(0,61),'1m 1s',"Elapsed computation correct at minute boundary");
+is(Test::Rail::Parser::_compute_elapsed(0,3661),'1h 1m 1s',"Elapsed computation correct at hour boundary");
+is(Test::Rail::Parser::_compute_elapsed(0,86461),'24h 1m 1s',"Elapsed computation correct at day boundary");
 
 #Time for non case_per_ok mode
 undef $tap;

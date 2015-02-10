@@ -1182,6 +1182,33 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
+$VAR1 = 'index.php?/api/v2/get_results/1';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:11 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '176',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:11 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":8,"test_id":15,"status_id":1,"created_by":1,"created_on":1419364931,"assignedto_id":null,"comment":"REAPER FORCES INBOUND","version":null,"elapsed":"2s","defects":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
 $VAR1 = 'index.php?/api/v2/delete_plan/23';
 $VAR2 = '200';
 $VAR3 = 'OK';
