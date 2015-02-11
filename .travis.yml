@@ -10,7 +10,7 @@ perl:
 matrix:
    fast_finish: true
    include:
-     - perl: 5.20
+     - perl: '5.20'
        env: COVERAGE=1
 
 sudo: false
@@ -27,6 +27,7 @@ install:
   - cpan-install --coverage   # installs converage prereqs, if enabled
   - cpanm --quiet --notest Devel::Cover::Report::Coveralls #Make sure to shoot it over to coveralls
   - cpanm --quiet --notest Test::Spelling Test::NoTabs Test::EOL #Looks like they were missed by haarg's stuff
+
 branches:
    only:
       - /^build/

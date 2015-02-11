@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 55;
+use Test::More tests => 57;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
@@ -15,11 +15,6 @@ my $pw     = $ENV{'TESTRAIL_PASSWORD'};
 
 #Mock if nothing is provided
 my $is_mock = ( !$apiurl && !$login && !$pw );
-
-#EXAMPLE:
-#my $apiurl = 'http://testrails.cpanel.qa/testrail';
-#my $login = 'some.guyb@whee.net';
-#my $pw = '5gP77MdrSIB68UFWvhIK';
 
 like(
     exception { TestRail::API->new('trash'); },
@@ -209,6 +204,16 @@ is( $tr->getChildRunByName( $new_plan, "Executing the great plan" )->{'id'},
 isnt( $tr->getChildRunByName( $namePlan, "Executing the great plan" )->{'id'},
     undef, "Getting run by name returns child runs" );
 
+#Test createRunInPlan
+my $updatedPlan = $tr->createRunInPlan( $new_plan->{'id'}, $new_suite->{'id'},
+    'Dynamic Plan Run' );
+$prun = $updatedPlan->{'runs'}->[0];
+is(
+    $tr->getRunByID( $prun->{'id'} )->{'name'},
+    "Dynamic Plan Run",
+    "Can get newly created child run of plan by ID"
+);
+
 #Test TEST/RESULT methods
 my $tests = $tr->getTests( $new_run->{'id'} );
 ok( $tests, "Can get tests" );
@@ -240,7 +245,19 @@ is( $results->[0]->{'id'}, $result->{'id'}, "Can get results for test" );
 
 #Test configuration methods
 my $configs = $tr->getConfigurations( $new_project->{'id'} );
-is( reftype($configs), 'ARRAY', "Can get configurations for a project" );
+my $is_arr =
+  is( reftype($configs), 'ARRAY', "Can get configurations for a project" );
+my ( @config_names, @config_ids );
+if ($is_arr) {
+    @config_names = map { $_->{'name'} } @$configs;
+    @config_ids   = map { $_->{'id'} } @$configs;
+}
+my $t_config_ids =
+  $tr->translateConfigNamesToIds( $new_project->{'id'}, \@config_names );
+@config_ids    = sort(@config_ids);
+@$t_config_ids = sort(@$t_config_ids);
+is_deeply( \@config_ids, $t_config_ids,
+    "Can correctly translate Project names to IDs" );
 
 #Delete a plan
 ok( $tr->deletePlan( $new_plan->{'id'} ), "Can delete plan" );

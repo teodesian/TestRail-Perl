@@ -33,7 +33,7 @@ my %WriteMakefileArgs = (
     "HTTP::Request" => 0,
     "HTTP::Response" => 0,
     "IO::Interactive::Tiny" => 0,
-    "JSON::MaybeXS" => 0,
+    "JSON::MaybeXS" => "1.001000",
     "LWP::UserAgent" => 0,
     "List::Util" => "1.33",
     "POSIX" => 0,
@@ -58,7 +58,7 @@ my %WriteMakefileArgs = (
     "Test::Fatal" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.018",
+  "VERSION" => "0.019",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -82,7 +82,7 @@ my %FallbackPrereqs = (
   "IO::Handle" => 0,
   "IO::Interactive::Tiny" => 0,
   "IPC::Open3" => 0,
-  "JSON::MaybeXS" => 0,
+  "JSON::MaybeXS" => "1.001000",
   "LWP::UserAgent" => 0,
   "List::Util" => "1.33",
   "POSIX" => 0,

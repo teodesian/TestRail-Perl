@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.018';
+$Test::Rail::Parser::VERSION = '0.019';
 use strict;
 use warnings;
 use utf8;
@@ -43,7 +43,8 @@ sub new {
         'step_results' => delete $opts->{'step_results'},
         'case_per_ok'  => delete $opts->{'case_per_ok'},
         'plan'         => delete $opts->{'plan'},
-        'configs'      => delete $opts->{'configs'},
+        'configs'      => delete $opts->{'configs'} // [],
+        'spawn'        => delete $opts->{'spawn'},
 
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
@@ -104,18 +105,27 @@ sub new {
 
     #Grab run
     my $run_id = $tropts->{'run_id'};
-    my $run;
+    my ( $run, $plan, $config_ids );
 
-    #TODO check if configs passed are defined for project
+    #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
+    $config_ids = $tr->translateConfigNamesToIds( $tropts->{'project_id'},
+        $tropts->{'configs'} );
+    confess("Could not retrieve list of valid configurations for your project.")
+      unless ( reftype($config_ids) || 'undef' ) eq 'ARRAY';
+    my @bogus_configs = grep { !defined($_) } @$config_ids;
+    my $num_bogus = scalar(@bogus_configs);
+    confess(
+        "Detected $num_bogus bad config names passed.  Check available configurations for your project."
+    ) if $num_bogus;
 
     if ( $tropts->{'run'} ) {
         if ( $tropts->{'plan'} ) {
 
             #Attempt to find run, filtered by configurations
-            my $plan =
+            $plan =
               $tr->getPlanByName( $tropts->{'project_id'}, $tropts->{'plan'} );
             if ($plan) {
-                $tropts->{'plan'} = $plan;    #XXX Save for later just in case?
+                $tropts->{'plan'} = $plan;
                 $run =
                   $tr->getChildRunByName( $plan, $tropts->{'run'},
                     $tropts->{'configs'} );    #Find plan filtered by configs
@@ -142,6 +152,34 @@ sub new {
     else {
         $tropts->{'run'} = $tr->getRunByID($run_id);
     }
+
+    #If spawn was passed and we don't have a Run ID yet, go ahead and make it
+    if ( $tropts->{'spawn'} && !$tropts->{'run_id'} ) {
+        if ( $tropts->{'plan'} ) {
+            $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'},
+                $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids );
+            $run = $plan->{'runs'}->[0]
+              if exists( $plan->{'runs'} )
+              && ( reftype( $plan->{'runs'} ) || 'undef' ) eq 'ARRAY'
+              && scalar( @{ $plan->{'runs'} } );
+            if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
+                $tropts->{'run'}    = $run;
+                $tropts->{'run_id'} = $run->{'id'};
+            }
+        }
+        else {
+            $run = $tr->createRun( $tropts->{'project_id'},
+                $tropts->{'spawn'}, $tropts->{'run'},
+                "Automatically created Run from TestRail::API" );
+            if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
+                $tropts->{'run'}    = $run;
+                $tropts->{'run_id'} = $run->{'id'};
+            }
+        }
+        confess("Could not spawn run with requested parameters!")
+          if !$tropts->{'run_id'};
+    }
+
     confess(
         "No run ID provided, and no run with specified name exists in provided project/plan!"
     ) if !$tropts->{'run_id'};
@@ -474,7 +512,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.018
+version 0.019
 
 =head1 DESCRIPTION
 
@@ -508,9 +546,13 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<browser> - OBJECT: Something like an LWP::UserAgent.  Useful for mocking with L<Test::LWP::UserAgent::TestRailMock>.
 
-=item B<run> - STRING (optional): name of desired run. Required if run_id not passed.
+=item B<run> - STRING (semi-optional): name of desired run. Required if run_id not passed.
 
-=item B<run_id> - INTEGER (optional): ID of desired run. Required if run not passed.
+=item B<run_id> - INTEGER (semi-optional): ID of desired run. Required if run not passed.
+
+=item B<plan> - STRING (semi-optional): Name of test plan to use, if your run provided is a child of said plan.  Only relevant when run_id not passed.
+
+=item B<configs> - ARRAYREF (optional): Configurations to filter runs in plan by.  Runs can have the same name, yet with differing configurations in a plan; this handles that odd case.
 
 =item B<project> - STRING (optional): name of project containing your desired run.  Required if project_id not passed.
 
@@ -523,6 +565,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 =item B<result_options> - HASHREF (optional): Extra options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.
 
 =item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
+
+=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.
 
 =back
 

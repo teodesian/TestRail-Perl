@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 6;
+use Test::More 'tests' => 10;
 
 my @args = (
     $^X,
@@ -21,12 +21,32 @@ is( $? >> 8, 0, "Exit code OK reported with multiple files (case-ok mode)" );
 $matches = () = $out =~ m/Reporting result of case/ig;
 is( $matches, 4, "Attempts to upload multiple times (case-ok mode)" );
 
+#Test version, case-ok
 @args = (
     $^X,
-    qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite" --case-ok --mock t/test_subtest.tap}
+    qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite" --case-ok --version '1.0.14' --mock t/test_subtest.tap}
 );
 $out = `@args`;
 is( $? >> 8, 0, "Exit code OK reported with subtests (case-ok mode)" );
 $matches = () = $out =~ m/Reporting result of case/ig;
 is( $matches, 2, "Attempts to upload do not do subtests (case-ok mode)" );
 
+#Test plans/configs
+@args = (
+    $^X,
+    qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "Executing the great plan" --plan "GosPlan" --config "testConfig"  --case-ok --mock t/test_subtest.tap}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK reported with plans" );
+$matches = () = $out =~ m/Reporting result of case.*OK/ig;
+is( $matches, 2, "Attempts to to plans work" );
+
+#Test that spawn works
+@args = (
+    $^X,
+    qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --spawn 9 --case-ok --mock t/test_subtest.tap}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK reported with spawn" );
+$matches = () = $out =~ m/Reporting result of case.*OK/ig;
+is( $matches, 2, "Attempts to spawn work" );

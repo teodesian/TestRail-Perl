@@ -1,5 +1,13 @@
 Revision history for Perl module TestRail::API
 
+0.019 2015-03-18 TEODESIAN
+    - Add createRunInPlan method to TestRail::API
+    - Add translateConfigNamesToIds method to TestRail::API
+    - Modified getConfigurations, and added GetConfigurationGroups for clarity
+    - Add ability to spawn runs to App::Prove::TestRail and testrail-report
+    - Stricter checking that passed configurations passed exist in Test::Rail::Parser
+    - Require minimum version of JSON::Maybe::XS to resolve smoker failures.
+
 0.018 2015-01-29 TEODESIAN
     - Better finding of $HOME in testrail-report and the prove plugin for cross-platform usage
     - Track elapsed time of tests when run as prove plugin, and report this to testrail

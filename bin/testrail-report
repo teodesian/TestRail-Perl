@@ -58,6 +58,19 @@ PARAMETERS:
   you want to set results for.  This should provide sufficient
   uniqueness to get to any run using words.
 
+  [OPTIONAL PARAMETERS]
+
+    --spawn [testsuite_id] : Attempt to create a run based on the
+      provided testsuite ID.  Uses the name provided with --run.
+
+      If plans/configurations are supplied, it will attempt to create
+      it as a child of the provided plan, and with the supplied
+      configurations.
+
+      If the specified run already exists, the
+      program will simply use the existing run,
+      and disregard the supplied testsuite_id.
+
   [CONFIG OVERRIDES]
   In your \$HOME, (or the current directory, if your system has no
   concept of a home directory) put a file called .testrailrc with
@@ -134,7 +147,7 @@ sub parseConfig {
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn);
 
 #parse switches
 GetOptions(
@@ -149,6 +162,7 @@ GetOptions(
     'config=s@'      => \$configs,
     'plan=s'         => \$plan,
     'version=s'      => \$version,
+    'spawn=i'        => \$spawn,
     'help'           => \$help
 );
 
@@ -264,10 +278,10 @@ foreach my $phil (@files) {
         'step_results' => $step_results,
         'debug'        => $debug,
         'browser'      => $browser,
-        'version'      => $version,
         'plan'         => $plan,
         'configs'      => $configs,
         'result_options' => $result_options,
+        'spawn'        => $spawn,
         'merge'        => 1
     });
     $tap->run();
@@ -291,7 +305,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.018
+version 0.019
 
 =head1 SYNOPSIS
 
@@ -331,7 +345,13 @@ You can do the same outside of plans, and without configurations; but doing so i
 So, try not to do that if you want to use this tool, and want sanity in your Test management system.
 
 The way around this is to specify what plan and configuration you want to set results for.
-This should provide sufficient uniqueness to get to any run using names.
+This should provide sufficient uniqueness to get any run using names.
+
+=head3 OPTIONAL PARAMETERS
+
+    --spawn [testsuite_id] : Attempt to create a run based on the provided testsuite ID.  Uses the name provided with --run.
+      If plans/configurations are supplied, it will attempt to create it as a child of the provided plan, and with the supplied configurations.
+      If the specified run already exists, the program will simply use the existing run, and disregard the supplied testsuite_id.
 
 =head3 CONFIG OVERRIDES
 

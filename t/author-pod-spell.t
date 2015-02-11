@@ -80,6 +80,9 @@ unknownCallback
 buildStepResults
 testrailrc
 TODO
+createRunInPlan
+getConfigurationGroups
+getConfigurations
 George
 Baugh
 teodesian
