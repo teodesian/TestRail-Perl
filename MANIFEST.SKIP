@@ -6,7 +6,6 @@ README.md
 .git/*
 .gitignore
 tidyall.ini
-enivronment.sh
 .build/*
 TestRail-API-*/
 cover/*
