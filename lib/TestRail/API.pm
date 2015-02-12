@@ -33,7 +33,7 @@ use Scalar::Util qw{reftype looks_like_number};
 use Clone 'clone';
 use Try::Tiny;
 
-use JSON::MaybeXS ();
+use JSON::MaybeXS 1.001000 ();
 use HTTP::Request;
 use LWP::UserAgent;
 use Data::Validate::URI qw{is_uri};
