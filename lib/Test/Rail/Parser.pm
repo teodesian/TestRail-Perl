@@ -52,9 +52,13 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<browser> - OBJECT: Something like an LWP::UserAgent.  Useful for mocking with L<Test::LWP::UserAgent::TestRailMock>.
 
-=item B<run> - STRING (optional): name of desired run. Required if run_id not passed.
+=item B<run> - STRING (semi-optional): name of desired run. Required if run_id not passed.
 
-=item B<run_id> - INTEGER (optional): ID of desired run. Required if run not passed.
+=item B<run_id> - INTEGER (semi-optional): ID of desired run. Required if run not passed.
+
+=item B<plan> - STRING (semi-optional): Name of test plan to use, if your run provided is a child of said plan.  Only relevant when run_id not passed.
+
+=item B<configs> - ARRAYREF (optional): Configurations to filter runs in plan by.  Runs can have the same name, yet with differing configurations in a plan; this handles that odd case.
 
 =item B<project> - STRING (optional): name of project containing your desired run.  Required if project_id not passed.
 
