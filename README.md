@@ -25,6 +25,8 @@ Basically everything needed to sync up automated test runs to the test managemen
 
 Also provides a prove plugin and TAP analyzer so that you can upload results on-the-fly or after it's logged to a file.
 
+As of version 0.019, it also supports automated creation of builds (for use in a CI sort of arrangement).
+
 TODO: alter tests so that you can keep in sync.
 
 See POD for more info.
