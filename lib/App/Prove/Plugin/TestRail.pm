@@ -34,10 +34,13 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     version=xx.xx.xx.xx
     case_per_ok=0
     step_results=sr_sys_name
+    spawn=123
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 Values passed in via query string will override values in \$HOME/.testrailrc.
 If your system has no concept of user homes, it will look in the current directory for .testrailrc.
+
+See the documentation for the constructor of L<Test::Rail::Parser> as to why you might want to pass the aforementioned options.
 
 =head1 OVERRIDDEN METHODS
 
@@ -82,6 +85,7 @@ sub load {
     $ENV{'TESTRAIL_VERSION'} = $params->{version};
     $ENV{'TESTRAIL_CASEOK'}  = $params->{case_per_ok};
     $ENV{'TESTRAIL_STEPS'}   = $params->{step_results};
+    $ENV{'TESTRAIL_SPAWN'}   = $params->{spawn};
     return $class;
 }
 

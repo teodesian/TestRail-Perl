@@ -53,6 +53,7 @@ sub make_parser {
     $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
+    $args->{'spawn'}          = $ENV{'TESTRAIL_SPAWN'};
 
     #for Testability of plugin
     if ($ENV{'TESTRAIL_MOCKED'}) {

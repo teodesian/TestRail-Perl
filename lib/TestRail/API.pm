@@ -83,7 +83,7 @@ sub new {
         flattree         => [],
         user_cache       => [],
         type_cache       => [],
-        configurations   => undef,
+        configurations   => {},
         tr_fields        => undef,
         default_request  => undef,
         browser          => new LWP::UserAgent()
@@ -157,7 +157,6 @@ sub _doRequest {
     my $response = $self->{'browser'}->request($req);
 
     return $response if !defined($response); #worst case
-
     if ($response->code == 403) {
         cluck "ERROR: Access Denied.";
         return -403;
@@ -1338,6 +1337,56 @@ sub getPlanByID {
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
 }
 
+=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,case_ids)>
+
+Create a run.
+
+=over 4
+
+=item INTEGER C<PLAN ID> - ID of parent project.
+
+=item INTEGER C<SUITE ID> - ID of suite to base run on
+
+=item STRING C<NAME> - Name of run
+
+=item INTEGER C<ASSIGNED TO ID> (optional) - User to assign the run to
+
+=item ARRAYREF C<CONFIG IDS> (optional) - Array of Configuration IDs (see getConfigurations) to apply to the created run
+
+=item ARRAYREF C<CASE IDS> (optional) - Array of case IDs in case you don't want to use the whole testsuite when making the build.
+
+=back
+
+Returns run definition HASHREF.
+
+    $tr->createRun(1,1345,'PlannedRun',3,[1,4,77],[3,4,5,6]);
+
+=cut
+
+#If you pass an array of case ids, it implies include_all is false
+sub createRunInPlan {
+    my ($self,$plan_id,$suite_id,$name,$assignedto_id,$config_ids,$case_ids) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
+    confess("Name must be string") unless $self->_checkString($name);
+    confess("Assigned To ID must be integer") unless !defined($assignedto_id) || $self->_checkInteger($assignedto_id);
+    confess("Config IDs must be ARRAYREF") unless !defined($config_ids) || (reftype($config_ids) || 'undef') eq 'ARRAY';
+    confess("Case IDs must be ARRAYREF") unless !defined($case_ids) || (reftype($case_ids) || 'undef') eq 'ARRAY';
+
+    my $stuff = {
+        suite_id      => $suite_id,
+        name          => $name,
+        assignedto_id => $assignedto_id,
+        include_all   => defined($case_ids) ? 0 : 1,
+        case_ids      => $case_ids,
+        config_ids    => $config_ids
+    };
+
+    my $result = $self->_doRequest("index.php?/api/v2/add_plan_entry/$plan_id",'POST',$stuff);
+    return $result;
+}
+
 =head1 MILESTONE METHODS
 
 =head2 B<createMilestone (project_id,name,description,due_on)>
@@ -1730,9 +1779,35 @@ sub getTestResults {
 
 =head1 CONFIGURATION METHODS
 
+=head2 B<getConfigurationGroups(project_id)>
+
+Gets the available configuration groups for a project, with their configurations as children.
+Basically a direct wrapper of The 'get_configs' api call, with caching tacked on.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of relevant project
+
+=back
+
+Returns ARRAYREF of configuration group definition HASHREFs.
+
+=cut
+
+sub getConfigurationGroups {
+    my ($self,$project_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
+    my $url = "index.php?/api/v2/get_configs/$project_id";
+    return $self->{'configurations'}->{$project_id} if $self->{'configurations'}->{$project_id}; #cache this since we can't change it with the API
+    $self->{'configurations'}->{$project_id} = $self->_doRequest($url);
+    return $self->{'configurations'}->{$project_id};
+}
+
 =head2 B<getConfigurations(project_id)>
 
 Gets the available configurations for a project.
+Mostly for convenience (no need to write a boilerplate loop over the groups).
 
 =over 4
 
@@ -1741,17 +1816,49 @@ Gets the available configurations for a project.
 =back
 
 Returns ARRAYREF of configuration definition HASHREFs.
+Returns result of getConfigurationGroups (likely -500) in the event that call fails.
 
 =cut
 
 sub getConfigurations {
     my ($self,$project_id) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
-    confess("Test ID must be positive integer") unless $self->_checkInteger($project_id);
-    my $url = "index.php?/api/v2/get_configs/$project_id";
-    return $self->{'configurations'} if $self->{'configurations'}; #cache this since we can't change it with the API
-    $self->{'configurations'} = $self->_doRequest($url);
-    return $self->{'configurations'};
+    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
+    my $cgroups = $self->getConfigurationGroups($project_id);
+    my $configs = [];
+    return $cgroups unless (reftype($cgroups) || 'undef') eq 'ARRAY';
+    foreach my $cfg (@$cgroups) {
+        push(@$configs, @{$cfg->{'configs'}});
+    }
+    return $configs;
+}
+
+=head2 B<translateConfigNamesToIds(project_id,configs)>
+
+Transforms a list of configuration names into a list of config IDs.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - Relevant project ID for configs.
+
+=item ARRAYREF C<CONFIGS> - Array ref of config names
+
+=back
+
+Returns ARRAYREF of configuration names, with undef values for unknown configuration names.
+
+=cut
+
+sub translateConfigNamesToIds {
+    my ($self,$project_id,$configs) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
+    confess("Configs must be arrayref") unless (reftype($configs) || 'undef') eq 'ARRAY';
+    return [] if !scalar(@$configs);
+    my $existing_configs = $self->getConfigurations($project_id);
+    return map {undef} @$configs if (reftype($existing_configs) || 'undef') ne 'ARRAY';
+    my @ret = map {my $name = $_; my @candidates = grep { $name eq $_->{'name'} } @$existing_configs; scalar(@candidates) ? $candidates[0]->{'id'} : undef } @$configs;
+    return \@ret;
 }
 
 =head1 STATIC METHODS
