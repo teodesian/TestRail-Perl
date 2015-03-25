@@ -6,7 +6,7 @@ Perl interface to TestRail's REST API
 <img alt="TravisCI Build Status" src="https://travis-ci.org/teodesian/TestRail-Perl.svg"></img>
 <a href='https://coveralls.io/r/teodesian/TestRail-Perl?branch=build%2Fmaster'><img src='https://coveralls.io/repos/teodesian/TestRail-Perl/badge.svg?branch=build%2Fmaster' alt='Coverage Status' /></a>
 
-Doesn't implement every method provided (yet), just the ones *I* needed:
+Implements most available TestRail API methods:
 
 * Making Projects,Suites,Sections,Cases,Plans and Runs
 * Getting the same
@@ -14,6 +14,7 @@ Doesn't implement every method provided (yet), just the ones *I* needed:
 * Setting test run statuses
 
 Basically everything needed to sync up automated test runs to the test management DB.
+Also has convenience methods to handle various limitations of the API.
 
 > my $url = "http://some.testrail.install/";
 > 
