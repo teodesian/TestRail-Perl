@@ -9,7 +9,7 @@
 
   prove -v sometest.t | testrail-report [OPTIONS]
 
-  prove -PTestRail='http://some.testlink.install/,someUser,somePassword,someProject,someRun,0,step_results' sometest.t
+  prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t
 
 =head1 DESCRIPTION
 
@@ -78,7 +78,7 @@ overall result of the test will be used as the pass/fail for the test.
 
 =head2 PROVE PLUGIN:
 
-passing -PTestRail=apiurl,user,pass,project,run to prove will
+passing -PTestRail='key=value,...' to prove will
 automatically upload your test results while the test is running if
 real-time results are desired.
 
