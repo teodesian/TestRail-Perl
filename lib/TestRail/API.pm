@@ -86,6 +86,7 @@ sub new {
         configurations   => {},
         tr_fields        => undef,
         default_request  => undef,
+        global_limit     => 250, #Discovered by experimentation
         browser          => new LWP::UserAgent()
     };
 
@@ -155,6 +156,9 @@ sub _doRequest {
     $req->header( "Content-Type" => "application/json" );
 
     my $response = $self->{'browser'}->request($req);
+
+    #use Data::Dumper;
+    #print Dumper($path,'200','OK',$response->headers,$response->content);
 
     return $response if !defined($response); #worst case
     if ($response->code == 403) {
@@ -1035,6 +1039,8 @@ sub deleteRun {
 =head2 B<getRuns (project_id)>
 
 Get all runs for specified project.
+To do this, it must make (no. of runs/250) HTTP requests.
+This is due to the maximum resultset limit enforced by testrail.
 
 =over 4
 
@@ -1052,9 +1058,51 @@ sub getRuns {
     my ($self,$project_id) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    return $self->_doRequest("index.php?/api/v2/get_runs/$project_id");
+    my $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},0);
+    return $initial_runs unless (reftype($initial_runs) || 'undef') eq 'ARRAY';
+    my $runs = [];
+    push(@$runs,@$initial_runs);
+    my $offset = 1;
+    while (scalar(@$initial_runs) == $self->{'global_limit'}) {
+        $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        push(@$runs,@$initial_runs);
+        $offset++;
+    }
+    return $runs;
 }
 
+=head2 B<getRunsPaginated (project_id,limit,offset)>
+
+Get some runs for specified project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of parent project
+
+=item INTEGER C<LIMIT> - Number of runs to return.
+
+=item INTEGER C<OFFSET> - Page of runs to return.
+
+=back
+
+Returns ARRAYREF of run definition HASHREFs.
+
+    $someRuns = $tr->getRunsPaginated(6969,22,4);
+
+=cut
+
+sub getRunsPaginated {
+    my ($self,$project_id,$limit,$offset) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
+    confess("Limit must be integer") unless !defined($limit) || $self->_checkInteger($limit);
+    confess("Offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
+    confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
+    my $apiurl = "index.php?/api/v2/get_runs/$project_id";
+    $apiurl .= "&offset=$offset" if $offset;
+    $apiurl .= "&limit=$limit" if $limit;
+    return $self->_doRequest($apiurl);
+}
 
 =head2 B<getRunByName (project_id,name)>
 
@@ -1255,9 +1303,10 @@ sub deletePlan {
     return $result;
 }
 
-=head2 B<getPlans (project_id,get_runs)>
+=head2 B<getPlans (project_id)>
 
-Gets specified test plans.
+Gets all test plans in specified project.
+Like getRuns, must make multiple HTTP requests when the number of results exceeds 250.
 
 =over 4
 
@@ -1265,12 +1314,12 @@ Gets specified test plans.
 
 =back
 
-Returns ARRAYREF of plan definition HASHREFs.
+Returns ARRAYREF of all plan definition HASHREFs in a project.
 
     $tr->getPlans(8);
 
 Does not contain any information about child test runs.
-Use getRunByID or getRunByName if you want that, in particular if you are interested in using getChildRunByName.
+Use getPlanByID or getPlanByName if you want that, in particular if you are interested in using getChildRunByName.
 
 =cut
 
@@ -1278,7 +1327,50 @@ sub getPlans {
     my ($self,$project_id) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    return $self->_doRequest("index.php?/api/v2/get_plans/$project_id");
+    my $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},0);
+    return $initial_plans unless (reftype($initial_plans) || 'undef') eq 'ARRAY';
+    my $plans = [];
+    push(@$plans,@$initial_plans);
+    my $offset = 1;
+    while (scalar(@$initial_plans) == $self->{'global_limit'}) {
+        $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        push(@$plans,@$initial_plans);
+        $offset++;
+    }
+    return $plans;
+}
+
+=head2 B<getPlansPaginated (project_id,limit,offset)>
+
+Get some plans for specified project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of parent project
+
+=item INTEGER C<LIMIT> - Number of plans to return.
+
+=item INTEGER C<OFFSET> - Page of plans to return.
+
+=back
+
+Returns ARRAYREF of plan definition HASHREFs.
+
+    $someRuns = $tr->getPlansPaginated(6969,222,44);
+
+=cut
+
+sub getPlansPaginated {
+    my ($self,$project_id,$limit,$offset) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
+    confess("Limit must be integer") unless !defined($limit) || $self->_checkInteger($limit);
+    confess("Offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
+    confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
+    my $apiurl = "index.php?/api/v2/get_plans/$project_id";
+    $apiurl .= "&offset=$offset" if $offset;
+    $apiurl .= "&limit=$limit" if $limit;
+    return $self->_doRequest($apiurl);
 }
 
 =head2 B<getPlanByName (project_id,name)>

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 129;
+use Test::More 'tests' => 133;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -60,7 +60,9 @@ isnt( exception {$tr->getTests() },undef,'getTests returns error when no argumen
 isnt( exception {$tr->getTestSuites() },undef,'getTestSuites returns error when no arguments are passed');
 isnt( exception {$tr->getSections() },undef,'getSections returns error when no arguments are passed');
 isnt( exception {$tr->getRuns() },undef,'getRuns returns error when no arguments are passed');
+isnt( exception {$tr->getRunsPaginated() },undef,'getRunsPaginated returns error when no arguments are passed');
 isnt( exception {$tr->getPlans() },undef,'getPlans returns error when no arguments are passed');
+isnt( exception {$tr->getPlansPaginated() },undef,'getPlansPaginated returns error when no arguments are passed');
 isnt( exception {$tr->getMilestones() },undef,'getMilestones returns error when no arguments are passed');
 isnt( exception {$tr->getConfigurationGroups() },undef,'getConfigurations returns error when no arguments are passed');
 isnt( exception {$tr->getConfigurations() },undef,'getConfigurationGroups returns error when no arguments are passed');
@@ -75,14 +77,16 @@ is(exception {$tr->deleteMilestone(1)},       undef,'deleteMilestone returns no 
 is(exception {$tr->deletePlan(1)},            undef,'deletePlan returns no error when int arg passed');
 is(exception {$tr->deleteProject(1)},         undef,'deleteProject returns no error when int arg passed');
 is(exception {$tr->deleteRun(1)},             undef,'deleteRun returns no error when int arg passed');
-is(exception {$tr->deleteSection(1)},        undef,'deleteSection returns no error when int arg passed');
+is(exception {$tr->deleteSection(1)},         undef,'deleteSection returns no error when int arg passed');
 is(exception {$tr->deleteTestSuite(1)},       undef,'deleteTestSuite returns no error when int arg passed');
 is(exception {$tr->getCaseByID(1)},           undef,'getCaseByID returns no error when int arg passed');
 is(exception {$tr->getRuns(1)},               undef,'getRuns returns no error when int arg passed');
+is(exception {$tr->getRunsPaginated(1)},      undef,'getRunsPaginated returns no error when int arg passed');
 is(exception {$tr->getSectionByID(1)},        undef,'getSectionByID returns no error when int arg passed');
 is(exception {$tr->getTestByID(1)},           undef,'getTestByID returns no error when int arg passed');
 is(exception {$tr->getTestSuiteByID(1)},      undef,'getTestSuiteByID returns no error when int arg passed');
 is(exception {$tr->getPlans(1)},              undef,'getPlans returns no error when int arg passed');
+is(exception {$tr->getPlansPaginated(1)},     undef,'getPlansPaginated returns no error when int arg passed');
 is(exception {$tr->getProjectByID(1)},        undef,'getProjectByID returns no error when int arg passed');
 is(exception {$tr->getRunByID(1)},            undef,'getRunByID returns no error when int arg passed');
 is(exception {$tr->getTestSuites(1)},         undef,'getTestSuites returns no error when int arg passed');
