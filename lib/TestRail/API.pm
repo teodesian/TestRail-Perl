@@ -1040,7 +1040,7 @@ sub deleteRun {
 
 Get all runs for specified project.
 To do this, it must make (no. of runs/250) HTTP requests.
-This is due to the maximum resultset limit enforced by testrail.
+This is due to the maximum result set limit enforced by testrail.
 
 =over 4
 
