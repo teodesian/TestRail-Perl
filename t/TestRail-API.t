@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 57;
+use Test::More tests => 59;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
@@ -258,6 +258,36 @@ my $t_config_ids =
 @$t_config_ids = sort(@$t_config_ids);
 is_deeply( \@config_ids, $t_config_ids,
     "Can correctly translate Project names to IDs" );
+
+############################################################
+# TestRail arbitrarily limits many calls to 250 result sets.
+# Let's make sure our getters actually get everything.
+############################################################
+
+#Check get_plans
+foreach my $i ( 0 .. $tr->{'global_limit'} ) {
+    $tr->createPlan( $new_project->{'id'}, $plan_name, "PETE & RE-PIOTR" );
+}
+is(
+    scalar( @{ $tr->getPlans( $new_project->{'id'} ) } ),
+    ( $tr->{'global_limit'} + 2 ),
+    "Can get list of plans beyond " . $tr->{'global_limit'}
+);
+
+#Check get_runs
+foreach my $i ( 0 .. $tr->{'global_limit'} ) {
+    $tr->createRun( $new_project->{'id'}, $new_suite->{'id'}, $run_name,
+        "ACQUIRE CLOTHES, BOOTS AND MOTORCYCLE" );
+}
+is(
+    scalar( @{ $tr->getRuns( $new_project->{'id'} ) } ),
+    ( $tr->{'global_limit'} + 2 ),
+    "Can get list of runs beyond " . $tr->{'global_limit'}
+);
+
+##########
+# Clean up
+##########
 
 #Delete a plan
 ok( $tr->deletePlan( $new_plan->{'id'} ), "Can delete plan" );

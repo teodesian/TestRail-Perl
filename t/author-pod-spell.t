@@ -83,6 +83,8 @@ TODO
 createRunInPlan
 getConfigurationGroups
 getConfigurations
+getPlansPaginated
+getRunsPaginated
 George
 Baugh
 teodesian

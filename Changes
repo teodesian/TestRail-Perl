@@ -1,5 +1,11 @@
 Revision history for Perl module TestRail::API
 
+0.020 2015-03-25 TEODESIAN
+    - Add getRunsPaginated and getPlansPaginated to get around 250 hardlimit in TR results
+    - Modify getRuns and getPlans to use the above to actually get all runs/plans
+    - Fix various defective pod surrounding those methods
+    - Fix minor incorrectness in testrail-report POD
+
 0.019 2015-03-18 TEODESIAN
     - Add createRunInPlan method to TestRail::API
     - Add translateConfigNamesToIds method to TestRail::API
