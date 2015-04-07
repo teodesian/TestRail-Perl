@@ -1179,8 +1179,10 @@ sub getChildRuns {
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
     return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
-    return 0 unless defined($plan->{'entries'}->[0]->{'runs'}) && (reftype($plan->{'entries'}->[0]->{'runs'}) || 'undef') eq 'ARRAY';
-    return $plan->{'entries'}->[0]->{'runs'};
+    return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
+    my $entries = $plan->{'entries'};
+    my @plans = map { $_->{'runs'}->[0] } @$entries; #XXX not sure if this list-ification is intentional
+    return \@plans;
 }
 
 =head2 B<getChildRunByName(plan,name,configurations)>
@@ -1217,12 +1219,18 @@ sub getChildRunByName {
         my ($cname);
         @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @$configurations } @$avail_configs; #Get a list of IDs from the names passed
     }
+    my $found;
     foreach my $run (@$runs) {
+        next if $run->{name} ne $name;
+        next if scalar(@pconfigs) ne scalar(@{$run->{'config_ids'}});
+
         #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        $found = 0;
         foreach my $cid (@{$run->{'config_ids'}}) {
-            next unless List::Util::all {$_ eq $cid} @pconfigs;
+            $found++ if grep {$_ == $cid} @pconfigs;
         }
-        return $run if $run->{name} eq $name;
+
+        return $run if $found == scalar(@{$run->{'config_ids'}});
     }
     return 0;
 }

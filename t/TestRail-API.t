@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 59;
+use Test::More tests => 60;
 use Test::Fatal;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
@@ -114,7 +114,8 @@ is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan b
 my $prun = $new_plan->{'entries'}->[0]->{'runs'}->[0];
 is($tr->getRunByID($prun->{'id'})->{'name'},"Executing the great plan","Can get child run of plan by ID");
 is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{'id'},"Can find child run of plan by name");
-isnt($tr->getChildRunByName($namePlan,"Executing the great plan")->{'id'},undef,"Getting run by name returns child runs");
+isnt($tr->getChildRunByName($namePlan,"Executing the great plan",['Chrome']),0,"Getting run by name returns child runs");
+is($tr->getChildRunByName($namePlan,"Executing the great plan"),0,"Getting run by name without sufficient configuration data returns child runs");
 
 #Test createRunInPlan
 my $updatedPlan = $tr->createRunInPlan($new_plan->{'id'},$new_suite->{'id'},'Dynamic Plan Run');
