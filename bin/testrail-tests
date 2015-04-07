@@ -1,0 +1,250 @@
+#!/usr/bin/env perl
+# ABSTRACT: List tests in a TestRail run matching the provided filters
+# PODNAME: testrail-test
+
+=head1 SYNOPSIS
+
+  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
+
+=head1 DESCRIPTION
+
+testrail-tests - list tests in a run matching the provided filters.
+
+=head2 PARAMETERS:
+
+=head3 MANDATORY PARAMETERS
+
+    -j --project [project]: desired project name.
+    -r --run [run]: desired run name.
+
+=head3 SEMI-OPTIONAL PARAMETERS
+
+    -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
+
+=head3 OPTIONAL PARAMETERS
+
+    -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
+    -s --status [status]: only list tests marked as [status] in testrail.  Can be passed multiple times.
+    -a --assignedto [user]: only list tests assigned to user. Can be passed multiple times.
+
+=head3 CONFIG OPTIONS
+
+    In your \$HOME, (or the current directory, if your system has no
+    concept of a home directory) put a file called .testrailrc with
+    key=value syntax separated by newlines.
+    Valid Keys are: apiurl,user,password
+
+=head3 CONFIG OVERRIDES
+
+    These override the config, if present.
+    If neither are used, you will be prompted.
+
+  --apiurl   [url] : full URL to get to TestRail index document
+  --password [key] : Your TestRail Password.
+  --user    [name] : Your TestRail User Name.
+
+=head2 TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
+
+=cut
+
+use strict;
+use warnings;
+use utf8;
+
+use TestRail::API;
+use TestRail::Utils;
+
+use Getopt::Long;
+use File::HomeDir qw{my_home};
+use File::Find;
+use Cwd qw{abs_path};
+use File::Basename qw{basename};
+
+sub help {
+    print("
+testrail-tests - list tests in a run matching the provided filters.
+
+USAGE:
+
+  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
+
+PARAMETERS:
+  [MANDATORY PARAMETERS]
+    -j --project [project]: desired project name.
+    -r --run [run]: desired run name.
+
+  [SEMI-OPTIONAL PARAMETERS]
+
+    -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
+    -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
+    -n --no-recurse: if match passed, do not recurse subdirectories.
+
+  [OPTIONAL PARAMETERS]
+
+    -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
+    -s --status [status]: only list tests marked as [status] in testrail.  Can be passed multiple times.
+    -a --assignedto [user]: only list tests assigned to user. Can be passed multiple times.
+
+  [CONFIG OPTIONS]
+    In your \$HOME, (or the current directory, if your system has no
+    concept of a home directory) put a file called .testrailrc with
+    key=value syntax separated by newlines.
+    Valid Keys are: apiurl,user,password
+
+  [CONFIG OVERRIDES]
+    These override the config, if present.
+    If neither are used, you will be prompted.
+
+  --apiurl   [url] : full URL to get to TestRail index document
+  --password [key] : Your TestRail Password.
+  --user    [name] : Your TestRail User Name.
+
+TESTING OPTIONS:
+
+    --mock don't do any real HTTP requests.
+
+");
+    exit 0;
+}
+
+my %opts;
+
+GetOptions(
+    'apiurl'          => \$opts{'apiurl'},
+    'password'        => \$opts{'pass'},
+    'user'            => \$opts{'user'},
+    'j|project=s'     => \$opts{'project'},
+    'p|plan=s'        => \$opts{'plan'},
+    'r|run=s'         => \$opts{'run'},
+    'c|config=s@'     => \$opts{'configs'},
+    's|status=s@'     => \$opts{'statuses'},
+    'a|assignedto=s@' => \$opts{'users'},
+    'mock'            => \$opts{'mock'},
+    'm|match=s'       => \$opts{'match'},
+    'n|no-recurse'    => \$opts{'no-recurse'}
+);
+
+if ($opts{help}) { help(); }
+
+#Parse config file if we are missing api url/key or user
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
+    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir);
+}
+
+#Interrogate user if they didn't provide info
+if (!$opts{apiurl}) {
+    print "Type the API endpoint url for your testLink install below:\n";
+    $opts{apiurl} = TestRail::Utils::userInput();
+}
+
+if (!$opts{user}) {
+    print "Type your testLink user name below:\n";
+    $opts{user} = TestRail::Utils::userInput();
+}
+
+if (!$opts{pass}) {
+    print "Type the password for your testLink user below:\n";
+    $opts{pass} = TestRail::Utils::userInput();
+}
+
+if (!$opts{apiurl} || !$opts{pass} || !$opts{user}) {
+    print "ERROR: api url, username and password cannot be blank.\n";
+    exit 1;
+}
+
+#Interrogate user if they didn't provide info
+if (!$opts{project}) {
+    print "Type the name of the project you are testing under:\n";
+    $opts{project} = TestRail::Utils::userInput();
+}
+
+# Interrogate user if options were not passed
+if (!$opts{run}) {
+    print "Type the name of the existing run you would like to run against:\n";
+    $opts{run} = TestRail::Utils::userInput();
+}
+
+if ($opts{mock}) {
+    use Test::LWP::UserAgent::TestRailMock;
+    $opts{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts{debug} = 1;
+}
+
+my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'debug'});
+$tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
+$tr->{'debug'} = 0;
+
+my $project = $tr->getProjectByName($opts{'project'});
+
+my ($run,$plan);
+
+if ($opts{'plan'}) {
+    $plan = $tr->getPlanByName($project->{'id'},$opts{'plan'});
+    if (!$plan) {
+        print "No such plan '$opts{plan}'!\n";
+        exit 1;
+    }
+    $run = $tr->getChildRunByName($plan,$opts{'run'}, $opts{'configs'});
+} else {
+    $run = $tr->getRunByName($project->{'id'},$opts{'run'});
+}
+
+if (!$run) {
+    print "No such run '$opts{run}' matching the provided configs (if any).\n";
+    exit 2;
+}
+
+my ($status_ids,$user_ids);
+
+#Process statuses
+if ($opts{'statuses'}) {
+    eval { @$status_ids = $tr->statusNamesToIds(@{$opts{'statuses'}}); };
+    if ($@) {
+        print "$@\n";
+        exit 4;
+    }
+}
+
+#Process assignedto ids
+if ($opts{'users'}) {
+    eval { @$user_ids = $tr->userNamesToIds(@{$opts{'users'}}); };
+    if ($@) {
+        print "$@\n";
+        exit 5;
+    }
+}
+
+my $cases = $tr->getTests($run->{'id'},$status_ids,$user_ids);
+
+if (!$cases) {
+    print "No cases in TestRail!\n";
+    exit 3;
+}
+
+my @tests =  map {$_->{'title'}} @$cases;
+my @realtests;
+
+if ($opts{'match'}) {
+    if (!$opts{'no-recurse'}) {
+        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $opts{'match'} );
+        @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
+    } else {
+        @tests = grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
+    }
+}
+@tests = map { abs_path($_) } @tests;
+print join("\n",@tests)."\n" if scalar(@tests);
+exit 0;
+
+__END__
+
+L<TestRail::API>
+
+L<File::HomeDir> for the finding of .testrailrc
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this module.

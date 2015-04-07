@@ -253,6 +253,31 @@ sub getUserByEmail {
     return 0;
 }
 
+=head2 userNamesToIds(names)
+
+Convenience method to translate a list of user names to TestRail user IDs.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of user names to translate to IDs.
+
+=back
+
+Returns ARRAY of user IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid username.
+
+=cut
+
+sub userNamesToIds {
+    my ($self,@names) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("At least one user name must be provided") if !scalar(@names);
+    my @ret = grep {defined $_} map {my $user = $_; my @list = grep {$user->{'name'} eq $_} @names; scalar(@list) ? $user->{'id'} : undef} @{$self->getUsers()};
+    confess("One or more user names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    return @ret;
+};
+
 =head1 PROJECT METHODS
 
 =head2 B<createProject (name, [description,send_announcement])>
@@ -1200,6 +1225,8 @@ sub getChildRuns {
 Returns run definition HASHREF, or false if no such run is found.
 Convenience method using getChildRuns.
 
+Will throw a fatal error if one or more of the configurations passed does not exist in the project.
+
 =cut
 
 sub getChildRunByName {
@@ -1219,10 +1246,12 @@ sub getChildRunByName {
         my ($cname);
         @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @$configurations } @$avail_configs; #Get a list of IDs from the names passed
     }
+    confess("One or more configurations passed does not exist in your project!") if defined($configurations) && (scalar(@pconfigs) != scalar(@$configurations));
+
     my $found;
     foreach my $run (@$runs) {
         next if $run->{name} ne $name;
-        next if scalar(@pconfigs) ne scalar(@{$run->{'config_ids'}});
+        next if scalar(@pconfigs) != scalar(@{$run->{'config_ids'}});
 
         #Compare run config IDs against desired, invalidate run if all conditions not satisfied
         $found = 0;
@@ -1633,27 +1662,37 @@ sub getMilestoneByID {
 
 =head1 TEST METHODS
 
-=head2 B<getTests (run_id)>
+=head2 B<getTests (run_id,status_ids,assignedto_ids)>
 
-Get tests for some run.
+Get tests for some run.  Optionally filter by provided status_ids.
 
 =over 4
 
 =item INTEGER C<RUN ID> - ID of parent run.
 
+=item ARRAYREF C<STATUS IDS> (optional) - IDs of relevant test statuses to filter by.  get with getPossibleTestStatuses.
+
+=item ARRAYREF C<ASSIGNEDTO IDS> (optional) - IDs of users assigned to test to filter by.  get with getUsers.
+
 =back
 
 Returns ARRAYREF of test definition HASHREFs.
 
-    $tr->getTests(8);
+    $tr->getTests(8,[1,2,3],[2]);
 
 =cut
 
 sub getTests {
-    my ($self,$run_id) = @_;
+    my ($self,$run_id,$status_ids,$assignedto_ids) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Run ID must be integer") unless $self->_checkInteger($run_id);
-    return $self->_doRequest("index.php?/api/v2/get_tests/$run_id");
+    confess("Status IDs must be ARRAYREF") unless !defined($status_ids) || ( reftype($status_ids) || 'undef' ) eq 'ARRAY';
+    confess("Assigned to IDs must be ARRAYREF") unless !defined($assignedto_ids) || ( reftype($assignedto_ids) || 'undef' ) eq 'ARRAY';
+    my $query_string = '';
+    $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
+    my $results = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
+    @$results = grep {my $aid = $_->{'assignedto_id'}; grep {defined($aid) && $aid == $_} @$assignedto_ids} @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
+    return $results;
 }
 
 =head2 B<getTestByName (run_id,name)>
@@ -1768,6 +1807,32 @@ sub getPossibleTestStatuses {
     confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest('index.php?/api/v2/get_statuses');
 }
+
+=head2 statusNamesToIds(names)
+
+Convenience method to translate a list of statuses to TestRail status IDs.
+The names referred to here are 'internal names' rather than the labels shown in TestRail.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of status IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
+
+=cut
+
+sub statusNamesToIds {
+    my ($self,@names) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("At least one status name must be provided") if !scalar(@names);
+    my @ret = grep {defined $_} map {my $status = $_; my @list = grep {$status->{'name'} eq $_} @names; scalar(@list) ? $status->{'id'} : undef} @{$self->getPossibleTestStatuses()};
+    confess("One or more status names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    return @ret;
+};
 
 =head2 B<createTestResults(test_id,status_id,comment,options,custom_options)>
 

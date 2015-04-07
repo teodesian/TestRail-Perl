@@ -4,8 +4,9 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 60;
+use Test::More tests => 68;
 use Test::Fatal;
+use Test::Deep;
 use Scalar::Util 'reftype';
 use ExtUtils::MakeMaker qw{prompt};
 
@@ -43,6 +44,13 @@ my $myuser = $tr->getUserByEmail($login);
 is($myuser->{'email'},$login,"Can get user by email");
 is($tr->getUserByID($myuser->{'id'})->{'id'},$myuser->{'id'},"Can get user by ID");
 is($tr->getUserByName($myuser->{'name'})->{'name'},$myuser->{'name'},"Can get user by Name");
+
+my @user_names = map {$_->{'name'}} @$userlist;
+my @user_ids = map {$_->{'id'}} @$userlist;
+my @cuser_ids = $tr->userNamesToIds(@user_names);
+cmp_deeply(\@cuser_ids,\@user_ids,"userNamesToIds functions correctly");
+isnt(exception {$tr->userNamesToIds(@user_names,'potzrebie'); }, undef, "Passing invalid user name throws exception");
+
 
 #Test PROJECT methods
 my $project_name = 'CRUSH ALL HUMANS';
@@ -114,8 +122,12 @@ is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan b
 my $prun = $new_plan->{'entries'}->[0]->{'runs'}->[0];
 is($tr->getRunByID($prun->{'id'})->{'name'},"Executing the great plan","Can get child run of plan by ID");
 is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{'id'},"Can find child run of plan by name");
-isnt($tr->getChildRunByName($namePlan,"Executing the great plan",['Chrome']),0,"Getting run by name returns child runs");
-is($tr->getChildRunByName($namePlan,"Executing the great plan"),0,"Getting run by name without sufficient configuration data returns child runs");
+
+SKIP: {
+    skip("Cannot create configurations programattically in the API like in mocks",2) if !$is_mock;
+    isnt($tr->getChildRunByName($namePlan,"Executing the great plan",['Chrome']),0,"Getting run by name returns child runs");
+    is($tr->getChildRunByName($namePlan,"Executing the great plan"),0,"Getting run by name without sufficient configuration data returns child runs");
+}
 
 #Test createRunInPlan
 my $updatedPlan = $tr->createRunInPlan($new_plan->{'id'},$new_suite->{'id'},'Dynamic Plan Run');
@@ -132,12 +144,28 @@ my $resTypes = $tr->getTestResultFields();
 my $statusTypes = $tr->getPossibleTestStatuses();
 ok($resTypes,"Can get test result fields");
 ok($statusTypes,"Can get possible test statuses");
+my @status_names = map {$_->{'name'}} @$statusTypes;
+my @status_ids = map {$_->{'id'}} @$statusTypes;
+my @computed_ids = $tr->statusNamesToIds(@status_names);
+cmp_deeply(\@computed_ids,\@status_ids,"statusNamesToIds functions correctly");
+isnt(exception {$tr->statusNamesToIds(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception");
 
 #TODO make more thorough tests for options, custom options
 my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'},"REAPER FORCES INBOUND");
 ok(defined($result->{'id'}),"Can add test results");
 my $results = $tr->getTestResults($tests->[0]->{'id'});
 is($results->[0]->{'id'},$result->{'id'},"Can get results for test");
+
+#Test status and assignedto filtering
+my $filteredTests = $tr->getTests($new_run->{'id'},[$status_ids[0]]);
+is(scalar(@$filteredTests),1,"Test Filtering works: status id positive");
+$filteredTests = $tr->getTests($new_run->{'id'},[$status_ids[1]]);
+is(scalar(@$filteredTests),0,"Test Filtering works: status id negative");
+$filteredTests = $tr->getTests($new_run->{'id'},[$status_ids[0]],[$userlist->[0]->{'id'}]);
+is(scalar(@$filteredTests),0,"Test Filtering works: status id positive, user id negative");
+$filteredTests = $tr->getTests($new_run->{'id'},undef,[$userlist->[0]->{'id'}]);
+is(scalar(@$filteredTests),0,"Test Filtering works: status id undef, user id negative");
+#XXX there is no way to programmatically assign things :( so this will remain somewhat uncovered
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});
@@ -156,20 +184,21 @@ is_deeply(\@config_ids,$t_config_ids, "Can correctly translate Project names to 
 # TestRail arbitrarily limits many calls to 250 result sets.
 # Let's make sure our getters actually get everything.
 ############################################################
+SKIP: {
+    skip("Skipping slow tests...", 2) if $ENV{'TESTRAIL_SLOW_TESTS'};
+    #Check get_plans
+    foreach my $i (0..$tr->{'global_limit'}) {
+        $tr->createPlan($new_project->{'id'},$plan_name,"PETE & RE-PIOTR");
+    }
+    is(scalar(@{$tr->getPlans($new_project->{'id'})}),($tr->{'global_limit'} + 2),"Can get list of plans beyond ".$tr->{'global_limit'});
 
-#Check get_plans
-foreach my $i (0..$tr->{'global_limit'}) {
-    $tr->createPlan($new_project->{'id'},$plan_name,"PETE & RE-PIOTR");
+
+    #Check get_runs
+    foreach my $i (0..$tr->{'global_limit'}) {
+        $tr->createRun($new_project->{'id'},$new_suite->{'id'},$run_name,"ACQUIRE CLOTHES, BOOTS AND MOTORCYCLE");
+    }
+    is(scalar(@{$tr->getRuns($new_project->{'id'})}),($tr->{'global_limit'} + 2),"Can get list of runs beyond ".$tr->{'global_limit'});
 }
-is(scalar(@{$tr->getPlans($new_project->{'id'})}),($tr->{'global_limit'} + 2),"Can get list of plans beyond ".$tr->{'global_limit'});
-
-
-#Check get_runs
-foreach my $i (0..$tr->{'global_limit'}) {
-    $tr->createRun($new_project->{'id'},$new_suite->{'id'},$run_name,"ACQUIRE CLOTHES, BOOTS AND MOTORCYCLE");
-}
-is(scalar(@{$tr->getRuns($new_project->{'id'})}),($tr->{'global_limit'} + 2),"Can get list of runs beyond ".$tr->{'global_limit'});
-
 ##########
 # Clean up
 ##########
