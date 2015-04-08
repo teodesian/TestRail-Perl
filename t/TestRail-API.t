@@ -125,7 +125,7 @@ is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{
 
 SKIP: {
     skip("Cannot create configurations programattically in the API like in mocks",2) if !$is_mock;
-    isnt($tr->getChildRunByName($namePlan,"Executing the great plan",['Chrome']),0,"Getting run by name returns child runs");
+    isnt($tr->getChildRunByName($namePlan,"Executing the great plan",['testConfig']),0,"Getting run by name returns child runs");
     is($tr->getChildRunByName($namePlan,"Executing the great plan"),0,"Getting run by name without sufficient configuration data returns child runs");
 }
 

@@ -23,7 +23,7 @@ I recommend using the excellent L<Attempt> module for this purpose.
 
 =cut
 
-use 5.010;
+use 5.014;
 
 use strict;
 use warnings;

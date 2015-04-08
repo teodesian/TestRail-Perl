@@ -1,13 +1,16 @@
-# ABSTRACT: Utilities for the testrail commandline functions.
+# ABSTRACT: Utilities for the testrail command line functions.
 # PODNAME: TestRail::Utils
-
-package TestRail::Utils;
 
 =head1 DESCRIPTION
 
-Utilities for the testrail commandline functions.
+Utilities for the testrail command line functions.
 
 =cut
+
+package TestRail::Utils;
+
+use strict;
+use warnings;
 
 =head1 FUNCTIONS
 
@@ -24,9 +27,9 @@ sub userInput {
  return $rt;
 }
 
-=head2 parseConfig($homedir)
+=head2 parseConfig(homedir)
 
-Parse .testrailrc in the provided homedir.
+Parse .testrailrc in the provided home directory.
 
 Returns:
 

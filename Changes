@@ -7,6 +7,7 @@ Revision history for Perl module TestRail::API
     - Add bin/testrail-tests and bin/testrail-runs
     - Add statusNamesToIds and userNamesToIds convenience methods to TestRail::API
     - Add getRunSummary to TestRail::API
+    - Minimum perl version now 5.14
 
 0.020 2015-03-25 TEODESIAN
     - Add getRunsPaginated and getPlansPaginated to get around 250 hardlimit in TR results
