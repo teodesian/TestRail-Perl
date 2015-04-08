@@ -2,7 +2,7 @@
 # PODNAME: Test::LWP::UserAgent::TestRailMock
 
 package Test::LWP::UserAgent::TestRailMock;
-$Test::LWP::UserAgent::TestRailMock::VERSION = '0.020';
+$Test::LWP::UserAgent::TestRailMock::VERSION = '0.021';
 use strict;
 use warnings;
 
@@ -67,7 +67,7 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
         'HTTP::Headers'
     );
     $VAR5 =
-      '[{"id":1,"name":"teodesian","email":"teodesian@cpan.org","is_active":true}]';
+      '[{"id":1,"name":"teodesian","email":"teodesian@cpan.org","is_active":true},{"id":2,"name":"billy","email":"billy@witchdoctor.com","is_active":true}]';
     $mockObject->map_response( qr/\Q$VAR1\E/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
@@ -1006,7 +1006,7 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
         'HTTP::Headers'
     );
     $VAR5 =
-      '{"id":23,"name":"GosPlan","description":"Soviet 5-year agriculture plan to liquidate Kulaks","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/23","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":1,"suite_id":9,"name":"Executing the great plan","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":"testConfig","config_ids":[1],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
+      '{"id":23,"name":"GosPlan","description":"Soviet 5-year agriculture plan to liquidate Kulaks","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":10,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/23","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":1,"suite_id":9,"name":"Executing the great plan","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":"testConfig","config_ids":[1],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
     $mockObject->map_response( qr/\Q$VAR1\E/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
@@ -1038,7 +1038,7 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
         'HTTP::Headers'
     );
     $VAR5 =
-      '{"id":24,"name":"mah dubz plan","description":"bogoplan","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/24","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":1,"suite_id":9,"name":"TestingSuite","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":"testConfig","config_ids":[2],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
+      '{"id":24,"name":"mah dubz plan","description":"bogoplan","milestone_id":8,"assignedto_id":null,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":10,"created_on":1419364930,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/plans\\/view\\/24","entries":[{"id":"271443a5-aacf-467e-8993-b4f7001195cf","suite_id":9,"name":"Executing the great plan","runs":[{"id":1,"suite_id":9,"name":"TestingSuite","description":null,"milestone_id":8,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":23,"entry_index":1,"entry_id":"271443a5-aacf-467e-8993-b4f7001195cf","config":"testConfig","config_ids":[2],"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/24"}]}]}';
     $mockObject->map_response( qr/\Q$VAR1\E/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
@@ -1070,8 +1070,102 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
         'HTTP::Headers'
     );
     $VAR5 =
-      '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STROGGIFY POPULATION CENTERS","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
-    $mockObject->map_response( qr/\Q$VAR1\E/,
+      '[{"id":15,"case_id":8,"status_id":1,"assignedto_id":null,"run_id":22,"title":"STROGGIFY POPULATION CENTERS","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+    $mockObject->map_response( qr/\Q$VAR1\E$/,
+        HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
+
+}
+
+{
+
+    $VAR1 = 'index.php?/api/v2/get_tests/22&status_id=1';
+    $VAR2 = '200';
+    $VAR3 = 'OK';
+    $VAR4 = bless(
+        {
+            'connection'          => 'close',
+            'x-powered-by'        => 'PHP/5.5.9-1ubuntu4.5',
+            'client-response-num' => 1,
+            'date'                => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'client-peer'         => '192.168.122.217:80',
+            'content-length'      => '276',
+            '::std_case'          => {
+                'client-date'         => 'Client-Date',
+                'x-powered-by'        => 'X-Powered-By',
+                'client-response-num' => 'Client-Response-Num',
+                'client-peer'         => 'Client-Peer'
+            },
+            'client-date'  => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'content-type' => 'application/json; charset=utf-8',
+            'server'       => 'Apache/2.4.7 (Ubuntu)'
+        },
+        'HTTP::Headers'
+    );
+    $VAR5 =
+      '[{"id":15,"case_id":8,"status_id":1,"assignedto_id":null,"run_id":22,"title":"STROGGIFY POPULATION CENTERS","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+    $mockObject->map_response( qr/\Q$VAR1\E$/,
+        HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
+
+}
+
+{
+
+    $VAR1 = 'index.php?/api/v2/get_tests/22&status_id=2';
+    $VAR2 = '200';
+    $VAR3 = 'OK';
+    $VAR4 = bless(
+        {
+            'connection'          => 'close',
+            'x-powered-by'        => 'PHP/5.5.9-1ubuntu4.5',
+            'client-response-num' => 1,
+            'date'                => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'client-peer'         => '192.168.122.217:80',
+            'content-length'      => '276',
+            '::std_case'          => {
+                'client-date'         => 'Client-Date',
+                'x-powered-by'        => 'X-Powered-By',
+                'client-response-num' => 'Client-Response-Num',
+                'client-peer'         => 'Client-Peer'
+            },
+            'client-date'  => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'content-type' => 'application/json; charset=utf-8',
+            'server'       => 'Apache/2.4.7 (Ubuntu)'
+        },
+        'HTTP::Headers'
+    );
+    $VAR5 = '[]';
+    $mockObject->map_response( qr/\Q$VAR1\E$/,
+        HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
+
+}
+
+{
+
+    $VAR1 = 'index.php?/api/v2/get_tests/1&status_id=5';
+    $VAR2 = '200';
+    $VAR3 = 'OK';
+    $VAR4 = bless(
+        {
+            'connection'          => 'close',
+            'x-powered-by'        => 'PHP/5.5.9-1ubuntu4.5',
+            'client-response-num' => 1,
+            'date'                => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'client-peer'         => '192.168.122.217:80',
+            'content-length'      => '276',
+            '::std_case'          => {
+                'client-date'         => 'Client-Date',
+                'x-powered-by'        => 'X-Powered-By',
+                'client-response-num' => 'Client-Response-Num',
+                'client-peer'         => 'Client-Peer'
+            },
+            'client-date'  => 'Tue, 23 Dec 2014 20:02:10 GMT',
+            'content-type' => 'application/json; charset=utf-8',
+            'server'       => 'Apache/2.4.7 (Ubuntu)'
+        },
+        'HTTP::Headers'
+    );
+    $VAR5 = '[]';
+    $mockObject->map_response( qr/\Q$VAR1\E$/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
 }
@@ -1103,7 +1197,7 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
     );
     $VAR5 =
       '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"faker.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
-    $mockObject->map_response( qr/\Q$VAR1\E/,
+    $mockObject->map_response( qr/\Q$VAR1\E$/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
 }
@@ -1134,7 +1228,7 @@ LWP::Protocol::http::Socket: Bad hostname \'hokum.bogus\' at /usr/share/perl5/LW
         'HTTP::Headers'
     );
     $VAR5 =
-      '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skipall.test"} ]';
+      '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
     $mockObject->map_response( qr/\Q$VAR1\E/,
         HTTP::Response->new( $VAR2, $VAR3, $VAR4, $VAR5 ) );
 
@@ -2011,7 +2105,7 @@ Test::LWP::UserAgent::TestRailMock - Provides an interface to something like Tes
 
 =head1 VERSION
 
-version 0.020
+version 0.021
 
 =head1 SYNOPSIS
 

@@ -6,15 +6,16 @@ use warnings;
 
 use Test::More;
 
-plan tests => 6 + ( $ENV{AUTHOR_TESTING} ? 1 : 0 );
+plan tests => 9 + ( $ENV{AUTHOR_TESTING} ? 1 : 0 );
 
 my @module_files = (
     'App/Prove/Plugin/TestRail.pm', 'Test/LWP/UserAgent/TestRailMock.pm',
     'Test/Rail/Harness.pm',         'Test/Rail/Parser.pm',
-    'TestRail/API.pm'
+    'TestRail/API.pm',              'TestRail/Utils.pm'
 );
 
-my @scripts = ('bin/testrail-report');
+my @scripts =
+  ( 'bin/testrail-report', 'bin/testrail-runs', 'bin/testrail-tests' );
 
 # no fake home requested
 

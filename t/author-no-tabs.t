@@ -17,15 +17,20 @@ use Test::NoTabs;
 
 my @files = (
     'bin/testrail-report',
+    'bin/testrail-runs',
+    'bin/testrail-tests',
     'lib/App/Prove/Plugin/TestRail.pm',
     'lib/Test/LWP/UserAgent/TestRailMock.pm',
     'lib/Test/Rail/Harness.pm',
     'lib/Test/Rail/Parser.pm',
     'lib/TestRail/API.pm',
+    'lib/TestRail/Utils.pm',
+    't/.testrailrc',
     't/00-compile.t',
     't/App-Prove-Plugin-Testrail.t',
     't/Test-Rail-Parser.t',
     't/TestRail-API.t',
+    't/TestRail-Utils.t',
     't/arg_types.t',
     't/author-classSafety.t',
     't/author-critic.t',
@@ -48,7 +53,9 @@ my @files = (
     't/skipall.test',
     't/test_multiple_files.tap',
     't/test_subtest.tap',
-    't/testrail-report.t'
+    't/testrail-report.t',
+    't/testrail-runs.t',
+    't/testrail-tests.t'
 );
 
 notabs_ok($_) foreach @files;

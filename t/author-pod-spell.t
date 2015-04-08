@@ -85,6 +85,8 @@ getConfigurationGroups
 getConfigurations
 getPlansPaginated
 getRunsPaginated
+getPossibleTestStatuses
+userInput
 George
 Baugh
 teodesian
@@ -92,6 +94,8 @@ Neil
 Bowers
 neil
 lib
+TestRail
+Utils
 Test
 LWP
 UserAgent
@@ -101,6 +105,5 @@ Harness
 App
 Prove
 Plugin
-TestRail
 Parser
 API

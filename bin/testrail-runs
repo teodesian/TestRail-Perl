@@ -1,0 +1,259 @@
+#!/usr/bin/env perl
+# ABSTRACT: List runs in a TestRail project matching the provided filters
+# PODNAME: testrail-runs
+
+
+use strict;
+use warnings;
+use utf8;
+
+use TestRail::API;
+use TestRail::Utils;
+
+use Getopt::Long;
+use File::HomeDir qw{my_home};
+use File::Find;
+use Cwd qw{abs_path};
+use File::Basename qw{basename};
+
+sub help {
+    print("
+testrail-tests - list tests in a run matching the provided filters.
+
+USAGE:
+
+  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
+
+PARAMETERS:
+  [MANDATORY PARAMETERS]
+    -j --project [project]: desired project name.
+
+  [OPTIONAL PARAMETERS]
+
+    -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
+    -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
+
+  [CONFIG OPTIONS]
+    In your \$HOME, (or the current directory, if your system has no
+    concept of a home directory) put a file called .testrailrc with
+    key=value syntax separated by newlines.
+    Valid Keys are: apiurl,user,password
+
+  [CONFIG OVERRIDES]
+    These override the config, if present.
+    If neither are used, you will be prompted.
+
+  --apiurl   [url] : full URL to get to TestRail index document
+  --password [key] : Your TestRail Password.
+  --user    [name] : Your TestRail User Name.
+
+TESTING OPTIONS:
+
+    --mock: don't do any real HTTP requests.
+    --help: show this output
+
+");
+    exit 0;
+}
+
+my %opts;
+
+GetOptions(
+    'apiurl'          => \$opts{'apiurl'},
+    'password'        => \$opts{'pass'},
+    'user'            => \$opts{'user'},
+    'j|project=s'     => \$opts{'project'},
+    'c|config=s@'     => \$opts{'configs'},
+    's|status=s@'     => \$opts{'statuses'},
+    'mock'            => \$opts{'mock'},
+    'h|help'          => \$opts{'help'}
+);
+
+if ($opts{help}) { help(); }
+
+#Parse config file if we are missing api url/key or user
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
+    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir);
+}
+
+#Interrogate user if they didn't provide info
+if (!$opts{apiurl}) {
+    print "Type the API endpoint url for your testLink install below:\n";
+    $opts{apiurl} = TestRail::Utils::userInput();
+}
+
+if (!$opts{user}) {
+    print "Type your testLink user name below:\n";
+    $opts{user} = TestRail::Utils::userInput();
+}
+
+if (!$opts{pass}) {
+    print "Type the password for your testLink user below:\n";
+    $opts{pass} = TestRail::Utils::userInput();
+}
+
+if (!$opts{apiurl} || !$opts{pass} || !$opts{user}) {
+    print "ERROR: api url, username and password cannot be blank.\n";
+    exit 1;
+}
+
+#Interrogate user if they didn't provide info
+if (!$opts{project}) {
+    print "Type the name of the project you are testing under:\n";
+    $opts{project} = TestRail::Utils::userInput();
+}
+
+if ($opts{mock}) {
+    use Test::LWP::UserAgent::TestRailMock;
+    $opts{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts{debug} = 1;
+}
+
+my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'debug'});
+$tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
+$tr->{'debug'} = 0;
+
+my ($status_ids,$user_ids);
+
+#Process statuses
+if ($opts{'statuses'}) {
+    eval { @$status_ids = $tr->statusNamesToIds(@{$opts{'statuses'}}); };
+    if ($@) {
+        print "$@\n";
+        exit 4;
+    }
+}
+
+my $project = $tr->getProjectByName($opts{'project'});
+if (!$project) {
+    print "No such project '$opts{project}'.\n";
+    exit 6;
+}
+
+my @pconfigs;
+if (defined $opts{configs}) {
+    my $avail_configs = $tr->getConfigurations($project->{'id'});
+    my ($cname);
+    @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @{$opts{configs}} } @$avail_configs; #Get a list of IDs from the names passed
+}
+
+if (defined($opts{configs}) && (scalar(@pconfigs) != scalar(@{$opts{configs}}))) {
+    print("One or more configurations passed does not exist in your project!\n");
+    exit 7;
+}
+
+my ($runs,$plans,$planRuns,$cruns,$found) = ([],[],[],[],0);
+$runs = $tr->getRuns($project->{'id'}) if (!$opts{'configs'}); # If configs are passed, global runs are not in consideration.
+$plans = $tr->getPlans($project->{'id'});
+foreach my $plan (@$plans) {
+    $cruns = $tr->getChildRuns($plan);
+    next if !$cruns;
+    foreach my $run (@$cruns) {
+        next if scalar(@pconfigs) != scalar(@{$run->{'config_ids'}});
+
+        #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        $found = 0;
+        foreach my $cid (@{$run->{'config_ids'}}) {
+            $found++ if grep {$_ == $cid} @pconfigs;
+        }
+
+        push(@$planRuns, $run) if $found == scalar(@{$run->{'config_ids'}});
+    }
+}
+
+push(@$runs,@$planRuns);
+
+if ($opts{'statuses'}) {
+    @$runs =  $tr->getRunSummary(@$runs);
+    @$runs = grep { defined($_->{'run_status'}) } @$runs; #Filter stuff with no results
+    foreach my $status (@{$opts{'statuses'}}) {
+        @$runs = grep { $_->{'run_status'}->{$status} } @$runs; #If it's positive, keep it.  Otherwise forget it.
+    }
+}
+
+@$runs = map {$_->{name}} @$runs;
+print join("\n",@$runs)."\n" if scalar(@$runs);
+exit 0;
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+testrail-runs - List runs in a TestRail project matching the provided filters
+
+=head1 VERSION
+
+version 0.021
+
+=head1 SYNOPSIS
+
+  testrail-runs [OPTIONS] | xargs prove -PTestrail=...
+
+=head1 DESCRIPTION
+
+testrail-tests - list runs in a TestRail project matching the provided filters.
+Groups by plan for runs which are children of a plan.
+
+=head2 PARAMETERS:
+
+=head3 MANDATORY PARAMETERS
+
+    -j --project [project]: desired project name.
+
+=head3 OPTIONAL PARAMETERS
+
+    -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
+    -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
+
+=head3 CONFIG OPTIONS
+
+    In your \$HOME, (or the current directory, if your system has no
+    concept of a home directory) put a file called .testrailrc with
+    key=value syntax separated by newlines.
+    Valid Keys are: apiurl,user,password
+
+=head3 CONFIG OVERRIDES
+
+    These override the config, if present.
+    If neither are used, you will be prompted.
+
+  --apiurl   [url] : full URL to get to TestRail index document
+  --password [key] : Your TestRail Password.
+  --user    [name] : Your TestRail User Name.
+
+=head2 TESTING OPTIONS:
+
+    --mock: don't do any real HTTP requests.
+    --help: show this output
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this module.
+
+=head1 AUTHOR
+
+George S. Baugh <teodesian@cpan.org>
+
+=head1 SOURCE
+
+The development version is on github at L<http://github.com/teodesian/TestRail-Perl>
+and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2015 by George S. Baugh.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
+
+__END__
+
+L<TestRail::API>
+
+L<File::HomeDir> for the finding of .testrailrc
+

@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use 5.010;
+use 5.014;
 
 use ExtUtils::MakeMaker;
 
@@ -17,16 +17,20 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "TestRail-API",
   "EXE_FILES" => [
-    "bin/testrail-report"
+    "bin/testrail-report",
+    "bin/testrail-tests",
+    "bin/testrail-runs"
   ],
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.010",
+  "MIN_PERL_VERSION" => "5.014",
   "NAME" => "TestRail::API",
   "PREREQ_PM" => {
     "Carp" => 0,
     "Clone" => 0,
+    "Cwd" => 0,
     "Data::Validate::URI" => 0,
     "File::Basename" => 0,
+    "File::Find" => 0,
     "File::HomeDir" => 0,
     "Getopt::Long" => 0,
     "HTTP::Headers" => 0,
@@ -55,10 +59,11 @@ my %WriteMakefileArgs = (
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
+    "Test::Deep" => 0,
     "Test::Fatal" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.020",
+  "VERSION" => "0.021",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -70,9 +75,11 @@ my %FallbackPrereqs = (
   "Carp" => 0,
   "Class::Inspector" => 0,
   "Clone" => 0,
+  "Cwd" => 0,
   "Data::Validate::URI" => 0,
   "ExtUtils::MakeMaker" => 0,
   "File::Basename" => 0,
+  "File::Find" => 0,
   "File::HomeDir" => 0,
   "File::Spec" => 0,
   "Getopt::Long" => 0,
@@ -90,6 +97,7 @@ my %FallbackPrereqs = (
   "TAP::Harness" => 0,
   "TAP::Parser" => 0,
   "Term::ANSIColor" => "2.01",
+  "Test::Deep" => 0,
   "Test::Fatal" => 0,
   "Test::LWP::UserAgent" => 0,
   "Test::More" => 0,

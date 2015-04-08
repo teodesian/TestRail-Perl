@@ -6,6 +6,7 @@
 use strict;
 use warnings;
 
+use TestRail::Utils;
 use Getopt::Long;
 use Term::ANSIColor 2.01 qw(colorstrip);
 use Test::Rail::Parser;
@@ -119,32 +120,6 @@ TESTING OPTIONS:
     exit 0;
 }
 
-sub userInput {
- $| = 1;
- my $rt = <STDIN>;
- chomp $rt;
- return $rt;
-}
-
-sub parseConfig {
-    my $homedir = shift;
-    my $results = {};
-    my $arr =[];
-
-    open(my $fh, '<', $homedir . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
-    while (<$fh>) {
-        chomp;
-        @$arr = split(/=/,$_);
-        if (scalar(@$arr) != 2) {
-            warn("Could not parse $_ in tlreport config\n");
-            next;
-        }
-        $results->{lc($arr->[0])} = $arr->[1];
-    }
-    close($fh);
-    return ($results->{'apiurl'},$results->{'password'},$results->{'user'});
-}
-
 #Main loop------------
 
 my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn);
@@ -171,7 +146,7 @@ if ($help) { help(); }
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
-    ($apiurl,$password,$user) = parseConfig($homedir);
+    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir);
 }
 
 #XXX not even close to optimized, don't slurp in the future
@@ -223,17 +198,17 @@ if ($file) {
 #Interrogate user if they didn't provide info
 if (!$apiurl) {
     print "Type the API endpoint url for your testLink install below:\n";
-    $apiurl = userInput();
+    $apiurl = TestRail::Utils::userInput();
 }
 
 if (!$user) {
     print "Type your testLink user name below:\n";
-    $user = userInput();
+    $user = TestRail::Utils::userInput();
 }
 
 if (!$password) {
     print "Type the password for your testLink user below:\n";
-    $password = userInput();
+    $password = TestRail::Utils::userInput();
 }
 
 if (!$apiurl || !$password || !$user) {
@@ -244,13 +219,13 @@ if (!$apiurl || !$password || !$user) {
 #Interrogate user if they didn't provide info
 if (!$project) {
     print "Type the name of the project you are testing under:\n";
-    $project = userInput();
+    $project = TestRail::Utils::userInput();
 }
 
 # Interrogate user if options were not passed
 if (!$run) {
     print "Type the name of the existing run you would like to run against:\n";
-    $run = userInput();
+    $run = TestRail::Utils::userInput();
 }
 
 my $debug = 0;
@@ -305,7 +280,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.020
+version 0.021
 
 =head1 SYNOPSIS
 
@@ -320,7 +295,6 @@ version 0.020
 
 testrail-report - report raw TAP results to a TestRail install
 
-USAGE:
 =head2 PARAMETERS:
 
 =head3 MANDATORY PARAMETERS
@@ -353,12 +327,12 @@ This should provide sufficient uniqueness to get any run using names.
       If plans/configurations are supplied, it will attempt to create it as a child of the provided plan, and with the supplied configurations.
       If the specified run already exists, the program will simply use the existing run, and disregard the supplied testsuite_id.
 
-=head3 CONFIG OVERRIDES
+=head3 CONFIG OPTIONS
 
 In your $HOME (or the current directory, if your system has no concept of a home directory), put a file called .testrailrc with key=value
 syntax separated by newlines.  Valid Keys are: apiurl,user,password
 
-=head3 CONFIG OPTIONS
+=head3 CONFIG OVERRIDES
 
 These override the config, if present.  If neither are used, you will be prompted.
 

@@ -2,9 +2,9 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.020';
+$TestRail::API::VERSION = '0.021';
 
-use 5.010;
+use 5.014;
 
 use strict;
 use warnings;
@@ -195,6 +195,20 @@ sub getUserByEmail {
         return $usr if $usr->{'email'} eq $email;
     }
     return 0;
+}
+
+sub userNamesToIds {
+    my ( $self, @names ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("At least one user name must be provided") if !scalar(@names);
+    my @ret = grep { defined $_ } map {
+        my $user = $_;
+        my @list = grep { $user->{'name'} eq $_ } @names;
+        scalar(@list) ? $user->{'id'} : undef
+    } @{ $self->getUsers() };
+    confess("One or more user names provided does not exist in TestRail.")
+      unless scalar(@names) == scalar(@ret);
+    return @ret;
 }
 
 sub createProject {
@@ -649,6 +663,51 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+sub getRunSummary {
+    my ( $self, @runs ) = @_;
+
+    #Translate custom statuses
+    my $statuses = $self->getPossibleTestStatuses();
+    my %shash;
+
+    #XXX so, they do these tricks with the status names, see...so map the counts to their relevant status ids.
+    @shash{
+        map {
+            ( $_->{'id'} < 6 )
+              ? $_->{'name'} . "_count"
+              : "custom_status"
+              . ( $_->{'id'} - 5 )
+              . "_count"
+        } @$statuses
+    } = map { $_->{'id'} } @$statuses;
+    my @sname;
+
+    #Create listing of keys/values
+    @runs = map {
+        my $run = $_;
+        @{ $run->{statuses} }{ grep { $_ =~ m/_count$/ } keys($run) } =
+          grep { $_ =~ m/_count$/ } keys($run);
+        foreach my $status ( keys( $run->{'statuses'} ) ) {
+            next if !exists( $shash{$status} );
+            @sname = grep {
+                exists( $shash{$status} )
+                  && $_->{'id'} == $shash{$status}
+            } @$statuses;
+            $run->{'statuses_clean'}->{ $sname[0]->{'name'} } = $run->{$status};
+        }
+        $run;
+    } @runs;
+
+    return map {
+        {
+            'id'         => $_->{'id'},
+            'name'       => $_->{'name'},
+            'run_status' => $_->{'statuses_clean'}
+        }
+    } @runs;
+
+}
+
 sub getChildRuns {
     my ( $self, $plan ) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
@@ -658,9 +717,12 @@ sub getChildRuns {
       unless defined( $plan->{'entries'} )
       && ( reftype( $plan->{'entries'} ) || 'undef' ) eq 'ARRAY';
     return 0
-      unless defined( $plan->{'entries'}->[0]->{'runs'} )
-      && ( reftype( $plan->{'entries'}->[0]->{'runs'} ) || 'undef' ) eq 'ARRAY';
-    return $plan->{'entries'}->[0]->{'runs'};
+      unless defined( $plan->{'entries'} )
+      && ( reftype( $plan->{'entries'} ) || 'undef' ) eq 'ARRAY';
+    my $entries = $plan->{'entries'};
+    my @plans = map { $_->{'runs'}->[0] }
+      @$entries;    #XXX not sure if this list-ification is intentional
+    return \@plans;
 }
 
 sub getChildRunByName {
@@ -686,13 +748,22 @@ sub getChildRunByName {
             grep { $_ eq $cname } @$configurations
         } @$avail_configs;    #Get a list of IDs from the names passed
     }
+    confess("One or more configurations passed does not exist in your project!")
+      if defined($configurations)
+      && ( scalar(@pconfigs) != scalar(@$configurations) );
+
+    my $found;
     foreach my $run (@$runs) {
+        next if $run->{name} ne $name;
+        next if scalar(@pconfigs) != scalar( @{ $run->{'config_ids'} } );
 
         #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        $found = 0;
         foreach my $cid ( @{ $run->{'config_ids'} } ) {
-            next unless List::Util::all { $_ eq $cid } @pconfigs;
+            $found++ if grep { $_ == $cid } @pconfigs;
         }
-        return $run if $run->{name} eq $name;
+
+        return $run if $found == scalar( @{ $run->{'config_ids'} } );
     }
     return 0;
 }
@@ -894,10 +965,25 @@ sub getMilestoneByID {
 }
 
 sub getTests {
-    my ( $self, $run_id ) = @_;
+    my ( $self, $run_id, $status_ids, $assignedto_ids ) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Run ID must be integer") unless $self->_checkInteger($run_id);
-    return $self->_doRequest("index.php?/api/v2/get_tests/$run_id");
+    confess("Status IDs must be ARRAYREF")
+      unless !defined($status_ids)
+      || ( reftype($status_ids) || 'undef' ) eq 'ARRAY';
+    confess("Assigned to IDs must be ARRAYREF")
+      unless !defined($assignedto_ids)
+      || ( reftype($assignedto_ids) || 'undef' ) eq 'ARRAY';
+    my $query_string = '';
+    $query_string = '&status_id=' . join( ',', @$status_ids )
+      if defined($status_ids) && scalar(@$status_ids);
+    my $results =
+      $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
+    @$results = grep {
+        my $aid = $_->{'assignedto_id'};
+        grep { defined($aid) && $aid == $_ } @$assignedto_ids
+    } @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
+    return $results;
 }
 
 sub getTestByName {
@@ -951,6 +1037,20 @@ sub getPossibleTestStatuses {
     my $self = shift;
     confess("Object methods must be called by an instance") unless ref($self);
     return $self->_doRequest('index.php?/api/v2/get_statuses');
+}
+
+sub statusNamesToIds {
+    my ( $self, @names ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("At least one status name must be provided") if !scalar(@names);
+    my @ret = grep { defined $_ } map {
+        my $status = $_;
+        my @list = grep { $status->{'name'} eq $_ } @names;
+        scalar(@list) ? $status->{'id'} : undef
+    } @{ $self->getPossibleTestStatuses() };
+    confess("One or more status names provided does not exist in TestRail.")
+      unless scalar(@names) == scalar(@ret);
+    return @ret;
 }
 
 sub createTestResults {
@@ -1100,7 +1200,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.020
+version 0.021
 
 =head1 SYNOPSIS
 
@@ -1168,6 +1268,20 @@ Returns ARRAYREF of user definition HASHREFs.
 
 Get user definition hash by ID, Name or Email.
 Returns user def HASHREF.
+
+=head2 userNamesToIds(names)
+
+Convenience method to translate a list of user names to TestRail user IDs.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of user names to translate to IDs.
+
+=back
+
+Returns ARRAY of user IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid username.
 
 =head1 PROJECT METHODS
 
@@ -1637,6 +1751,21 @@ Returns run definition HASHREF.
 
     $tr->getRunByID(7779311);
 
+=head2 B<getRunSummary(runs)>
+
+Returns array of hashrefs describing the # of tests in the run(s) with the available statuses.
+Translates custom_statuses into their system names for you.
+
+=over 4
+
+=item ARRAY C<RUNS> - runs obtained from getRun* or getChildRun* methods.
+
+=back
+
+Returns ARRAY of run HASHREFs with the added key 'run_status' holding a hashref where status_name => count.
+
+    $tr->getRunSummary($run,$run2);
+
 =head1 RUN AS CHILD OF PLAN METHODS
 
 =head2 B<getChildRuns(plan)>
@@ -1665,6 +1794,8 @@ Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract 
 
 Returns run definition HASHREF, or false if no such run is found.
 Convenience method using getChildRuns.
+
+Will throw a fatal error if one or more of the configurations passed does not exist in the project.
 
 =head1 PLAN METHODS
 
@@ -1882,19 +2013,23 @@ Returns milestone definition HASHREF.
 
 =head1 TEST METHODS
 
-=head2 B<getTests (run_id)>
+=head2 B<getTests (run_id,status_ids,assignedto_ids)>
 
-Get tests for some run.
+Get tests for some run.  Optionally filter by provided status_ids.
 
 =over 4
 
 =item INTEGER C<RUN ID> - ID of parent run.
 
+=item ARRAYREF C<STATUS IDS> (optional) - IDs of relevant test statuses to filter by.  get with getPossibleTestStatuses.
+
+=item ARRAYREF C<ASSIGNEDTO IDS> (optional) - IDs of users assigned to test to filter by.  get with getUsers.
+
 =back
 
 Returns ARRAYREF of test definition HASHREFs.
 
-    $tr->getTests(8);
+    $tr->getTests(8,[1,2,3],[2]);
 
 =head2 B<getTestByName (run_id,name)>
 
@@ -1949,6 +2084,21 @@ Gets a test result field by it's system name.  Optionally filter by project ID.
 Gets all possible statuses a test can be set to.
 
 Returns ARRAYREF of status definition HASHREFs.
+
+=head2 statusNamesToIds(names)
+
+Convenience method to translate a list of statuses to TestRail status IDs.
+The names referred to here are 'internal names' rather than the labels shown in TestRail.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of status IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
 
 =head2 B<createTestResults(test_id,status_id,comment,options,custom_options)>
 
