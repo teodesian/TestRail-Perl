@@ -7,6 +7,9 @@ META.yml
 Makefile.PL
 README
 SIGNATURE
+TestRail-API-0.021/.travis.yml
+TestRail-API-0.021/TestRail-API-0.021/.travis.yml
+TestRail-API-0.021/TestRail-API-0.021/TestRail-API-0.021/.travis.yml
 bin/testrail-report
 bin/testrail-runs
 bin/testrail-tests

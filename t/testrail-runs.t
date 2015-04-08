@@ -4,7 +4,10 @@ use warnings;
 use Test::More 'tests' => 8;
 
 #check status filters
-my @args = ( $^X, qw{bin/testrail-runs -j 'TestProject' --mock} );
+my @args = (
+    $^X,
+    qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j 'TestProject' --mock}
+);
 my $out = `@args`;
 is( $? >> 8, 0, "Exit code OK looking for runs with passes" );
 chomp $out;
@@ -15,7 +18,10 @@ like(
 );
 
 #check status filters
-@args = ( $^X, qw{bin/testrail-runs -j 'TestProject' --mock --status passed} );
+@args = (
+    $^X,
+    qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j 'TestProject' --mock --status passed}
+);
 $out = `@args`;
 is(
     $? >> 8,
@@ -25,8 +31,10 @@ is(
 chomp $out;
 is( $out, '', "Gets no runs correctly looking for passes" );
 
-@args =
-  ( $^X, qw{bin/testrail-runs -j 'CRUSH ALL HUMANS' --mock --status passed} );
+@args = (
+    $^X,
+    qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j 'CRUSH ALL HUMANS' --mock --status passed}
+);
 $out = `@args`;
 is( $? >> 8, 0, "Exit code OK looking for runs with passes" );
 chomp $out;
@@ -37,8 +45,10 @@ like(
 );
 
 #TODO check configs for real next time
-@args =
-  ( $^X, qw{bin/testrail-runs -j 'TestProject' --mock --config testConfig} );
+@args = (
+    $^X,
+    qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j 'TestProject' --mock --config testConfig}
+);
 $out = `@args`;
 is( $? >> 8, 0, "Exit code OK looking for runs with passes" );
 chomp $out;

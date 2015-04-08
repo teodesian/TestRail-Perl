@@ -4,7 +4,7 @@
 package TestRail::API;
 $TestRail::API::VERSION = '0.021';
 
-use 5.014;
+use 5.010;
 
 use strict;
 use warnings;
@@ -685,9 +685,9 @@ sub getRunSummary {
     #Create listing of keys/values
     @runs = map {
         my $run = $_;
-        @{ $run->{statuses} }{ grep { $_ =~ m/_count$/ } keys($run) } =
-          grep { $_ =~ m/_count$/ } keys($run);
-        foreach my $status ( keys( $run->{'statuses'} ) ) {
+        @{ $run->{statuses} }{ grep { $_ =~ m/_count$/ } keys(%$run) } =
+          grep { $_ =~ m/_count$/ } keys(%$run);
+        foreach my $status ( keys( %{ $run->{'statuses'} } ) ) {
             next if !exists( $shash{$status} );
             @sname = grep {
                 exists( $shash{$status} )

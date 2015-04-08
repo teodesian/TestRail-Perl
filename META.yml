@@ -5,7 +5,6 @@ author:
 build_requires:
   App::Prove: 0
   Class::Inspector: 0
-  ExtUtils::MakeMaker: 0
   File::Spec: 0
   IO::Handle: 0
   IPC::Open3: 0
@@ -64,7 +63,7 @@ requires:
   Test::LWP::UserAgent: 0
   Try::Tiny: 0
   parent: 0
-  perl: 5.014
+  perl: 5.010
   strict: 0
   utf8: 0
   warnings: 0

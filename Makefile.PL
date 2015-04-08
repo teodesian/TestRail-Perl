@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use 5.014;
+use 5.010;
 
 use ExtUtils::MakeMaker;
 
@@ -22,7 +22,7 @@ my %WriteMakefileArgs = (
     "bin/testrail-runs"
   ],
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.014",
+  "MIN_PERL_VERSION" => "5.010",
   "NAME" => "TestRail::API",
   "PREREQ_PM" => {
     "Carp" => 0,
@@ -55,7 +55,6 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "App::Prove" => 0,
     "Class::Inspector" => 0,
-    "ExtUtils::MakeMaker" => 0,
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,

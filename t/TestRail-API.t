@@ -7,8 +7,7 @@ use Test::LWP::UserAgent::TestRailMock;
 use Test::More tests => 71;
 use Test::Fatal;
 use Test::Deep;
-use Scalar::Util 'reftype';
-use ExtUtils::MakeMaker qw{prompt};
+use Scalar::Util ();
 
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
@@ -97,7 +96,7 @@ ok( $tr->getProjects(), "Get Projects returns list" );
 is( $tr->getProjectByName($project_name)->{'name'},
     $project_name, "Can get project by name" );
 my $pjid = $tr->getProjectByID( $new_project->{'id'} );
-is( reftype($pjid) eq 'HASH' ? $pjid->{'id'} : $pjid,
+is( Scalar::Util::reftype($pjid) eq 'HASH' ? $pjid->{'id'} : $pjid,
     $new_project->{'id'}, "Can get project by id" );
 
 #Test TESTSUITE methods
@@ -318,8 +317,8 @@ is( $summary->{'run_status'}->{'untested'},
 
 #Test configuration methods
 my $configs = $tr->getConfigurations( $new_project->{'id'} );
-my $is_arr =
-  is( reftype($configs), 'ARRAY', "Can get configurations for a project" );
+my $is_arr  = is( Scalar::Util::reftype($configs),
+    'ARRAY', "Can get configurations for a project" );
 my ( @config_names, @config_ids );
 if ($is_arr) {
     @config_names = map { $_->{'name'} } @$configs;
