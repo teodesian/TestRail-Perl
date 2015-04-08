@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 68;
+use Test::More tests => 71;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util 'reftype';
@@ -166,6 +166,13 @@ is(scalar(@$filteredTests),0,"Test Filtering works: status id positive, user id 
 $filteredTests = $tr->getTests($new_run->{'id'},undef,[$userlist->[0]->{'id'}]);
 is(scalar(@$filteredTests),0,"Test Filtering works: status id undef, user id negative");
 #XXX there is no way to programmatically assign things :( so this will remain somewhat uncovered
+
+#Get run summary
+my $runs = $tr->getRuns($new_project->{'id'});
+my ($summary) = $tr->getRunSummary(@$runs); #I only care about the first one
+isnt($summary->{'run_status'},undef,"Can get run statuses correctly");
+is($summary->{'run_status'}->{'passed'},int(!$is_mock),"Gets # of passed cases correctly");
+is($summary->{'run_status'}->{'untested'},int($is_mock),"Gets # of untested cases correctly");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});

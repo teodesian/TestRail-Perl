@@ -1183,6 +1183,48 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+=head2 B<getRunSummary(runs)>
+
+Returns array of hashrefs describing the # of tests in the run(s) with the available statuses.
+Translates custom_statuses into their system names for you.
+
+=over 4
+
+=item ARRAY C<RUNS> - runs obtained from getRun* or getChildRun* methods.
+
+=back
+
+Returns ARRAY of run HASHREFs with the added key 'run_status' holding a hashref where status_name => count.
+
+    $tr->getRunSummary($run,$run2);
+
+=cut
+
+sub getRunSummary {
+    my ($self,@runs) = @_;
+
+    #Translate custom statuses
+    my $statuses = $self->getPossibleTestStatuses();
+    my %shash;
+    #XXX so, they do these tricks with the status names, see...so map the counts to their relevant status ids.
+    @shash{map { ( $_->{'id'} < 6 ) ? $_->{'name'}."_count" : "custom_status".($_->{'id'} - 5)."_count" } @$statuses } = map { $_->{'id'} } @$statuses;
+    my @sname;
+    #Create listing of keys/values
+    @runs = map {
+        my $run = $_;
+        @{$run->{statuses}}{grep {$_ =~ m/_count$/} keys($run)} = grep {$_ =~ m/_count$/} keys($run);
+        foreach my $status (keys($run->{'statuses'})) {
+            next if !exists($shash{$status});
+            @sname = grep {exists($shash{$status}) && $_->{'id'} == $shash{$status}} @$statuses;
+            $run->{'statuses_clean'}->{$sname[0]->{'name'}} = $run->{$status};
+        }
+        $run;
+    } @runs;
+
+    return map { {'id' => $_->{'id'}, 'name' => $_->{'name'}, 'run_status' => $_->{'statuses_clean'}} } @runs;
+
+}
+
 =head1 RUN AS CHILD OF PLAN METHODS
 
 =head2 B<getChildRuns(plan)>

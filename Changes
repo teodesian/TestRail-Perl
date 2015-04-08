@@ -1,11 +1,12 @@
 Revision history for Perl module TestRail::API
 
-0.021 2015-04-07 TEODESIAN
+0.021 2015-04-08 TEODESIAN
     - Fix issue where getChildRuns did not return anything past first run
     - Fix issue where getChildRunByName did not perform configuration filtering correctly
     - Add ability to filter by test status and assignedto id to getTests
     - Add bin/testrail-tests and bin/testrail-runs
     - Add statusNamesToIds and userNamesToIds convenience methods to TestRail::API
+    - Add getRunSummary to TestRail::API
 
 0.020 2015-03-25 TEODESIAN
     - Add getRunsPaginated and getPlansPaginated to get around 250 hardlimit in TR results

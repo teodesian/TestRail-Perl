@@ -1,33 +1,26 @@
 #!/usr/bin/env perl
-# ABSTRACT: List tests in a TestRail run matching the provided filters
-# PODNAME: testrail-tests
+# ABSTRACT: List runs in a TestRail project matching the provided filters
+# PODNAME: testrail-runs
 
 =head1 SYNOPSIS
 
-  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
+  testrail-runs [OPTIONS] | xargs prove -PTestrail=...
 
 =head1 DESCRIPTION
 
-testrail-tests - list tests in a run matching the provided filters.
+testrail-tests - list runs in a TestRail project matching the provided filters.
+Groups by plan for runs which are children of a plan.
 
 =head2 PARAMETERS:
 
 =head3 MANDATORY PARAMETERS
 
     -j --project [project]: desired project name.
-    -r --run [run]: desired run name.
-
-=head3 SEMI-OPTIONAL PARAMETERS
-
-    -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
-    -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
-    -n --no-recurse: if match passed, do not recurse subdirectories.
 
 =head3 OPTIONAL PARAMETERS
 
-    -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
-    -s --status [status]: only list tests marked as [status] in testrail.  Can be passed multiple times.
-    -a --assignedto [user]: only list tests assigned to user. Can be passed multiple times.
+    -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
+    -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
 
 =head3 CONFIG OPTIONS
 
@@ -76,19 +69,11 @@ USAGE:
 PARAMETERS:
   [MANDATORY PARAMETERS]
     -j --project [project]: desired project name.
-    -r --run [run]: desired run name.
-
-  [SEMI-OPTIONAL PARAMETERS]
-
-    -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
-    -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
-    -n --no-recurse: if match passed, do not recurse subdirectories.
 
   [OPTIONAL PARAMETERS]
 
-    -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
-    -s --status [status]: only list tests marked as [status] in testrail.  Can be passed multiple times.
-    -a --assignedto [user]: only list tests assigned to user. Can be passed multiple times.
+    -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
+    -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
 
   [CONFIG OPTIONS]
     In your \$HOME, (or the current directory, if your system has no
@@ -108,6 +93,7 @@ TESTING OPTIONS:
 
     --mock: don't do any real HTTP requests.
     --help: show this output
+
 ");
     exit 0;
 }
@@ -119,14 +105,10 @@ GetOptions(
     'password'        => \$opts{'pass'},
     'user'            => \$opts{'user'},
     'j|project=s'     => \$opts{'project'},
-    'p|plan=s'        => \$opts{'plan'},
-    'r|run=s'         => \$opts{'run'},
     'c|config=s@'     => \$opts{'configs'},
     's|status=s@'     => \$opts{'statuses'},
-    'a|assignedto=s@' => \$opts{'users'},
     'mock'            => \$opts{'mock'},
-    'm|match=s'       => \$opts{'match'},
-    'n|no-recurse'    => \$opts{'no-recurse'}
+    'h|help'          => \$opts{'help'}
 );
 
 if ($opts{help}) { help(); }
@@ -164,12 +146,6 @@ if (!$opts{project}) {
     $opts{project} = TestRail::Utils::userInput();
 }
 
-# Interrogate user if options were not passed
-if (!$opts{run}) {
-    print "Type the name of the existing run you would like to run against:\n";
-    $opts{run} = TestRail::Utils::userInput();
-}
-
 if ($opts{mock}) {
     use Test::LWP::UserAgent::TestRailMock;
     $opts{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
@@ -179,30 +155,6 @@ if ($opts{mock}) {
 my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'debug'});
 $tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
 $tr->{'debug'} = 0;
-
-my $project = $tr->getProjectByName($opts{'project'});
-if (!$project) {
-    print "No such project '$opts{project}'.\n";
-    exit 6;
-}
-
-my ($run,$plan);
-
-if ($opts{'plan'}) {
-    $plan = $tr->getPlanByName($project->{'id'},$opts{'plan'});
-    if (!$plan) {
-        print "No such plan '$opts{plan}'!\n";
-        exit 1;
-    }
-    $run = $tr->getChildRunByName($plan,$opts{'run'}, $opts{'configs'});
-} else {
-    $run = $tr->getRunByName($project->{'id'},$opts{'run'});
-}
-
-if (!$run) {
-    print "No such run '$opts{run}' matching the provided configs (if any).\n";
-    exit 2;
-}
 
 my ($status_ids,$user_ids);
 
@@ -215,35 +167,55 @@ if ($opts{'statuses'}) {
     }
 }
 
-#Process assignedto ids
-if ($opts{'users'}) {
-    eval { @$user_ids = $tr->userNamesToIds(@{$opts{'users'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 5;
+my $project = $tr->getProjectByName($opts{'project'});
+if (!$project) {
+    print "No such project '$opts{project}'.\n";
+    exit 6;
+}
+
+my @pconfigs;
+if (defined $opts{configs}) {
+    my $avail_configs = $tr->getConfigurations($project->{'id'});
+    my ($cname);
+    @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @{$opts{configs}} } @$avail_configs; #Get a list of IDs from the names passed
+}
+
+if (defined($opts{configs}) && (scalar(@pconfigs) != scalar(@{$opts{configs}}))) {
+    print("One or more configurations passed does not exist in your project!\n");
+    exit 7;
+}
+
+my ($runs,$plans,$planRuns,$cruns,$found) = ([],[],[],[],0);
+$runs = $tr->getRuns($project->{'id'}) if (!$opts{'configs'}); # If configs are passed, global runs are not in consideration.
+$plans = $tr->getPlans($project->{'id'});
+foreach my $plan (@$plans) {
+    $cruns = $tr->getChildRuns($plan);
+    next if !$cruns;
+    foreach my $run (@$cruns) {
+        next if scalar(@pconfigs) != scalar(@{$run->{'config_ids'}});
+
+        #Compare run config IDs against desired, invalidate run if all conditions not satisfied
+        $found = 0;
+        foreach my $cid (@{$run->{'config_ids'}}) {
+            $found++ if grep {$_ == $cid} @pconfigs;
+        }
+
+        push(@$planRuns, $run) if $found == scalar(@{$run->{'config_ids'}});
     }
 }
 
-my $cases = $tr->getTests($run->{'id'},$status_ids,$user_ids);
+push(@$runs,@$planRuns);
 
-if (!$cases) {
-    print "No cases in TestRail!\n";
-    exit 3;
-}
-
-my @tests =  map {$_->{'title'}} @$cases;
-my @realtests;
-
-if ($opts{'match'}) {
-    if (!$opts{'no-recurse'}) {
-        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $opts{'match'} );
-        @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
-    } else {
-        @tests = grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
+if ($opts{'statuses'}) {
+    @$runs =  $tr->getRunSummary(@$runs);
+    @$runs = grep { defined($_->{'run_status'}) } @$runs; #Filter stuff with no results
+    foreach my $status (@{$opts{'statuses'}}) {
+        @$runs = grep { $_->{'run_status'}->{$status} } @$runs; #If it's positive, keep it.  Otherwise forget it.
     }
 }
-@tests = map { abs_path($_) } @tests;
-print join("\n",@tests)."\n" if scalar(@tests);
+
+@$runs = map {$_->{name}} @$runs;
+print join("\n",@$runs)."\n" if scalar(@$runs);
 exit 0;
 
 __END__
