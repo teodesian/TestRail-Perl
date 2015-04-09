@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.022 2015-05-08 TEODESIAN
+    - Fix issue where testrail-tests always attempted to turn test names into paths
+
 0.021 2015-04-08 TEODESIAN
     - Fix issue where getChildRuns did not return anything past first run
     - Fix issue where getChildRunByName did not perform configuration filtering correctly
