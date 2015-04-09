@@ -101,9 +101,9 @@ TESTING OPTIONS:
 my %opts;
 
 GetOptions(
-    'apiurl'          => \$opts{'apiurl'},
-    'password'        => \$opts{'pass'},
-    'user'            => \$opts{'user'},
+    'apiurl=s'          => \$opts{'apiurl'},
+    'password=s'        => \$opts{'pass'},
+    'user=s'            => \$opts{'user'},
     'j|project=s'     => \$opts{'project'},
     'c|config=s@'     => \$opts{'configs'},
     's|status=s@'     => \$opts{'statuses'},
