@@ -193,7 +193,7 @@ if ($opts{'match'}) {
         @tests = grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
     }
 }
-@tests = map { abs_path($_) } @tests;
+@tests = map { abs_path($_) } @tests if $opts{'match'};
 print join("\n",@tests)."\n" if scalar(@tests);
 exit 0;
 
@@ -207,7 +207,7 @@ testrail-tests - List tests in a TestRail run matching the provided filters
 
 =head1 VERSION
 
-version 0.021
+version 0.022
 
 =head1 SYNOPSIS
 

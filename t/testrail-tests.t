@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 18;
+use Test::More 'tests' => 20;
 
 #check plan mode
 my @args = (
@@ -91,4 +91,15 @@ $out = `@args`;
 is( $? >> 8, 0, "Exit code OK when filtering by status" );
 chomp $out;
 is( $out, '', "Gets no tests correctly when filtering by wrong status" );
+
+#Verify no-match returns non path
+@args = (
+    $^X,
+    qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r 'TestingSuite' --mock}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK running no plan mode, no recurse" );
+chomp $out;
+like( $out, qr/\nskipall\.test$/,
+    "Gets test correctly in no plan mode, no recurse" );
 

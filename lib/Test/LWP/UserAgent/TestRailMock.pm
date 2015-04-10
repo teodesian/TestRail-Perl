@@ -2,7 +2,7 @@
 # PODNAME: Test::LWP::UserAgent::TestRailMock
 
 package Test::LWP::UserAgent::TestRailMock;
-$Test::LWP::UserAgent::TestRailMock::VERSION = '0.021';
+$Test::LWP::UserAgent::TestRailMock::VERSION = '0.022';
 use strict;
 use warnings;
 
@@ -2105,7 +2105,7 @@ Test::LWP::UserAgent::TestRailMock - Provides an interface to something like Tes
 
 =head1 VERSION
 
-version 0.021
+version 0.022
 
 =head1 SYNOPSIS
 
