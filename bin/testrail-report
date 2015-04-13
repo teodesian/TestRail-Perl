@@ -280,7 +280,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.022
+version 0.023
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.022';
+$TestRail::API::VERSION = '0.023';
 
 use 5.010;
 
@@ -885,15 +885,23 @@ sub createRunInPlan {
       unless !defined($case_ids)
       || ( reftype($case_ids) || 'undef' ) eq 'ARRAY';
 
+    my $runs = [
+        {
+            config_ids  => $config_ids,
+            include_all => defined($case_ids) ? 0 : 1,
+            case_ids    => $case_ids
+        }
+    ];
+
     my $stuff = {
         suite_id      => $suite_id,
         name          => $name,
         assignedto_id => $assignedto_id,
         include_all   => defined($case_ids) ? 0 : 1,
         case_ids      => $case_ids,
-        config_ids    => $config_ids
+        config_ids    => $config_ids,
+        runs          => $runs
     };
-
     my $result = $self->_doRequest( "index.php?/api/v2/add_plan_entry/$plan_id",
         'POST', $stuff );
     return $result;
@@ -1200,7 +1208,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.022
+version 0.023
 
 =head1 SYNOPSIS
 
