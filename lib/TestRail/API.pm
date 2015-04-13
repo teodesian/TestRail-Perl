@@ -1545,15 +1545,23 @@ sub createRunInPlan {
     confess("Config IDs must be ARRAYREF") unless !defined($config_ids) || (reftype($config_ids) || 'undef') eq 'ARRAY';
     confess("Case IDs must be ARRAYREF") unless !defined($case_ids) || (reftype($case_ids) || 'undef') eq 'ARRAY';
 
+    my $runs = [
+        {
+            config_ids  => $config_ids,
+            include_all => defined($case_ids) ? 0 : 1,
+            case_ids    => $case_ids
+        }
+    ];
+
     my $stuff = {
         suite_id      => $suite_id,
         name          => $name,
         assignedto_id => $assignedto_id,
         include_all   => defined($case_ids) ? 0 : 1,
         case_ids      => $case_ids,
-        config_ids    => $config_ids
+        config_ids    => $config_ids,
+        runs          => $runs
     };
-
     my $result = $self->_doRequest("index.php?/api/v2/add_plan_entry/$plan_id",'POST',$stuff);
     return $result;
 }
