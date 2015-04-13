@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 3;
+use Test::More 'tests' => 4;
 use Test::Fatal;
 use App::Prove;
 use App::Prove::Plugin::TestRail;
@@ -29,3 +29,8 @@ $prove = App::Prove->new();
 $prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestingSuite2,version=0.014,case_per_ok=1,spawn=9",'t/skipall.test');
 
 is (exception {$prove->run()},undef,"Running TR parser case via plugin functions works with configs/plans");
+
+$prove = App::Prove->new();
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=bogoPlan,run=bogoRun,version=0.014,case_per_ok=1,spawn=9",'t/skipall.test');
+
+is (exception {$prove->run()},undef,"Running TR parser spawns both runs and plans");

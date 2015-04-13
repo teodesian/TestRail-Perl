@@ -46,6 +46,7 @@ This should provide sufficient uniqueness to get any run using names.
     --spawn [testsuite_id] : Attempt to create a run based on the provided testsuite ID.  Uses the name provided with --run.
       If plans/configurations are supplied, it will attempt to create it as a child of the provided plan, and with the supplied configurations.
       If the specified run already exists, the program will simply use the existing run, and disregard the supplied testsuite_id.
+      If the specified plan does not exist, it too will be created for you.
 
 =head3 CONFIG OPTIONS
 
@@ -163,6 +164,9 @@ PARAMETERS:
       If the specified run already exists, the
       program will simply use the existing run,
       and disregard the supplied testsuite_id.
+
+      If the specified plan does not exist, it will be created
+      as well.
 
   [CONFIG OVERRIDES]
   In your \$HOME, (or the current directory, if your system has no

@@ -72,7 +72,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
 
-=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.
+=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.  If the plan does not exist, create it too.
 
 =back
 
@@ -178,7 +178,9 @@ sub new {
                     $tropts->{'run_id'} = $run->{'id'};
                 }
             } else {
-                confess("Could not find plan ".$tropts->{'plan'}." in provided project!");
+                #Try to make it if spawn is passed
+                $tropts->{'plan'} = $tr->createPlan($tropts->{'project_id'},$tropts->{'plan'},"Test plan created by TestRail::API");
+                confess("Could not find plan ".$tropts->{'plan'}." in provided project, and spawning failed!") if !$tropts->{'plan'};
             }
         } else {
             $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
