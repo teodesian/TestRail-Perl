@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.023';
+$Test::Rail::Parser::VERSION = '0.024';
 use strict;
 use warnings;
 use utf8;
@@ -50,6 +50,9 @@ sub new {
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'}
     };
+
+    confess("case_per_ok and step_results options are mutually exclusive")
+      if ( $tropts->{'case_per_ok'} && $tropts->{'step_results'} );
 
     #Allow natural confessing from constructor
     my $tr = TestRail::API->new(
@@ -135,9 +138,13 @@ sub new {
                 }
             }
             else {
+                #Try to make it if spawn is passed
+                $tropts->{'plan'} = $tr->createPlan( $tropts->{'project_id'},
+                    $tropts->{'plan'}, "Test plan created by TestRail::API" );
                 confess("Could not find plan "
                       . $tropts->{'plan'}
-                      . " in provided project!" );
+                      . " in provided project, and spawning failed!" )
+                  if !$tropts->{'plan'};
             }
         }
         else {
@@ -387,13 +394,7 @@ sub EOFCallback {
           _compute_elapsed( $self->{'starttime'}, time() );
     }
 
-    if (
-        !(
-            !$self->{'tr_opts'}->{'step_results'}
-            xor $self->{'tr_opts'}->{'case_per_ok'}
-        )
-      )
-    {
+    if ( $self->{'tr_opts'}->{'case_per_ok'} ) {
         print "Nothing left to do.\n";
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
@@ -512,7 +513,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.023
+version 0.024
 
 =head1 DESCRIPTION
 
@@ -566,7 +567,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
 
-=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.
+=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.  If the plan does not exist, create it too.
 
 =back
 

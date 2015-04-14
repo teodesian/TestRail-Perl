@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.023';
+$TestRail::API::VERSION = '0.024';
 
 use 5.010;
 
@@ -1208,7 +1208,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.023
+version 0.024
 
 =head1 SYNOPSIS
 
@@ -1558,7 +1558,7 @@ Creates a test case.
 
 =over 4
 
-=item INTEGER C<SECTION ID> - Parent Project ID.
+=item INTEGER C<SECTION ID> - Parent Section ID.
 
 =item STRING C<TITLE> - Case title.
 

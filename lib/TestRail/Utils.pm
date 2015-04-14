@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.023';
+$TestRail::Utils::VERSION = '0.024';
 use strict;
 use warnings;
 
@@ -47,7 +47,7 @@ TestRail::Utils - Utilities for the testrail command line functions.
 
 =head1 VERSION
 
-version 0.023
+version 0.024
 
 =head1 DESCRIPTION
 

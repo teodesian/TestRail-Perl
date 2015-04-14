@@ -7,7 +7,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 36;
+use Test::More 'tests' => 40;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -353,5 +353,58 @@ if ( !$res ) {
     $tap->run();
     is( $tap->{'errors'}, 0, "No errors encountered uploading case results" );
 }
+
+#Test spawning of plans and runs.
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new(
+        {
+            'source'  => 't/skipall.test',
+            'apiurl'  => $apiurl,
+            'user'    => $login,
+            'pass'    => $pw,
+            'debug'   => $debug,
+            'browser' => $browser,
+            'run'     => 'BogoRun',
+            'plan'    => 'BogoPlan',
+            'project' => 'TestProject',
+            'spawn'   => 9,
+            'merge'   => 1
+        }
+    );
+};
+is( $res, undef,
+    "TR Parser doesn't explode on instantiation when spawning run in plan" );
+isa_ok( $tap, "Test::Rail::Parser" );
+
+if ( !$res ) {
+    $tap->run();
+    is( $tap->{'errors'}, 0, "No errors encountered uploading case results" );
+}
+
+#Verify that case_per_ok and step_results are mutually exclusive, and die.
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new(
+        {
+            'source'       => 't/skipall.test',
+            'apiurl'       => $apiurl,
+            'user'         => $login,
+            'pass'         => $pw,
+            'debug'        => $debug,
+            'browser'      => $browser,
+            'run'          => 'BogoRun',
+            'plan'         => 'BogoPlan',
+            'project'      => 'TestProject',
+            'spawn'        => 9,
+            'merge'        => 1,
+            'case_per_ok'  => 1,
+            'step_results' => 'sr_step_results'
+        }
+    );
+};
+isnt( $res, undef,
+    "TR Parser explodes on instantiation when mutually exclusive options are passed"
+);
 
 0;
