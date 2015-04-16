@@ -117,6 +117,8 @@ sub new {
         'result_custom_options' => delete $opts->{'result_custom_options'}
     };
 
+    confess("case_per_ok and step_results options are mutually exclusive") if ($tropts->{'case_per_ok'} && $tropts->{'step_results'});
+
     #Allow natural confessing from constructor
     my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'debug'});
     $tropts->{'testrail'} = $tr;
@@ -405,7 +407,7 @@ sub EOFCallback {
         $self->{'tr_opts'}->{'result_options'}->{'elapsed'} = _compute_elapsed($self->{'starttime'},time());
     }
 
-    if (!(!$self->{'tr_opts'}->{'step_results'} xor $self->{'tr_opts'}->{'case_per_ok'})) {
+    if ($self->{'tr_opts'}->{'case_per_ok'}) {
         print "Nothing left to do.\n";
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
