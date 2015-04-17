@@ -802,7 +802,7 @@ Creates a test case.
 
 =over 4
 
-=item INTEGER C<SECTION ID> - Parent Project ID.
+=item INTEGER C<SECTION ID> - Parent Section ID.
 
 =item STRING C<TITLE> - Case title.
 
