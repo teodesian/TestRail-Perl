@@ -1,6 +1,6 @@
 Revision history for Perl module TestRail::API
 
-0.024 2015-05-13 TEODESIAN
+0.024 2015-05-17 TEODESIAN
     - Allow spawning of plans in Test::Rail::Parser (and those programs depending on it)
     - Fix issue where step_results were not uploaded correctly.
 
