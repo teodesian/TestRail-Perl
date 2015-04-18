@@ -190,9 +190,11 @@ if ($opts{'match'}) {
         File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $opts{'match'} );
         @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
     } else {
-        @tests = grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
+        #Handle special windows case -- glob doesn't prepend abspath
+        @tests = map {$^O eq 'MSWin32' ? $opts{'match'}."/$_" : $_ } grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
     }
 }
+
 @tests = map { abs_path($_) } @tests if $opts{'match'};
 print join("\n",@tests)."\n" if scalar(@tests);
 exit 0;
