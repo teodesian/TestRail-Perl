@@ -126,7 +126,8 @@ GetOptions(
     'a|assignedto=s@' => \$opts{'users'},
     'mock'            => \$opts{'mock'},
     'm|match=s'       => \$opts{'match'},
-    'n|no-recurse'    => \$opts{'no-recurse'}
+    'n|no-recurse'    => \$opts{'no-recurse'},
+    'h|help'          => \$opts{'help'}
 );
 
 if ($opts{help}) { help(); }

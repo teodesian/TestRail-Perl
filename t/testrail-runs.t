@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 8;
+use Test::More 'tests' => 10;
 
 #check status filters
 my @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock});
@@ -29,3 +29,9 @@ $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
 is($out,'',"Gets no run correctly when filtering by unassigned config");
+
+#help options
+@args = ($^X,qw{bin/testrail-runs --help});
+$out = `@args`;
+is($? >> 8, 0, "Exit code OK looking for help");
+like($out,qr/usage/i,"Help output OK");
