@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 10;
+use Test::More 'tests' => 12;
 
 my @args = (
     $^X,
@@ -50,3 +50,11 @@ $out = `@args`;
 is( $? >> 8, 0, "Exit code OK reported with spawn" );
 $matches = () = $out =~ m/Reporting result of case.*OK/ig;
 is( $matches, 2, "Attempts to spawn work" );
+
+#Test that help works
+@args = ( $^X, qw{bin/testrail-report --help} );
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK reported with help" );
+$matches = () = $out =~ m/usage/ig;
+is( $matches, 1, "Help output OK" );
+

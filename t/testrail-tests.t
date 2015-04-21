@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 20;
+use Test::More "tests" => 22;
 
 #check plan mode
 my @args = (
@@ -102,4 +102,10 @@ is( $? >> 8, 0, "Exit code OK running no plan mode, no recurse" );
 chomp $out;
 like( $out, qr/\nskipall\.test$/,
     "Gets test correctly in no plan mode, no recurse" );
+
+#Verify no-match returns non path
+@args = ( $^X, qw{bin/testrail-tests --help} );
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK asking for help" );
+like( $out, qr/usage/i, "Help output OK" );
 

@@ -281,7 +281,7 @@ $res = exception {
             'browser' => $browser,
             'run'     => 'TestingSuite',
             'plan'    => 'mah dubz plan',
-            'configs' => ['testPlatform1'],
+            'configs' => ['testConfig'],
             'project' => 'TestProject',
             'merge'   => 1
         }

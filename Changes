@@ -1,5 +1,10 @@
 Revision history for Perl module TestRail::API
 
+0.025 2015-05-21 TEODESIAN
+    - Fix test failures on windows (and an issue in testrail-tests on win32)
+    - Fix issue where testrail-tests was unresponsive to --help
+    - Fix issue where getChildRuns would not return all child runs.
+
 0.024 2015-05-17 TEODESIAN
     - Allow spawning of plans in Test::Rail::Parser (and those programs depending on it)
     - Fix issue where step_results were not uploaded correctly.

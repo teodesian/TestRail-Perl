@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.024';
+$TestRail::API::VERSION = '0.025';
 
 use 5.010;
 
@@ -720,9 +720,13 @@ sub getChildRuns {
       unless defined( $plan->{'entries'} )
       && ( reftype( $plan->{'entries'} ) || 'undef' ) eq 'ARRAY';
     my $entries = $plan->{'entries'};
-    my @plans = map { $_->{'runs'}->[0] }
-      @$entries;    #XXX not sure if this list-ification is intentional
-    return \@plans;
+    my $plans   = [];
+    foreach my $entry (@$entries) {
+        push( @$plans, @{ $entry->{'runs'} } )
+          if defined( $entry->{'runs'} )
+          && ( ( reftype( $entry->{'runs'} ) || 'undef' ) eq 'ARRAY' );
+    }
+    return $plans;
 }
 
 sub getChildRunByName {
@@ -1208,7 +1212,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.024
+version 0.025
 
 =head1 SYNOPSIS
 
