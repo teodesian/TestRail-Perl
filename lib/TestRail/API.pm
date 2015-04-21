@@ -1248,8 +1248,11 @@ sub getChildRuns {
     return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
     return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
     my $entries = $plan->{'entries'};
-    my @plans = map { $_->{'runs'}->[0] } @$entries; #XXX not sure if this list-ification is intentional
-    return \@plans;
+    my $plans = [];
+    foreach my $entry (@$entries) {
+        push(@$plans,@{$entry->{'runs'}}) if defined($entry->{'runs'}) && ((reftype($entry->{'runs'}) || 'undef') eq 'ARRAY')
+    }
+    return $plans;
 }
 
 =head2 B<getChildRunByName(plan,name,configurations)>
