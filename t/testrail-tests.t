@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 30;
+use Test::More "tests" => 32;
 
 #check plan mode
 my @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" -m t --config testConfig --mock --no-recurse});
@@ -91,5 +91,11 @@ like($out,qr/\nskipall\.test$/,"Gets test correctly in no plan mode, no recurse"
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK asking for help");
 like($out,qr/usage/i,"Help output OK");
+
+#Verify no-match and match are mutually exclusive
+@args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa });
+$out = `@args`;
+isnt($? >> 8, 0, "Exit code not OK asking for mutually exclusive match options");
+like($out,qr/mutually exclusive/i,"Death message OK");
 
 

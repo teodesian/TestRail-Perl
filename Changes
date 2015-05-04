@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.026 2015-06-?? TEODESIAN
+    - Add --no-match option to testrail-tests to find orphan tests in a tree
+
 0.025 2015-05-21 TEODESIAN
     - Fix test failures on windows (and an issue in testrail-tests on win32)
     - Fix issue where testrail-tests was unresponsive to --help
