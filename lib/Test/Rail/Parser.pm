@@ -233,6 +233,7 @@ sub new {
     $self->{'errors'}  = 0;
     #Start the shot clock
     $self->{'starttime'} = time();
+    $self->{'raw_output'} = "";
 
     return $self;
 }
@@ -251,6 +252,7 @@ sub unknownCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     #try to pick out the filename if we are running this on TAP in files
 
@@ -279,6 +281,7 @@ sub commentCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     if ($line =~ m/^#TESTDESC:\s*/) {
         $self->{'tr_opts'}->{'test_desc'} = $line;
@@ -327,6 +330,8 @@ sub testCallback {
 
     #Default assumption is that case name is step text (case_per_ok), unless...
     my $line = $test->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+
     $line =~ s/^(ok|not ok)\s[0-9]*\s-\s//g;
     my $test_name  = $line;
     my $run_id     = $self->{'tr_opts'}->{'run_id'};
@@ -429,6 +434,7 @@ sub EOFCallback {
 
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};
+    $notes = $self->{'raw_output'} if !$self->{'tr_opts'}->{'step_results'};
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
