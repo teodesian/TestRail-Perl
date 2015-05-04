@@ -21,7 +21,7 @@ like(exception {TestRail::API->new('trash');}, qr/invalid uri/i, "Non-URIs bounc
 #XXX for some insane reason 'hokum.bogus' seems to be popular with cpantesters
 my $bogoError = exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',0); };
 SKIP: {
-    skip("Some CPANTesters like to randomly redirect all DNS misses to some other host, apparently", 1) if ($bogoError =~ m/404/);
+    skip("Some CPANTesters like to randomly redirect all DNS misses to some other host, apparently", 1) if ($bogoError =~ m/404|302/);
     like($bogoError, qr/Could not communicate with TestRail Server/i,"Bogus Testrail URI rejected");
 }
 
