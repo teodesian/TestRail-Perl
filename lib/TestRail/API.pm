@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.025';
+$TestRail::API::VERSION = '0.026';
 
 use 5.010;
 
@@ -440,6 +440,28 @@ sub getSectionByName {
         return $sec if $sec->{'name'} eq $section_name;
     }
     return 0;
+}
+
+sub sectionNamesToIds {
+    my ( $self, $project_id, $suite_id, @names ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be an integer")
+      unless $self->_checkInteger($project_id);
+    confess("Suite ID must be an integer")
+      unless $self->_checkInteger($suite_id);
+    confess("At least one section name must be provided") if !scalar(@names);
+
+    my $sections = $self->getSections( $project_id, $suite_id );
+    confess("Invalid project/suite ($project_id,$suite_id) provided.")
+      unless ( reftype($sections) || 'undef' ) eq 'ARRAY';
+    my @ret = grep { defined $_ } map {
+        my $section = $_;
+        my @list = grep { $section->{'name'} eq $_ } @names;
+        scalar(@list) ? $section->{'id'} : undef
+    } @$sections;
+    confess("One or more user names provided does not exist in TestRail.")
+      unless scalar(@names) == scalar(@ret);
+    return @ret;
 }
 
 sub getCaseTypes {
@@ -1212,7 +1234,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.025
+version 0.026
 
 =head1 SYNOPSIS
 
@@ -1531,6 +1553,24 @@ Gets desired section.
 Returns section definition HASHREF.
 
     $tr->getSectionByName(1,2,'nugs');
+
+=head2 sectionNamesToIds(project_id,suite_id,names)
+
+Convenience method to translate a list of section names to TestRail section IDs.
+
+=over 4
+
+=item INTEGER C<PROJECT ID> - ID of parent project.
+
+=item INTEGER C<SUITE ID> - ID of parent suite.
+
+=item ARRAY C<NAMES> - Array of section names to translate to IDs.
+
+=back
+
+Returns ARRAY of section IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid section name.
 
 =head1 CASE METHODS
 
@@ -1919,7 +1959,7 @@ Returns plan definition HASHREF.
 
     $tr->getPlanByID(2);
 
-=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,case_ids)>
+=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
 
 Create a run.
 

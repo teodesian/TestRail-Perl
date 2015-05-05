@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 71;
+use Test::More tests => 73;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -30,7 +30,7 @@ SKIP: {
     skip(
         "Some CPANTesters like to randomly redirect all DNS misses to some other host, apparently",
         1
-    ) if ( $bogoError =~ m/404/ );
+    ) if ( $bogoError =~ m/404|302/ );
     like(
         $bogoError,
         qr/Could not communicate with TestRail Server/i,
@@ -134,6 +134,19 @@ is(
 );
 is( $tr->getSectionByID( $new_section->{'id'} )->{'id'},
     $new_section->{'id'}, "Can get new section by id" );
+
+my @cids =
+  $tr->sectionNamesToIds( $new_project->{'id'}, $new_suite->{'id'},
+    $section_name );
+is( $cids[0], $new_section->{'id'}, "sectionNamesToIds returns correct IDs" );
+isnt(
+    exception {
+        $tr->sectionNamesToIds( $new_project->{'id'}, $new_suite->{'id'},
+            "No such Section" );
+    },
+    undef,
+    "Passing bogus section to sectionNamesToIds throws exception"
+);
 
 #Test CASE methods
 my $case_name = 'STROGGIFY POPULATION CENTERS';

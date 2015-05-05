@@ -33,6 +33,10 @@ PARAMETERS:
 
     -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
     -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
+    --no-match [dir]: attempt to find filenames that do not match the test names in the provided dir.
+
+    The match and no-match options are mutually exclusive, and will terminate execution if both are passed.
+
     -n --no-recurse: if match passed, do not recurse subdirectories.
 
   [OPTIONAL PARAMETERS]
@@ -77,11 +81,17 @@ GetOptions(
     'a|assignedto=s@' => \$opts{'users'},
     'mock'            => \$opts{'mock'},
     'm|match=s'       => \$opts{'match'},
+    'no-match=s'      => \$opts{'no-match'},
     'n|no-recurse'    => \$opts{'no-recurse'},
     'h|help'          => \$opts{'help'}
 );
 
 if ($opts{help}) { help(); }
+if ($opts{'match'} && $opts{'no-match'}) {
+    print "Error! match and no-match options are mutually exclusive.\n";
+    exit 255;
+}
+
 
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
@@ -186,14 +196,17 @@ if (!$cases) {
 my @tests =  map {$_->{'title'}} @$cases;
 my @realtests;
 
-if ($opts{'match'}) {
+if ($opts{'match'} || $opts{'no-match'}) {
+    my $dir = $opts{'match'} ? $opts{'match'} : $opts{'no-match'};
     if (!$opts{'no-recurse'}) {
-        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $opts{'match'} );
+        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $dir );
         @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
     } else {
         #Handle special windows case -- glob doesn't prepend abspath
-        @tests = map {$^O eq 'MSWin32' ? $opts{'match'}."/$_" : $_ } grep {my $fname = $_; grep { basename($_) eq $fname} glob($opts{'match'}."/*") } @tests;
+        @realtests = glob("$dir/*");
+        @tests = map {$^O eq 'MSWin32' ? "$dir/$_" : $_ } grep {my $fname = $_; grep { basename($_) eq $fname} @realtests } @tests;
     }
+    @tests = grep {my $otest = basename($_); scalar(grep {basename($_) eq $otest} @tests) == 0} @realtests if $opts{'no-match'}; #invert the list in this case.
 }
 
 @tests = map { abs_path($_) } @tests if $opts{'match'};
@@ -210,7 +223,7 @@ testrail-tests - List tests in a TestRail run matching the provided filters
 
 =head1 VERSION
 
-version 0.025
+version 0.026
 
 =head1 SYNOPSIS
 
@@ -231,7 +244,8 @@ testrail-tests - list tests in a run matching the provided filters.
 
     -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
     -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
-    -n --no-recurse: if match passed, do not recurse subdirectories.
+    --no-match [dir]: attempt to find filenames that do not match test names in the provided dir.
+    -n --no-recurse: if match (or no-match) passed, do not recurse subdirectories.
 
 =head3 OPTIONAL PARAMETERS
 

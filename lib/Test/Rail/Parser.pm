@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.025';
+$Test::Rail::Parser::VERSION = '0.026';
 use strict;
 use warnings;
 use utf8;
@@ -45,6 +45,7 @@ sub new {
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
+        'sections'     => delete $opts->{'sections'},
 
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
@@ -162,9 +163,36 @@ sub new {
 
     #If spawn was passed and we don't have a Run ID yet, go ahead and make it
     if ( $tropts->{'spawn'} && !$tropts->{'run_id'} ) {
+        print "# Spawning run\n";
+        my $cases = [];
+        if ( $tropts->{'sections'} ) {
+            print "# with specified sections\n";
+
+            #Then translate the sections into an array of case IDs.
+            confess("Sections passed to spawn must be ARRAYREF")
+              unless ( reftype( $tropts->{'sections'} ) || 'undef' ) eq 'ARRAY';
+            @{ $tropts->{'sections'} } =
+              $tr->sectionNamesToIds( $tropts->{'project_id'},
+                $tropts->{'spawn'}, @{ $tropts->{'sections'} } );
+            foreach my $section ( @{ $tropts->{'sections'} } ) {
+                my $cases = $tr->getCases( $tropts->{'project_id'},
+                    $tropts->{'spawn'}, $section );
+                push( @$cases, @$cases )
+                  if ( reftype($cases) || 'undef' ) eq 'ARRAY';
+            }
+        }
+        if ( scalar(@$cases) ) {
+            @$cases = map { $_->{'id'} } @$cases;
+        }
+        else {
+            $cases = undef;
+        }
+
         if ( $tropts->{'plan'} ) {
+            print "# inside of plan\n";
             $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'},
-                $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids );
+                $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids,
+                $cases );
             $run = $plan->{'runs'}->[0]
               if exists( $plan->{'runs'} )
               && ( reftype( $plan->{'runs'} ) || 'undef' ) eq 'ARRAY'
@@ -175,9 +203,15 @@ sub new {
             }
         }
         else {
-            $run = $tr->createRun( $tropts->{'project_id'},
-                $tropts->{'spawn'}, $tropts->{'run'},
-                "Automatically created Run from TestRail::API" );
+            $run = $tr->createRun(
+                $tropts->{'project_id'},
+                $tropts->{'spawn'},
+                $tropts->{'run'},
+                "Automatically created Run from TestRail::API",
+                undef,
+                undef,
+                $cases
+            );
             if ( defined($run) && ( reftype($run) || 'undef' ) eq 'HASH' ) {
                 $tropts->{'run'}    = $run;
                 $tropts->{'run_id'} = $run->{'id'};
@@ -185,6 +219,7 @@ sub new {
         }
         confess("Could not spawn run with requested parameters!")
           if !$tropts->{'run_id'};
+        print "# Success!\n";
     }
 
     confess(
@@ -196,7 +231,7 @@ sub new {
         && reftype( $self->{'_iterator'}->{'command'} ) eq 'ARRAY' )
     {
         $self->{'file'} = $self->{'_iterator'}->{'command'}->[-1];
-        print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
         $self->{'track_time'} = 1;
     }
     else {
@@ -214,7 +249,8 @@ sub new {
     $self->{'errors'}  = 0;
 
     #Start the shot clock
-    $self->{'starttime'} = time();
+    $self->{'starttime'}  = time();
+    $self->{'raw_output'} = "";
 
     return $self;
 }
@@ -224,6 +260,7 @@ sub unknownCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     #try to pick out the filename if we are running this on TAP in files
 
@@ -232,7 +269,7 @@ sub unknownCallback {
 
         #TODO figure out which testsuite this implies
         $self->{'file'} = $1;
-        print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
     }
 
     #RAW tap #XXX this regex could be improved
@@ -240,7 +277,7 @@ sub unknownCallback {
         $self->{'file'} = $1
           unless $line =~ /^[ok|not ok] - /;    #a little more careful
     }
-    print "$line\n" if ( $line =~ /^error/i );
+    print "# $line\n" if ( $line =~ /^error/i );
 }
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
@@ -248,6 +285,7 @@ sub commentCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     if ( $line =~ m/^#TESTDESC:\s*/ ) {
         $self->{'tr_opts'}->{'test_desc'} = $line;
@@ -280,7 +318,7 @@ sub testCallback {
       )
     {
         print
-          "Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n"
+          "# Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n"
           if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -305,11 +343,13 @@ sub testCallback {
 
     #Default assumption is that case name is step text (case_per_ok), unless...
     my $line = $test->as_string;
+    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+
     $line =~ s/^(ok|not ok)\s[0-9]*\s-\s//g;
     my $test_name = $line;
     my $run_id    = $self->{'tr_opts'}->{'run_id'};
 
-    print "Assuming test name is '$test_name'...\n"
+    print "# Assuming test name is '$test_name'...\n"
       if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
 
     my $todo_reason;
@@ -363,7 +403,7 @@ sub testCallback {
                 $line, "Good result", "Bad Result", $status
             )
         );
-        print "Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
+        print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
 
@@ -395,7 +435,7 @@ sub EOFCallback {
     }
 
     if ( $self->{'tr_opts'}->{'case_per_ok'} ) {
-        print "Nothing left to do.\n";
+        print "# Nothing left to do.\n";
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -417,11 +457,12 @@ sub EOFCallback {
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}   if $self->skip_all();
 
     #Optional args
-    my $notes          = $self->{'tr_opts'}->{'test_notes'};
+    my $notes = $self->{'tr_opts'}->{'test_notes'};
+    $notes = $self->{'raw_output'} if !$self->{'tr_opts'}->{'step_results'};
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
-    print "Setting results...\n";
+    print "# Setting results...\n";
     my $cres = _set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
 
@@ -435,10 +476,10 @@ sub _set_result {
     our $self;
     my $tc;
 
-    print "Test elapsed: " . $options->{'elapsed'} . "\n"
+    print "# Test elapsed: " . $options->{'elapsed'} . "\n"
       if $options->{'elapsed'};
 
-    print "Attempting to find case by title '" . $test_name . "'...\n";
+    print "# Attempting to find case by title '" . $test_name . "'...\n";
     $tc =
       $self->{'tr_opts'}->{'testrail'}->getTestByName( $run_id, $test_name );
     if ( !defined($tc) || ( reftype($tc) || 'undef' ) ne 'HASH' ) {
@@ -453,19 +494,19 @@ sub _set_result {
     #Set test result
     if ($tc) {
         print
-          "Reporting result of case $xid in run $self->{'tr_opts'}->{'run_id'} as status '$status'...";
+          "# Reporting result of case $xid in run $self->{'tr_opts'}->{'run_id'} as status '$status'...";
 
         # createTestResults(test_id,status_id,comment,options,custom_options)
         $cres =
           $self->{'tr_opts'}->{'testrail'}
           ->createTestResults( $tc->{'id'}, $status, $notes, $options,
             $custom_options );
-        print "OK! (set to $status)\n"
+        print "# OK! (set to $status)\n"
           if ( reftype($cres) || 'undef' ) eq 'HASH';
     }
     if ( !$tc || ( ( reftype($cres) || 'undef' ) ne 'HASH' ) ) {
-        print "Failed!\n";
-        print "No Such test case in TestRail ($xid).\n";
+        print "# Failed!\n";
+        print "# No Such test case in TestRail ($xid).\n";
         $self->{'errors'}++;
     }
 
@@ -513,7 +554,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.025
+version 0.026
 
 =head1 DESCRIPTION
 
@@ -568,6 +609,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 =item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
 
 =item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.  If the plan does not exist, create it too.
+
+=item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
 =back
 

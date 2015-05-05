@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 135;
+use Test::More 'tests' => 138;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -89,6 +89,8 @@ isnt( exception { $tr->getSectionByID() },
     undef, 'getSectionByID returns error when no arguments are passed' );
 isnt( exception { $tr->getSectionByName() },
     undef, 'getSectionByName returns error when no arguments are passed' );
+isnt( exception { $tr->sectionNamesToIds() },
+    undef, 'sectionNamesToIds returns error when no arguments are passed' );
 isnt( exception { $tr->getTestByID() },
     undef, 'getTestByID returns error when no arguments are passed' );
 isnt( exception { $tr->getTestByName() },
@@ -234,6 +236,8 @@ isnt( exception { $tr->getSectionByName(1) },
     undef, 'getSectionByName with 1 arg returns error' );
 isnt( exception { $tr->getSections(1) },
     undef, 'getSections with 1 arg returns error' );
+isnt( exception { $tr->sectionNamesToIds(1) },
+    undef, 'sectionNamesToIds returns error when 1 arguments are passed' );
 isnt( exception { $tr->getTestByName(1) },
     undef, 'getTestByName with 1 arg returns error' );
 isnt( exception { $tr->getTestSuiteByName(1) },
@@ -284,6 +288,8 @@ isnt( exception { $tr->getCases( 1, 2 ) },
     undef, 'getCases with 2 args returns error' );
 isnt( exception { $tr->getSectionByName( 1, 1 ) },
     undef, 'getSectionByName with 2 args returns error' );
+isnt( exception { $tr->sectionNamesToIds( 1, 1 ) },
+    undef, 'sectionNamesToIds returns error when 2 arguments are passed' );
 isnt( exception { $tr->createRunInPlan( 1, 1 ) },
     undef, 'createRunInPlan returns error when 2 arguments passed' );
 

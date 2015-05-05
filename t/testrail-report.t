@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 12;
+use Test::More 'tests' => 14;
 
 my @args = (
     $^X,
@@ -50,6 +50,16 @@ $out = `@args`;
 is( $? >> 8, 0, "Exit code OK reported with spawn" );
 $matches = () = $out =~ m/Reporting result of case.*OK/ig;
 is( $matches, 2, "Attempts to spawn work" );
+
+#Test that spawn works w/sections
+@args = (
+    $^X,
+    qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --spawn 9 --case-ok --section "CARBON LIQUEFACTION" --mock t/test_subtest.tap}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK reported with spawn" );
+$matches = () = $out =~ m/with specified sections/ig;
+is( $matches, 1, "Attempts to spawn work" );
 
 #Test that help works
 @args = ( $^X, qw{bin/testrail-report --help} );

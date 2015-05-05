@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.025';
+$Test::Rail::Harness::VERSION = '0.026';
 use strict;
 use warnings;
 
@@ -18,8 +18,9 @@ sub new {
 
 sub make_parser {
     my ( $self, $job ) = @_;
-    my $args    = $self->SUPER::_get_parser_args($job);
-    my @configs = ();
+    my $args     = $self->SUPER::_get_parser_args($job);
+    my @configs  = ();
+    my @sections = ();
 
     #XXX again, don't see any way of getting this downrange to my parser :(
     $args->{'apiurl'}  = $ENV{'TESTRAIL_APIURL'};
@@ -30,12 +31,15 @@ sub make_parser {
     $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
     @configs = split( /:/, $ENV{'TESTRAIL_CONFIGS'} )
       if $ENV{'TESTRAIL_CONFIGS'};
-    $args->{'configs'} = \@configs;
+    $args->{'configs'} = \@configs if scalar(@configs);
     $args->{'result_options'} = { 'version' => $ENV{'TESTRAIL_VERSION'} }
       if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}  = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'} = $ENV{'TESTRAIL_STEPS'};
     $args->{'spawn'}        = $ENV{'TESTRAIL_SPAWN'};
+    @sections = split( /:/, $ENV{'TESTRAIL_SECTIONS'} )
+      if $ENV{'TESTRAIL_SECTIONS'};
+    $args->{'sections'} = \@sections if scalar(@sections);
 
     #for Testability of plugin
     if ( $ENV{'TESTRAIL_MOCKED'} ) {
@@ -68,7 +72,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.025
+version 0.026
 
 =head1 DESCRIPTION
 

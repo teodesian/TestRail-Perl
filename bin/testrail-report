@@ -75,6 +75,12 @@ PARAMETERS:
       If the specified plan does not exist, it will be created
       as well.
 
+    --section [section_name] : When spawning, restrict the cases used
+      in the provided testsuite ID to these sections.
+
+      Option may be passed multiple times to specify multiple sections.
+
+
   [CONFIG OVERRIDES]
   In your \$HOME, (or the current directory, if your system has no
   concept of a home directory) put a file called .testrailrc with
@@ -125,7 +131,7 @@ TESTING OPTIONS:
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections);
 
 #parse switches
 GetOptions(
@@ -141,6 +147,7 @@ GetOptions(
     'plan=s'         => \$plan,
     'version=s'      => \$version,
     'spawn=i'        => \$spawn,
+    'section=s@'     => \$sections,
     'help'           => \$help
 );
 
@@ -260,6 +267,7 @@ foreach my $phil (@files) {
         'configs'      => $configs,
         'result_options' => $result_options,
         'spawn'        => $spawn,
+        'sections'     => $sections,
         'merge'        => 1
     });
     $tap->run();
@@ -283,7 +291,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.025
+version 0.026
 
 =head1 SYNOPSIS
 
@@ -330,6 +338,9 @@ This should provide sufficient uniqueness to get any run using names.
       If plans/configurations are supplied, it will attempt to create it as a child of the provided plan, and with the supplied configurations.
       If the specified run already exists, the program will simply use the existing run, and disregard the supplied testsuite_id.
       If the specified plan does not exist, it too will be created for you.
+
+    --section [section_name] : When spawning, restrict the cases used in the provided testsuite ID to these sections.
+      Option may be passed multiple times to specify multiple sections.
 
 =head3 CONFIG OPTIONS
 

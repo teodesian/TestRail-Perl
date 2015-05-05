@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 22;
+use Test::More "tests" => 32;
 
 #check plan mode
 my @args = (
@@ -13,6 +13,42 @@ is( $? >> 8, 0, "Exit code OK running plan mode, no recurse" );
 chomp $out;
 like( $out, qr/skipall\.test$/,
     "Gets test correctly in plan mode, no recurse" );
+
+#check no-match
+@args = (
+    $^X,
+    qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" --no-match t --config testConfig --mock}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK running plan mode, no match" );
+chomp $out;
+unlike( $out, qr/skipall\.test/,
+    "Omits test correctly in plan mode, recurse, no-match" );
+unlike(
+    $out,
+    qr/NOT SO SEARED AFTER ARR/,
+    "Omits non-file test correctly in plan mode, recurse, no-match"
+);
+like( $out, qr/faker\.test/,
+    "Omits non-file test correctly in plan mode, recurse, no-match" );
+
+#check no-match, no recurse
+@args = (
+    $^X,
+    qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" --no-match t --config testConfig --mock --no-recurse}
+);
+$out = `@args`;
+is( $? >> 8, 0, "Exit code OK running plan mode, no match, no recurse" );
+chomp $out;
+unlike( $out, qr/skipall\.test/,
+    "Omits test correctly in plan mode, no recurse, no-match" );
+unlike(
+    $out,
+    qr/NOT SO SEARED AFTER ARR/,
+    "Omits non-file test correctly in plan mode, no recurse, no-match"
+);
+like( $out, qr/faker\.test/,
+    "Omits non-file test correctly in plan mode, no recurse, no-match" );
 
 @args = (
     $^X,
@@ -108,4 +144,11 @@ like( $out, qr/\nskipall\.test$/,
 $out = `@args`;
 is( $? >> 8, 0, "Exit code OK asking for help" );
 like( $out, qr/usage/i, "Help output OK" );
+
+#Verify no-match and match are mutually exclusive
+@args = ( $^X, qw{bin/testrail-tests --no-match t/ --match t/qa } );
+$out = `@args`;
+isnt( $? >> 8, 0,
+    "Exit code not OK asking for mutually exclusive match options" );
+like( $out, qr/mutually exclusive/i, "Death message OK" );
 
