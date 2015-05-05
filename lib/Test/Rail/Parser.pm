@@ -74,6 +74,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.  If the plan does not exist, create it too.
 
+=item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
+
 =back
 
 =back
@@ -112,6 +114,7 @@ sub new {
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
+        'sections'     => delete $opts->{'sections'},
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'}
@@ -197,21 +200,41 @@ sub new {
 
     #If spawn was passed and we don't have a Run ID yet, go ahead and make it
     if ($tropts->{'spawn'} && !$tropts->{'run_id'}) {
+        print "# Spawning run\n";
+        my $cases = [];
+        if ($tropts->{'sections'}) {
+            print "# with specified sections\n";
+            #Then translate the sections into an array of case IDs.
+            confess("Sections passed to spawn must be ARRAYREF") unless (reftype($tropts->{'sections'}) || 'undef') eq 'ARRAY';
+            @{$tropts->{'sections'}} = $tr->sectionNamesToIds($tropts->{'project_id'},$tropts->{'spawn'},@{$tropts->{'sections'}});
+            foreach my $section (@{$tropts->{'sections'}}) {
+                my $cases = $tr->getCases($tropts->{'project_id'},$tropts->{'spawn'},$section);
+                push(@$cases,@$cases) if (reftype($cases) || 'undef') eq 'ARRAY';
+            }
+        }
+        if (scalar(@$cases)) {
+            @$cases = map {$_->{'id'}} @$cases;
+        } else {
+            $cases = undef;
+        }
+
         if ($tropts->{'plan'}) {
-            $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'}, $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids );
+            print "# inside of plan\n";
+            $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'}, $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids, $cases );
             $run = $plan->{'runs'}->[0] if exists($plan->{'runs'}) && (reftype($plan->{'runs'}) || 'undef') eq 'ARRAY' && scalar(@{$plan->{'runs'}});
             if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
                 $tropts->{'run'} = $run;
                 $tropts->{'run_id'} = $run->{'id'};
             }
         } else {
-            $run = $tr->createRun( $tropts->{'project_id'}, $tropts->{'spawn'}, $tropts->{'run'}, "Automatically created Run from TestRail::API" );
+            $run = $tr->createRun( $tropts->{'project_id'}, $tropts->{'spawn'}, $tropts->{'run'}, "Automatically created Run from TestRail::API", undef, undef, $cases );
             if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
                 $tropts->{'run'} = $run;
                 $tropts->{'run_id'} = $run->{'id'};
             }
         }
         confess("Could not spawn run with requested parameters!") if !$tropts->{'run_id'};
+        print "# Success!\n"
     }
 
     confess("No run ID provided, and no run with specified name exists in provided project/plan!") if !$tropts->{'run_id'};
@@ -219,7 +242,7 @@ sub new {
     $self = $class->SUPER::new($opts);
     if (defined($self->{'_iterator'}->{'command'}) && reftype($self->{'_iterator'}->{'command'}) eq 'ARRAY' ) {
         $self->{'file'} = $self->{'_iterator'}->{'command'}->[-1];
-        print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
         $self->{'track_time'} = 1;
     } else {
         #Not running inside of prove in real-time, don't bother with tracking elapsed times.
@@ -260,13 +283,13 @@ sub unknownCallback {
     if ($line =~ /^Running\s(.*)/) {
         #TODO figure out which testsuite this implies
         $self->{'file'} = $1;
-        print "PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
+        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
     }
     #RAW tap #XXX this regex could be improved
     if ($line =~ /(.*)\s\.\.\s*$/) {
         $self->{'file'} = $1 unless $line =~ /^[ok|not ok] - /; #a little more careful
     }
-    print "$line\n" if ($line =~ /^error/i);
+    print "# $line\n" if ($line =~ /^error/i);
 }
 
 =head2 commentCallback
@@ -313,7 +336,7 @@ sub testCallback {
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if ( !($self->{'tr_opts'}->{'step_results'} || $self->{'tr_opts'}->{'case_per_ok'}) ) {
-        print "Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n" if $self->{'tr_opts'}->{'debug'};
+        print "# Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n" if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
     if ($self->{'tr_opts'}->{'step_results'} && $self->{'tr_opts'}->{'case_per_ok'}) {
@@ -336,7 +359,7 @@ sub testCallback {
     my $test_name  = $line;
     my $run_id     = $self->{'tr_opts'}->{'run_id'};
 
-    print "Assuming test name is '$test_name'...\n" if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
+    print "# Assuming test name is '$test_name'...\n" if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
 
     my $todo_reason;
     #Setup args to pass to function
@@ -377,7 +400,7 @@ sub testCallback {
             @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
             TestRail::API::buildStepResults($line,"Good result","Bad Result",$status)
         );
-        print "Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
+        print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
 
@@ -413,7 +436,7 @@ sub EOFCallback {
     }
 
     if ($self->{'tr_opts'}->{'case_per_ok'}) {
-        print "Nothing left to do.\n";
+        print "# Nothing left to do.\n";
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -439,7 +462,7 @@ sub EOFCallback {
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
 
-    print "Setting results...\n";
+    print "# Setting results...\n";
     my $cres = _set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
 
     undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
@@ -452,9 +475,9 @@ sub _set_result {
     our $self;
     my $tc;
 
-    print "Test elapsed: ".$options->{'elapsed'}."\n" if $options->{'elapsed'};
+    print "# Test elapsed: ".$options->{'elapsed'}."\n" if $options->{'elapsed'};
 
-    print "Attempting to find case by title '".$test_name."'...\n";
+    print "# Attempting to find case by title '".$test_name."'...\n";
     $tc = $self->{'tr_opts'}->{'testrail'}->getTestByName($run_id,$test_name);
     if (!defined($tc) || (reftype($tc) || 'undef') ne 'HASH') {
         cluck("ERROR: Could not find test case: $tc");
@@ -467,14 +490,14 @@ sub _set_result {
 
     #Set test result
     if ($tc) {
-        print "Reporting result of case $xid in run $self->{'tr_opts'}->{'run_id'} as status '$status'...";
+        print "# Reporting result of case $xid in run $self->{'tr_opts'}->{'run_id'} as status '$status'...";
         # createTestResults(test_id,status_id,comment,options,custom_options)
         $cres = $self->{'tr_opts'}->{'testrail'}->createTestResults($tc->{'id'},$status, $notes, $options, $custom_options);
-        print "OK! (set to $status)\n" if (reftype($cres) || 'undef') eq 'HASH';
+        print "# OK! (set to $status)\n" if (reftype($cres) || 'undef') eq 'HASH';
     }
     if (!$tc || ((reftype($cres) || 'undef') ne 'HASH') ) {
-        print "Failed!\n";
-        print "No Such test case in TestRail ($xid).\n";
+        print "# Failed!\n";
+        print "# No Such test case in TestRail ($xid).\n";
         $self->{'errors'}++;
     }
 

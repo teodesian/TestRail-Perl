@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 135;
+use Test::More 'tests' => 138;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -48,6 +48,7 @@ isnt( exception {$tr->getRunByID() },undef,'getRunByID returns error when no arg
 isnt( exception {$tr->getRunByName() },undef,'getRunByName returns error when no arguments are passed');
 isnt( exception {$tr->getSectionByID() },undef,'getSectionByID returns error when no arguments are passed');
 isnt( exception {$tr->getSectionByName() },undef,'getSectionByName returns error when no arguments are passed');
+isnt( exception {$tr->sectionNamesToIds() },undef,'sectionNamesToIds returns error when no arguments are passed');
 isnt( exception {$tr->getTestByID() },undef,'getTestByID returns error when no arguments are passed');
 isnt( exception {$tr->getTestByName() },undef,'getTestByName returns error when no arguments are passed');
 isnt( exception {$tr->getTestResults() },undef,'getTestResults returns error when no arguments are passed');
@@ -121,6 +122,7 @@ isnt(exception {$tr->getPlanByName(1)}, undef,'getPlanByName with 1 arg returns 
 isnt(exception {$tr->getRunByName(1)}, undef,'getRunByName with 1 arg returns error');
 isnt(exception {$tr->getSectionByName(1)}, undef,'getSectionByName with 1 arg returns error');
 isnt(exception {$tr->getSections(1)}, undef,'getSections with 1 arg returns error');
+isnt(exception {$tr->sectionNamesToIds(1) },undef,'sectionNamesToIds returns error when 1 arguments are passed');
 isnt(exception {$tr->getTestByName(1)}, undef,'getTestByName with 1 arg returns error');
 isnt(exception {$tr->getTestSuiteByName(1)}, undef,'getTestSuiteByName with 1 arg returns error');
 isnt(exception {$tr->getChildRunByName({}) },undef,'getChildRunByName returns error when 1 argument passed');
@@ -147,6 +149,7 @@ isnt(exception {$tr->createSection(1,1)}, undef,'createSection with 2 args retur
 isnt(exception {$tr->getCaseByName(1,1)}, undef,'getCaseByName with 2 args returns error');
 isnt(exception {$tr->getCases(1,2)}, undef,'getCases with 2 args returns error');
 isnt(exception {$tr->getSectionByName(1,1)}, undef,'getSectionByName with 2 args returns error');
+isnt(exception {$tr->sectionNamesToIds(1,1) },undef,'sectionNamesToIds returns error when 2 arguments are passed');
 isnt( exception {$tr->createRunInPlan(1,1) },undef,'createRunInPlan returns error when 2 arguments passed');
 
 #3 arg functions

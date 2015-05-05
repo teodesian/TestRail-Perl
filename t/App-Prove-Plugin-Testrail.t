@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 4;
+use Test::More 'tests' => 5;
 use Test::Fatal;
 use App::Prove;
 use App::Prove::Plugin::TestRail;
@@ -34,3 +34,10 @@ $prove = App::Prove->new();
 $prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=bogoPlan,run=bogoRun,version=0.014,case_per_ok=1,spawn=9",'t/skipall.test');
 
 is (exception {$prove->run()},undef,"Running TR parser spawns both runs and plans");
+
+$prove = App::Prove->new();
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=bogoRun,version=0.014,case_per_ok=1,spawn=9,sections=fake.test:CARBON LIQUEFACTION",'t/fake.test');
+
+is (exception {$prove->run()},undef,"Running TR parser can discriminate by sections correctly");
+
+

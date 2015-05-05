@@ -229,33 +229,6 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
-$VAR1 = 'index.php?/api/v2/get_suites/9';
-$VAR2 = '200';
-$VAR3 = 'OK';
-$VAR4 = bless( {
-                 'connection' => 'close',
-                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
-                 'client-response-num' => 1,
-                 'date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
-                 'client-peer' => '192.168.122.217:80',
-                 'content-length' => '256',
-                 '::std_case' => {
-                                   'client-date' => 'Client-Date',
-                                   'x-powered-by' => 'X-Powered-By',
-                                   'client-response-num' => 'Client-Response-Num',
-                                   'client-peer' => 'Client-Peer'
-                                 },
-                 'client-date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
-                 'content-type' => 'application/json; charset=utf-8',
-                 'server' => 'Apache/2.4.7 (Ubuntu)'
-               }, 'HTTP::Headers' );
-$VAR5 = '[{"id":9,"name":"HAMBURGER-IZE HUMANITY","description":"Robo-Signed Patriotic People\'s TestSuite","project_id":9,"is_master":false,"is_baseline":false,"is_completed":false,"completed_on":null,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/suites\\/view\\/9"}]';
-$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
-
-}
-
-{
-
 $VAR1 = 'index.php?/api/v2/get_suite/9';
 $VAR2 = '200';
 $VAR3 = 'OK';
@@ -497,6 +470,34 @@ $VAR5 = '[{"id":10,"title":"STORAGE TANKS SEARED","section_id":10,"type_id":6,"p
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_cases/10&suite_id=9&section_id=9';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:09 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '322',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:09 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":8,"title":"STROGGIFY POPULATION CENTERS","section_id":9,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1419364929,"updated_by":1,"updated_on":1419364929,"estimate":null,"estimate_forecast":null,"suite_id":9,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
 
 {
 

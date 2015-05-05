@@ -746,6 +746,40 @@ sub getSectionByName {
     return 0;
 }
 
+=head2 sectionNamesToIds(project_id,suite_id,names)
+
+Convenience method to translate a list of section names to TestRail section IDs.
+
+=over 4
+
+=item INTEGER C<PROJECT ID> - ID of parent project.
+
+=item INTEGER C<SUITE ID> - ID of parent suite.
+
+=item ARRAY C<NAMES> - Array of section names to translate to IDs.
+
+=back
+
+Returns ARRAY of section IDs.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid section name.
+
+=cut
+
+sub sectionNamesToIds {
+    my ($self,$project_id,$suite_id,@names) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Project ID must be an integer") unless $self->_checkInteger($project_id);
+    confess("Suite ID must be an integer") unless $self->_checkInteger($suite_id);
+    confess("At least one section name must be provided") if !scalar(@names);
+
+    my $sections = $self->getSections($project_id,$suite_id);
+    confess("Invalid project/suite ($project_id,$suite_id) provided.") unless (reftype($sections) || 'undef') eq 'ARRAY';
+    my @ret = grep {defined $_} map {my $section = $_; my @list = grep {$section->{'name'} eq $_} @names; scalar(@list) ? $section->{'id'} : undef} @$sections;
+    confess("One or more user names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    return @ret;
+}
+
 =head1 CASE METHODS
 
 =head2 B<getCaseTypes ()>
@@ -1511,7 +1545,7 @@ sub getPlanByID {
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
 }
 
-=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,case_ids)>
+=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
 
 Create a run.
 
