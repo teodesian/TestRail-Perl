@@ -7,7 +7,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 48;
+use Test::More 'tests' => 58;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -128,6 +128,7 @@ isa_ok($tap,"Test::Rail::Parser");
 if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails");
 }
 
 #Default mode
@@ -233,6 +234,7 @@ isa_ok($tap,"Test::Rail::Parser");
 if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},6, "Test global result is SKIP on skip all");
 }
 
 #Ok, let's test the plan, config, and spawn bits.
@@ -447,4 +449,51 @@ $res = exception {
 };
 isnt($res,undef,"TR Parser explodes on instantiation with invalid section");
 
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/notests.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'BogoRun',
+        'project'             => 'TestProject',
+        'merge'               => 1,
+        'spawn'               => 9,
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},4, "Test global result is RETEST on env fail");
+}
+
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/pass.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'BogoRun',
+        'project'             => 'TestProject',
+        'merge'               => 1,
+        'spawn'               => 9,
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},1, "Test global result is PASS on ok test");
+}
 0;

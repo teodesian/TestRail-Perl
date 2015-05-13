@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.027 2015-06-?? TEODESIAN
+    - If no tests are run (environment fail), set test status to 'retest' on non case-per-ok tests
+
 0.026 2015-06-06 TEODESIAN
     - Add --no-match option to testrail-tests to find orphan tests in a tree
     - Upload full raw results to TestRail when not in step_results or case_per_ok mode

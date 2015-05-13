@@ -85,6 +85,8 @@ In both this mode and step_results, the file name of the test is expected to cor
 
 This module also attempts to calculate the elapsed time to run each test if it is run by a prove plugin rather than on raw TAP.
 
+The constructor will terminate if the statuses 'pass', 'fail', 'retest', 'skip', 'todo_pass', and 'todo_fail' are not registered as result internal names in your TestRail install.
+
 =cut
 
 sub new {
@@ -144,21 +146,24 @@ sub new {
 
     #Discover possible test statuses
     $tropts->{'statuses'} = $tr->getPossibleTestStatuses();
-    my @ok = grep {$_->{'name'} eq 'passed'} @{$tropts->{'statuses'}};
+    my @ok     = grep {$_->{'name'} eq 'passed'} @{$tropts->{'statuses'}};
     my @not_ok = grep {$_->{'name'} eq 'failed'} @{$tropts->{'statuses'}};
-    my @skip = grep {$_->{'name'} eq 'skip'} @{$tropts->{'statuses'}};
-    my @todof = grep {$_->{'name'} eq 'todo_fail'} @{$tropts->{'statuses'}};
-    my @todop = grep {$_->{'name'} eq 'todo_pass'} @{$tropts->{'statuses'}};
+    my @skip   = grep {$_->{'name'} eq 'skip'} @{$tropts->{'statuses'}};
+    my @todof  = grep {$_->{'name'} eq 'todo_fail'} @{$tropts->{'statuses'}};
+    my @todop  = grep {$_->{'name'} eq 'todo_pass'} @{$tropts->{'statuses'}};
+    my @retest = grep {$_->{'name'} eq 'retest'} @{$tropts->{'statuses'}};
     confess("No status with internal name 'passed' in TestRail!") unless scalar(@ok);
     confess("No status with internal name 'failed' in TestRail!") unless scalar(@not_ok);
     confess("No status with internal name 'skip' in TestRail!") unless scalar(@skip);
     confess("No status with internal name 'todo_fail' in TestRail!") unless scalar(@todof);
     confess("No status with internal name 'todo_pass' in TestRail!") unless scalar(@todop);
-    $tropts->{'ok'} = $ok[0];
-    $tropts->{'not_ok'} = $not_ok[0];
-    $tropts->{'skip'} = $skip[0];
+    confess("No status with internal name 'retest' in TestRail!") unless scalar(@retest);
+    $tropts->{'ok'}        = $ok[0];
+    $tropts->{'not_ok'}    = $not_ok[0];
+    $tropts->{'skip'}      = $skip[0];
     $tropts->{'todo_fail'} = $todof[0];
     $tropts->{'todo_pass'} = $todop[0];
+    $tropts->{'retest'}    = $retest[0];
 
     #Grab run
     my $run_id = $tropts->{'run_id'};
@@ -453,6 +458,7 @@ sub EOFCallback {
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
+    $status = $self->{'tr_opts'}->{'retest'}->{'id'} if !$self->tests_run(); #No tests were run, env fail
     $status = $self->{'tr_opts'}->{'skip'}->{'id'} if $self->skip_all();
 
     #Optional args
@@ -464,6 +470,7 @@ sub EOFCallback {
 
     print "# Setting results...\n";
     my $cres = _set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
+    $self->{'global_status'} = $status;
 
     undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
 
@@ -477,13 +484,14 @@ sub _set_result {
 
     print "# Test elapsed: ".$options->{'elapsed'}."\n" if $options->{'elapsed'};
 
-    print "# Attempting to find case by title '".$test_name."'...\n";
+    print "# Attempting to find case by title '".$test_name." in run $run_id'...\n";
     $tc = $self->{'tr_opts'}->{'testrail'}->getTestByName($run_id,$test_name);
     if (!defined($tc) || (reftype($tc) || 'undef') ne 'HASH') {
         cluck("ERROR: Could not find test case: $tc");
         $self->{'errors'}++;
         return 0;
     }
+
     my $xid = $tc ? $tc->{'id'} : '???';
 
     my $cres;
