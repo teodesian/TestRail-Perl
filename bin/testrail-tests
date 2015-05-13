@@ -43,7 +43,7 @@ testrail-tests - list tests in a run matching the provided filters.
     If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
   --user    [name] : Your TestRail User Name.
 
 =head2 TESTING OPTIONS:
@@ -106,7 +106,7 @@ PARAMETERS:
     If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password or a valid API key (TestRail 4.2 and above).
   --user    [name] : Your TestRail User Name.
 
 TESTING OPTIONS:

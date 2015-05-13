@@ -51,7 +51,7 @@ Creates new C<TestRail::API> object.
 
 =item STRING C<USER> - Your TestRail User.
 
-=item STRING C<PASSWORD> - Your TestRail password.
+=item STRING C<PASSWORD> - Your TestRail password, or a valid API key (TestRail 4.2 and above).
 
 =item BOOLEAN C<DEBUG> - Print the JSON responses from TL with your requests.
 

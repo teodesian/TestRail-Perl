@@ -46,7 +46,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<user> - STRING: Name of your TestRail user.
 
-=item B<pass> - STRING: Said user's password.
+=item B<pass> - STRING: Said user's password, or one of their valid API keys (TestRail 4.2 and above).
 
 =item B<debug> - BOOLEAN: Print a bunch of extra messages
 

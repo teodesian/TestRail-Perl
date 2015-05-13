@@ -62,7 +62,7 @@ These override the config, if present.  If neither are used, you will be prompte
 
     --apiurl   [url] : full URL to get to TestRail index document
 
-    --password [key] : Your TestRail Password.
+    --password [key] : Your TestRail Password or a valid API key (TestRail 4.2 and above).
 
     --user    [name] : Your TestRail User Name.
 
@@ -187,7 +187,7 @@ PARAMETERS:
                      If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
   --user    [name] : Your TestRail User Name.
 
   [BEHAVIOR]
