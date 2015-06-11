@@ -1207,7 +1207,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[]';
+$VAR5 = '[{"display_order":1,"system_name":"custom_step_results","name":"step_results","description":"Step by step results","is_active":1,"type_id":11,"configs":[{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[5],"is_global":1},"id":"43410543-edaf-44d2-91fc-58a6f9b3f743"},{"options":{"is_required":1,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[1],"is_global":1},"id":"0ab86184-0468-40d8-a385-a9b3a1ec41a4"},{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[10],"is_global":1},"id":"43ebdf1f-c9b9-4b91-a729-5c9f21252f00"}],"id":6,"label":"Step Results"}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }

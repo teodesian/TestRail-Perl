@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 138;
+use Test::More 'tests' => 139;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -52,6 +52,7 @@ isnt( exception {$tr->sectionNamesToIds() },undef,'sectionNamesToIds returns err
 isnt( exception {$tr->getTestByID() },undef,'getTestByID returns error when no arguments are passed');
 isnt( exception {$tr->getTestByName() },undef,'getTestByName returns error when no arguments are passed');
 isnt( exception {$tr->getTestResults() },undef,'getTestResults returns error when no arguments are passed');
+isnt( exception {$tr->getTestResultFieldByName() },undef,'getTestResultFieldByName returns error when no arguments are passed');
 isnt( exception {$tr->getTestSuiteByID() },undef,'getTestSuiteByID returns error when no arguments are passed');
 isnt( exception {$tr->getTestSuiteByName() },undef,'getTestSuiteByName returns error when no arguments are passed');
 isnt( exception {$tr->getUserByEmail() },0,'getUserByEmail returns error when no arguments are passed');

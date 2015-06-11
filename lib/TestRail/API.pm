@@ -1913,15 +1913,21 @@ sub getTestResultFieldByName {
     my ($self,$system_name,$project_id) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("System name must be string") unless $self->_checkString($system_name);
-    my @candidates = grep {$_->{'name'} eq $system_name} @{$self->getTestResultFields()};
-    return 0 if !scalar(@candidates);
-    if (defined $project_id) {
-        @candidates = grep {
-            $_->{'configs'}->[0]->{'context'}->{'is_global'} ||
-            ( grep {$_ == $project_id} @{ $_->{'configs'}->[0]->{'context'}->{'project_ids'} } )
-        } @candidates;
+    my @candidates = grep { $_->{'name'} eq $system_name} @{$self->getTestResultFields()};
+    return 0 if !scalar(@candidates); #No such name
+    return -1 if ref($candidates[0]) ne 'HASH';
+    return -2 if ref($candidates[0]->{'configs'}) ne 'ARRAY' && !scalar(@{$candidates[0]->{'configs'}}); #bogofilter
+
+    #Give it to the user
+    my $ret = $candidates[0]; #copy/save for later
+    return $ret if !defined($project_id);
+
+    #Filter by project ID
+    foreach my $config (@{$candidates[0]->{'configs'}}) {
+        return $ret if ( grep { $_ == $project_id} @{ $config->{'context'}->{'project_ids'} } )
     }
-    return $candidates[0];
+
+    return -3;
 }
 
 =head2 B<getPossibleTestStatuses()>
