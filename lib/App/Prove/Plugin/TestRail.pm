@@ -57,7 +57,12 @@ sub load {
 
     my $app = $p->{app_prove};
     my $args = $p->{'args'};
-    my $params = _parseConfig();
+
+    my $params = {};
+
+    #Only attempt parse if we aren't mocking and the homedir exists
+    my $homedir = my_home() || '.';
+    $params = TestRail::Utils::parseConfig($homedir) if -e $homedir && !$ENV{'TESTRAIL_MOCKED'};
 
     my @kvp = ();
     my ($key,$value);
@@ -89,26 +94,6 @@ sub load {
     $ENV{'TESTRAIL_SPAWN'}    = $params->{spawn};
     $ENV{'TESTRAIL_SECTIONS'} = $params->{sections};
     return $class;
-}
-
-sub _parseConfig {
-    my $results = {};
-    my $arr =[];
-
-    my $homedir = my_home() || '.';
-
-    open(my $fh, '<', $homedir . '/.testrailrc') or return (undef,undef,undef);#couldn't open!
-    while (<$fh>) {
-        chomp;
-        @$arr = split(/=/,$_);
-        if (scalar(@$arr) != 2) {
-            warn("Could not parse $_ in tlreport config\n");
-            next;
-        }
-        $results->{lc($arr->[0])} = $arr->[1];
-    }
-    close($fh);
-    return $results;
 }
 
 1;

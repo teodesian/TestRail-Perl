@@ -39,5 +39,3 @@ $prove = App::Prove->new();
 $prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=bogoRun,version=0.014,case_per_ok=1,spawn=9,sections=fake.test:CARBON LIQUEFACTION",'t/fake.test');
 
 is (exception {$prove->run()},undef,"Running TR parser can discriminate by sections correctly");
-
-

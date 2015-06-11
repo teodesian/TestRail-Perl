@@ -146,7 +146,7 @@ if ($opts{'match'} && $opts{'no-match'}) {
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
-    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir);
+    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir,1);
 }
 
 #Interrogate user if they didn't provide info

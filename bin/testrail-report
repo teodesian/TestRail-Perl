@@ -252,7 +252,7 @@ if ($help) { help(); }
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
-    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir);
+    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir,1);
 }
 
 #XXX not even close to optimized, don't slurp in the future
