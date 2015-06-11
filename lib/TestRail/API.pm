@@ -1255,7 +1255,7 @@ sub getRunSummary {
         $run;
     } @runs;
 
-    return map { {'id' => $_->{'id'}, 'name' => $_->{'name'}, 'run_status' => $_->{'statuses_clean'}} } @runs;
+    return map { {'id' => $_->{'id'}, 'name' => $_->{'name'}, 'run_status' => $_->{'statuses_clean'}, 'config_ids' => $_->{'config_ids'} } } @runs;
 
 }
 
@@ -1543,6 +1543,49 @@ sub getPlanByID {
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
+}
+
+=head2 B<getPlanSummary(plan_ID)>
+
+Returns hashref describing the various pass, fail, etc. percentages for tests in the plan.
+
+=over 4
+
+=item SCALAR C<plan_ID> - ID of your test plan.
+
+=back
+
+    $tr->getPlanSummary($plan_id);
+
+=cut
+
+sub getPlanSummary {
+    my ($self,$plan_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    my $runs = $self->getPlanByID( $plan_id );
+    $runs = $self->getChildRuns( $runs );
+    @$runs = $self->getRunSummary(@{$runs});
+    my $total_sum = 0;
+    my $ret = { plan => $plan_id };
+
+    #Compile totals
+    foreach my $summary ( @$runs ) {
+        my @elems = keys( $summary->{'run_status'} );
+        foreach my $key (@elems) {
+            $ret->{'totals'}->{$key} = 0 if !defined $ret->{'totals'}->{$key};
+            $ret->{'totals'}->{$key} += $summary->{'run_status'}->{$key};
+            $total_sum += $summary->{'run_status'}->{$key};
+        }
+    }
+
+    #Compile percentages
+    foreach my $key (keys(%{$ret->{'totals'}})) {
+        next if grep {$_ eq $key} qw{plan configs percentages};
+        $ret->{"percentages"}->{$key} = sprintf( "%.2f%%", ( $ret->{'totals'}->{$key} / $total_sum ) * 100 );
+    }
+
+    return $ret;
 }
 
 =head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
