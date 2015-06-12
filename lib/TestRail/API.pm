@@ -1571,7 +1571,7 @@ sub getPlanSummary {
 
     #Compile totals
     foreach my $summary ( @$runs ) {
-        my @elems = keys( $summary->{'run_status'} );
+        my @elems = keys( %{ $summary->{'run_status'} } );
         foreach my $key (@elems) {
             $ret->{'totals'}->{$key} = 0 if !defined $ret->{'totals'}->{$key};
             $ret->{'totals'}->{$key} += $summary->{'run_status'}->{$key};
