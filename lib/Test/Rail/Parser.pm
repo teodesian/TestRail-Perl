@@ -280,7 +280,7 @@ sub unknownCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+    $self->{'raw_output'} .= "$line\n";
 
     #try to pick out the filename if we are running this on TAP in files
 
@@ -309,7 +309,7 @@ sub commentCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+    $self->{'raw_output'} .= "$line\n";
 
     if ($line =~ m/^#TESTDESC:\s*/) {
         $self->{'tr_opts'}->{'test_desc'} = $line;
@@ -339,6 +339,10 @@ sub testCallback {
         $self->{'tr_opts'}->{'result_options'}->{'elapsed'} = _compute_elapsed($self->{'starttime'},time());
     }
 
+    #Default assumption is that case name is step text (case_per_ok), unless...
+    my $line = $test->as_string;
+    $self->{'raw_output'} .= "$line\n";
+
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if ( !($self->{'tr_opts'}->{'step_results'} || $self->{'tr_opts'}->{'case_per_ok'}) ) {
         print "# Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n" if $self->{'tr_opts'}->{'debug'};
@@ -355,10 +359,6 @@ sub testCallback {
         $self->{'errors'}++;
         return 0;
     }
-
-    #Default assumption is that case name is step text (case_per_ok), unless...
-    my $line = $test->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     $line =~ s/^(ok|not ok)\s[0-9]*\s-\s//g;
     my $test_name  = $line;
@@ -463,7 +463,7 @@ sub EOFCallback {
 
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};
-    $notes = $self->{'raw_output'} if !$self->{'tr_opts'}->{'step_results'};
+    $notes = $self->{'raw_output'};
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
