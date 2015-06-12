@@ -7,7 +7,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 58;
+use Test::More 'tests' => 62;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -128,7 +128,7 @@ isa_ok($tap,"Test::Rail::Parser");
 if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
-    is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails");
+    is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails even if there are TODO passes");
 }
 
 #Default mode
@@ -496,4 +496,30 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},1, "Test global result is PASS on ok test");
 }
+
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/todo_pass.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'BogoRun',
+        'project'             => 'TestProject',
+        'merge'               => 1,
+        'spawn'               => 9,
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},8, "Test global result is TODO PASS on todo pass test");
+}
+
+
 0;

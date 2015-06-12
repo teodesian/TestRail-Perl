@@ -87,6 +87,17 @@ This module also attempts to calculate the elapsed time to run each test if it i
 
 The constructor will terminate if the statuses 'pass', 'fail', 'retest', 'skip', 'todo_pass', and 'todo_fail' are not registered as result internal names in your TestRail install.
 
+If you are not in case_per_ok mode, the global status of the case will be set according to the following rules:
+
+    1. If there are no issues whatsoever besides TODO failing tests & skips, mark as PASS
+    2. If there are any non-skipped or TODOed fails OR a bad plan (extra/missing tests), mark as FAIL
+    3. If there are only SKIPs (e.g. plan => skip_all), mark as SKIP
+    4. If the only issues with the test are TODO tests that pass, mark as TODO PASS (to denote these TODOs for removal).
+    5. If no tests are run at all, mark as 'retest'.  This is making the assumption that such failures are due to test environment being setup improperly;
+       which can be remediated and retested.
+
+Step results will always be whatever status is relevant to the particular step.
+
 =cut
 
 sub new {
@@ -457,9 +468,10 @@ sub EOFCallback {
     my $test_name  = basename($self->{'file'});
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
-    $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
-    $status = $self->{'tr_opts'}->{'retest'}->{'id'} if !$self->tests_run(); #No tests were run, env fail
-    $status = $self->{'tr_opts'}->{'skip'}->{'id'} if $self->skip_all();
+    $status = $self->{'tr_opts'}->{'not_ok'}->{'id'}    if $self->has_problems();
+    $status = $self->{'tr_opts'}->{'retest'}->{'id'}    if !$self->tests_run(); #No tests were run, env fail
+    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed(); #If no fails, but a TODO pass, mark as TODO PASS
+    $status = $self->{'tr_opts'}->{'skip'}->{'id'}      if $self->skip_all(); #Skip all, whee
 
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};

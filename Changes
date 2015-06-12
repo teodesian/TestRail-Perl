@@ -1,9 +1,11 @@
 Revision history for Perl module TestRail::API
 
-0.027 2015-06-?? TEODESIAN
+0.027 2015-06-12 TEODESIAN
     - If no tests are run (environment fail), set test status to 'retest' on non case-per-ok tests
     - Fix issue where having a ~/.testrailrc would prevent make test from allowing install by cpan client
     - Add Plan Summarizer function
+    - Always append the full raw TAP to all results
+    - If the only oddities in a test are passing TODO tests, mark entire run as TODO PASS.
 
 0.026 2015-06-06 TEODESIAN
     - Add --no-match option to testrail-tests to find orphan tests in a tree
