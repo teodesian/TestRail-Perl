@@ -13,7 +13,7 @@ is( $? >> 8, 0, "Exit code OK looking for runs with passes" );
 chomp $out;
 like(
     $out,
-    qr/^TestingSuite\nOtherOtherSuite$/,
+    qr/^TestingSuite\nOtherOtherSuite\nFinalRun$/,
     "Gets run correctly looking for passes"
 );
 

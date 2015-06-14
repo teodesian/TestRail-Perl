@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.026';
+$Test::Rail::Parser::VERSION = '0.027';
 use strict;
 use warnings;
 use utf8;
@@ -46,6 +46,7 @@ sub new {
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
         'sections'     => delete $opts->{'sections'},
+        'autoclose'    => delete $opts->{'autoclose'},
 
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
@@ -91,6 +92,7 @@ sub new {
     my @skip   = grep { $_->{'name'} eq 'skip' } @{ $tropts->{'statuses'} };
     my @todof = grep { $_->{'name'} eq 'todo_fail' } @{ $tropts->{'statuses'} };
     my @todop = grep { $_->{'name'} eq 'todo_pass' } @{ $tropts->{'statuses'} };
+    my @retest = grep { $_->{'name'} eq 'retest' } @{ $tropts->{'statuses'} };
     confess("No status with internal name 'passed' in TestRail!")
       unless scalar(@ok);
     confess("No status with internal name 'failed' in TestRail!")
@@ -101,11 +103,14 @@ sub new {
       unless scalar(@todof);
     confess("No status with internal name 'todo_pass' in TestRail!")
       unless scalar(@todop);
+    confess("No status with internal name 'retest' in TestRail!")
+      unless scalar(@retest);
     $tropts->{'ok'}        = $ok[0];
     $tropts->{'not_ok'}    = $not_ok[0];
     $tropts->{'skip'}      = $skip[0];
     $tropts->{'todo_fail'} = $todof[0];
     $tropts->{'todo_pass'} = $todop[0];
+    $tropts->{'retest'}    = $retest[0];
 
     #Grab run
     my $run_id = $tropts->{'run_id'};
@@ -175,12 +180,13 @@ sub new {
               $tr->sectionNamesToIds( $tropts->{'project_id'},
                 $tropts->{'spawn'}, @{ $tropts->{'sections'} } );
             foreach my $section ( @{ $tropts->{'sections'} } ) {
-                my $cases = $tr->getCases( $tropts->{'project_id'},
+                my $section_cases = $tr->getCases( $tropts->{'project_id'},
                     $tropts->{'spawn'}, $section );
-                push( @$cases, @$cases )
-                  if ( reftype($cases) || 'undef' ) eq 'ARRAY';
+                push( @$cases, @$section_cases )
+                  if ( reftype($section_cases) || 'undef' ) eq 'ARRAY';
             }
         }
+
         if ( scalar(@$cases) ) {
             @$cases = map { $_->{'id'} } @$cases;
         }
@@ -221,7 +227,6 @@ sub new {
           if !$tropts->{'run_id'};
         print "# Success!\n";
     }
-
     confess(
         "No run ID provided, and no run with specified name exists in provided project/plan!"
     ) if !$tropts->{'run_id'};
@@ -260,7 +265,7 @@ sub unknownCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+    $self->{'raw_output'} .= "$line\n";
 
     #try to pick out the filename if we are running this on TAP in files
 
@@ -285,7 +290,7 @@ sub commentCallback {
     my (@args) = @_;
     our $self;
     my $line = $args[0]->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
+    $self->{'raw_output'} .= "$line\n";
 
     if ( $line =~ m/^#TESTDESC:\s*/ ) {
         $self->{'tr_opts'}->{'test_desc'} = $line;
@@ -308,6 +313,10 @@ sub testCallback {
         $self->{'tr_opts'}->{'result_options'}->{'elapsed'} =
           _compute_elapsed( $self->{'starttime'}, time() );
     }
+
+    #Default assumption is that case name is step text (case_per_ok), unless...
+    my $line = $test->as_string;
+    $self->{'raw_output'} .= "$line\n";
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if (
@@ -340,10 +349,6 @@ sub testCallback {
         $self->{'errors'}++;
         return 0;
     }
-
-    #Default assumption is that case name is step text (case_per_ok), unless...
-    my $line = $test->as_string;
-    $self->{'raw_output'} .= "$line\n" if !$self->{'tr_opts'}->{'step_results'};
 
     $line =~ s/^(ok|not ok)\s[0-9]*\s-\s//g;
     my $test_name = $line;
@@ -436,6 +441,7 @@ sub EOFCallback {
 
     if ( $self->{'tr_opts'}->{'case_per_ok'} ) {
         print "# Nothing left to do.\n";
+        $self->_test_closure();
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -454,17 +460,25 @@ sub EOFCallback {
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
-    $status = $self->{'tr_opts'}->{'skip'}->{'id'}   if $self->skip_all();
+    $status = $self->{'tr_opts'}->{'retest'}->{'id'}
+      if !$self->tests_run();    #No tests were run, env fail
+    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'}
+      if $self->todo_passed()
+      && !$self->failed();    #If no fails, but a TODO pass, mark as TODO PASS
+    $status = $self->{'tr_opts'}->{'skip'}->{'id'}
+      if $self->skip_all();    #Skip all, whee
 
     #Optional args
     my $notes = $self->{'tr_opts'}->{'test_notes'};
-    $notes = $self->{'raw_output'} if !$self->{'tr_opts'}->{'step_results'};
+    $notes = $self->{'raw_output'};
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
     print "# Setting results...\n";
     my $cres = _set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
+    $self->_test_closure();
+    $self->{'global_status'} = $status;
 
     undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
 
@@ -479,7 +493,9 @@ sub _set_result {
     print "# Test elapsed: " . $options->{'elapsed'} . "\n"
       if $options->{'elapsed'};
 
-    print "# Attempting to find case by title '" . $test_name . "'...\n";
+    print "# Attempting to find case by title '"
+      . $test_name
+      . " in run $run_id'...\n";
     $tc =
       $self->{'tr_opts'}->{'testrail'}->getTestByName( $run_id, $test_name );
     if ( !defined($tc) || ( reftype($tc) || 'undef' ) ne 'HASH' ) {
@@ -487,6 +503,7 @@ sub _set_result {
         $self->{'errors'}++;
         return 0;
     }
+
     my $xid = $tc ? $tc->{'id'} : '???';
 
     my $cres;
@@ -540,6 +557,37 @@ sub _compute_elapsed {
     return $datestr;
 }
 
+sub _test_closure {
+    my ($self) = @_;
+    return unless $self->{'tr_opts'}->{'autoclose'};
+    my $is_plan = $self->{'tr_opts'}->{'plan'} ? 1 : 0;
+    my $id =
+        $self->{'tr_opts'}->{'plan'}
+      ? $self->{'tr_opts'}->{'plan'}->{'id'}
+      : $self->{'tr_opts'}->{'run'};
+
+    if ($is_plan) {
+        my $plan_summary =
+          $self->{'tr_opts'}->{'testrail'}->getPlanSummary($id);
+
+        return
+          if ( $plan_summary->{'totals'}->{'untested'} +
+            $plan_summary->{'totals'}->{'retest'} );
+        print "# No more outstanding cases detected.  Closing Plan.\n";
+        $self->{'plan_closed'} = 1;
+        return $self->{'tr_opts'}->{'testrail'}->closePlan($id);
+    }
+
+    my ($run_summary) = $self->{'tr_opts'}->{'testrail'}->getRunSummary($id);
+    return
+      if ( $run_summary->{'run_status'}->{'untested'} +
+        $run_summary->{'run_status'}->{'retest'} );
+    print "# No more outstanding cases detected.  Closing Run.\n";
+    $self->{'run_closed'} = 1;
+    return $self->{'tr_opts'}->{'testrail'}
+      ->closeRun( $self->{'tr_opts'}->{'run_id'} );
+}
+
 1;
 
 __END__
@@ -554,7 +602,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.026
+version 0.027
 
 =head1 DESCRIPTION
 
@@ -582,7 +630,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<user> - STRING: Name of your TestRail user.
 
-=item B<pass> - STRING: Said user's password.
+=item B<pass> - STRING: Said user's password, or one of their valid API keys (TestRail 4.2 and above).
 
 =item B<debug> - BOOLEAN: Print a bunch of extra messages
 
@@ -612,6 +660,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
+=item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'untested' or 'retest', go ahead and close the run.  Default false.
+
 =back
 
 =back
@@ -620,6 +670,19 @@ It is worth noting that if neither step_results or case_per_ok is passed, that t
 In both this mode and step_results, the file name of the test is expected to correspond to the test name in TestRail.
 
 This module also attempts to calculate the elapsed time to run each test if it is run by a prove plugin rather than on raw TAP.
+
+The constructor will terminate if the statuses 'pass', 'fail', 'retest', 'skip', 'todo_pass', and 'todo_fail' are not registered as result internal names in your TestRail install.
+
+If you are not in case_per_ok mode, the global status of the case will be set according to the following rules:
+
+    1. If there are no issues whatsoever besides TODO failing tests & skips, mark as PASS
+    2. If there are any non-skipped or TODOed fails OR a bad plan (extra/missing tests), mark as FAIL
+    3. If there are only SKIPs (e.g. plan => skip_all), mark as SKIP
+    4. If the only issues with the test are TODO tests that pass, mark as TODO PASS (to denote these TODOs for removal).
+    5. If no tests are run at all, mark as 'retest'.  This is making the assumption that such failures are due to test environment being setup improperly;
+       which can be remediated and retested.
+
+Step results will always be whatever status is relevant to the particular step.
 
 =head1 PARSER CALLBACKS
 

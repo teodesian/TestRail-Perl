@@ -44,7 +44,7 @@ PARAMETERS:
     If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password or API key (TestRail 4.4 and above).
   --user    [name] : Your TestRail User Name.
 
 TESTING OPTIONS:
@@ -74,7 +74,7 @@ if ($opts{help}) { help(); }
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
-    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir);
+    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir,1);
 }
 
 #Interrogate user if they didn't provide info
@@ -186,7 +186,7 @@ testrail-runs - List runs in a TestRail project matching the provided filters
 
 =head1 VERSION
 
-version 0.026
+version 0.027
 
 =head1 SYNOPSIS
 
@@ -221,7 +221,7 @@ Groups by plan for runs which are children of a plan.
     If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
   --user    [name] : Your TestRail User Name.
 
 =head2 TESTING OPTIONS:

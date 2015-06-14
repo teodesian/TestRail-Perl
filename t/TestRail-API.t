@@ -279,6 +279,7 @@ my $resTypes    = $tr->getTestResultFields();
 my $statusTypes = $tr->getPossibleTestStatuses();
 ok( $resTypes,    "Can get test result fields" );
 ok( $statusTypes, "Can get possible test statuses" );
+
 my @status_names = map { $_->{'name'} } @$statusTypes;
 my @status_ids   = map { $_->{'id'} } @$statusTypes;
 my @computed_ids = $tr->statusNamesToIds(@status_names);

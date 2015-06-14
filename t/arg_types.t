@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 138;
+use Test::More 'tests' => 141;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -97,6 +97,9 @@ isnt( exception { $tr->getTestByName() },
     undef, 'getTestByName returns error when no arguments are passed' );
 isnt( exception { $tr->getTestResults() },
     undef, 'getTestResults returns error when no arguments are passed' );
+isnt( exception { $tr->getTestResultFieldByName() },
+    undef,
+    'getTestResultFieldByName returns error when no arguments are passed' );
 isnt( exception { $tr->getTestSuiteByID() },
     undef, 'getTestSuiteByID returns error when no arguments are passed' );
 isnt( exception { $tr->getTestSuiteByName() },
@@ -141,6 +144,10 @@ isnt( exception { $tr->userNamesToIds() },
     undef, 'userNamesToIds returns error when no arguments are passed' );
 isnt( exception { $tr->statusNamesToIds() },
     undef, 'statusNamesToIds returns error when no arguments are passed' );
+isnt( exception { $tr->getRunSummary() },
+    undef, 'getRunSummary returns error when no arguments are passed' );
+isnt( exception { $tr->getPlanSummary() },
+    undef, 'getPlanSummary returns error when no arguments are passed' );
 
 #1-arg functions
 is( exception { $tr->deleteCase(1) },

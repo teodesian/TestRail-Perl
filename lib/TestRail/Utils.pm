@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.026';
+$TestRail::Utils::VERSION = '0.027';
 use strict;
 use warnings;
 
@@ -14,7 +14,7 @@ sub userInput {
 }
 
 sub parseConfig {
-    my $homedir = shift;
+    my ( $homedir, $login_only ) = @_;
     my $results = {};
     my $arr     = [];
 
@@ -24,13 +24,15 @@ sub parseConfig {
         chomp;
         @$arr = split( /=/, $_ );
         if ( scalar(@$arr) != 2 ) {
-            warn("Could not parse $_ in tlreport config\n");
+            warn("Could not parse $_ in '$homedir/.testrailrc'!\n");
             next;
         }
         $results->{ lc( $arr->[0] ) } = $arr->[1];
     }
     close($fh);
-    return ( $results->{'apiurl'}, $results->{'password'}, $results->{'user'} );
+    return ( $results->{'apiurl'}, $results->{'password'}, $results->{'user'} )
+      if $login_only;
+    return $results;
 }
 
 1;
@@ -47,7 +49,7 @@ TestRail::Utils - Utilities for the testrail command line functions.
 
 =head1 VERSION
 
-version 0.026
+version 0.027
 
 =head1 DESCRIPTION
 

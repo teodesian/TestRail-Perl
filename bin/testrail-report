@@ -91,7 +91,7 @@ PARAMETERS:
                      If neither are used, you will be prompted.
 
   --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password.
+  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
   --user    [name] : Your TestRail User Name.
 
   [BEHAVIOR]
@@ -107,6 +107,8 @@ PARAMETERS:
   [RESULT OPTIONS]
 
     --version : String describing the version of the system under test.
+    --autoclose : If there are no more tests in 'untested' or 'retest'
+                  status for the specified run/plan, close it.
 
 PROVE PLUGIN:
 
@@ -131,7 +133,7 @@ TESTING OPTIONS:
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose);
 
 #parse switches
 GetOptions(
@@ -148,6 +150,7 @@ GetOptions(
     'version=s'      => \$version,
     'spawn=i'        => \$spawn,
     'section=s@'     => \$sections,
+    'autoclose'      => \$autoclose,
     'help'           => \$help
 );
 
@@ -156,7 +159,7 @@ if ($help) { help(); }
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
-    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir);
+    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir,1);
 }
 
 #XXX not even close to optimized, don't slurp in the future
@@ -268,6 +271,7 @@ foreach my $phil (@files) {
         'result_options' => $result_options,
         'spawn'        => $spawn,
         'sections'     => $sections,
+        'autoclose'    => $autoclose,
         'merge'        => 1
     });
     $tap->run();
@@ -291,7 +295,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.026
+version 0.027
 
 =head1 SYNOPSIS
 
@@ -353,7 +357,7 @@ These override the config, if present.  If neither are used, you will be prompte
 
     --apiurl   [url] : full URL to get to TestRail index document
 
-    --password [key] : Your TestRail Password.
+    --password [key] : Your TestRail Password or a valid API key (TestRail 4.2 and above).
 
     --user    [name] : Your TestRail User Name.
 
@@ -368,7 +372,8 @@ overall result of the test will be used as the pass/fail for the test.
 
 =head3 RESULT OPTIONS
 
-    --version : String describing the version of the system under test.
+    --version   : String describing the version of the system under test.
+    --autoclose : If there are no more tests in 'untested' or 'retest' status for the specified run/plan, close it.
 
 =head2 PROVE PLUGIN:
 

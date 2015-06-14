@@ -10,7 +10,7 @@ BEGIN {
 use strict;
 use warnings;
 
-# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.09
+# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.15
 
 use Test::More 0.88;
 use Test::NoTabs;
@@ -38,8 +38,11 @@ my @files = (
     't/author-eol.t',
     't/author-no-tabs.t',
     't/author-pod-spell.t',
+    't/fake.tap',
     't/fake.test',
     't/faker.test',
+    't/notests.test',
+    't/pass.test',
     't/release-cpan-changes.t',
     't/release-kwalitee.t',
     't/release-minimum-version.t',
@@ -56,7 +59,8 @@ my @files = (
     't/test_subtest.tap',
     't/testrail-report.t',
     't/testrail-runs.t',
-    't/testrail-tests.t'
+    't/testrail-tests.t',
+    't/todo_pass.test'
 );
 
 notabs_ok($_) foreach @files;

@@ -1,5 +1,15 @@
 Revision history for Perl module TestRail::API
 
+0.027 2015-06-12 TEODESIAN
+    - If no tests are run (environment fail), set test status to 'retest' on non case-per-ok tests
+    - If the only oddities in a test are passing TODO tests, mark entire run as TODO PASS.
+    - Fix issue where having a ~/.testrailrc would prevent make test from allowing install by cpan client
+    - Fix issue where specifying sections past the first defined in a project would fail to restrict spawning to said sections
+    - Add Plan Summarizer function
+    - Always append the full raw TAP to all results
+    - Add closePlan and closeRun functions to TestRail::API
+    - Add option to binaries, plugin to close plan/run if no untested/retest exist at end of TAP parse
+
 0.026 2015-06-06 TEODESIAN
     - Add --no-match option to testrail-tests to find orphan tests in a tree
     - Upload full raw results to TestRail when not in step_results or case_per_ok mode

@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.026';
+$TestRail::API::VERSION = '0.027';
 
 use 5.010;
 
@@ -685,8 +685,19 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+sub closeRun {
+    my ( $self, $run_id ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    return $self->_doRequest( "index.php?/api/v2/close_run/$run_id", 'POST' );
+}
+
 sub getRunSummary {
     my ( $self, @runs ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("All Plans passed must be HASHREFs")
+      unless scalar( grep { ( reftype($_) || 'undef' ) eq 'HASH' } @runs ) ==
+      scalar(@runs);
 
     #Translate custom statuses
     my $statuses = $self->getPossibleTestStatuses();
@@ -724,7 +735,8 @@ sub getRunSummary {
         {
             'id'         => $_->{'id'},
             'name'       => $_->{'name'},
-            'run_status' => $_->{'statuses_clean'}
+            'run_status' => $_->{'statuses_clean'},
+            'config_ids' => $_->{'config_ids'}
         }
     } @runs;
 
@@ -893,6 +905,36 @@ sub getPlanByID {
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
 }
 
+sub getPlanSummary {
+    my ( $self, $plan_id ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    my $runs = $self->getPlanByID($plan_id);
+    $runs  = $self->getChildRuns($runs);
+    @$runs = $self->getRunSummary( @{$runs} );
+    my $total_sum = 0;
+    my $ret = { plan => $plan_id };
+
+    #Compile totals
+    foreach my $summary (@$runs) {
+        my @elems = keys( %{ $summary->{'run_status'} } );
+        foreach my $key (@elems) {
+            $ret->{'totals'}->{$key} = 0 if !defined $ret->{'totals'}->{$key};
+            $ret->{'totals'}->{$key} += $summary->{'run_status'}->{$key};
+            $total_sum += $summary->{'run_status'}->{$key};
+        }
+    }
+
+    #Compile percentages
+    foreach my $key ( keys( %{ $ret->{'totals'} } ) ) {
+        next if grep { $_ eq $key } qw{plan configs percentages};
+        $ret->{"percentages"}->{$key} =
+          sprintf( "%.2f%%", ( $ret->{'totals'}->{$key} / $total_sum ) * 100 );
+    }
+
+    return $ret;
+}
+
 #If you pass an array of case ids, it implies include_all is false
 sub createRunInPlan {
     my ( $self, $plan_id, $suite_id, $name, $assignedto_id, $config_ids,
@@ -931,6 +973,13 @@ sub createRunInPlan {
     my $result = $self->_doRequest( "index.php?/api/v2/add_plan_entry/$plan_id",
         'POST', $stuff );
     return $result;
+}
+
+sub closePlan {
+    my ( $self, $plan_id ) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    return $self->_doRequest( "index.php?/api/v2/close_plan/$plan_id", 'POST' );
 }
 
 sub createMilestone {
@@ -1056,15 +1105,24 @@ sub getTestResultFieldByName {
       unless $self->_checkString($system_name);
     my @candidates =
       grep { $_->{'name'} eq $system_name } @{ $self->getTestResultFields() };
-    return 0 if !scalar(@candidates);
-    if ( defined $project_id ) {
-        @candidates = grep {
-            $_->{'configs'}->[0]->{'context'}->{'is_global'}
-              || ( grep { $_ == $project_id }
-                @{ $_->{'configs'}->[0]->{'context'}->{'project_ids'} } )
-        } @candidates;
+    return 0  if !scalar(@candidates);              #No such name
+    return -1 if ref( $candidates[0] ) ne 'HASH';
+    return -2
+      if ref( $candidates[0]->{'configs'} ) ne 'ARRAY'
+      && !scalar( @{ $candidates[0]->{'configs'} } );    #bogofilter
+
+    #Give it to the user
+    my $ret = $candidates[0];                            #copy/save for later
+    return $ret if !defined($project_id);
+
+    #Filter by project ID
+    foreach my $config ( @{ $candidates[0]->{'configs'} } ) {
+        return $ret
+          if ( grep { $_ == $project_id }
+            @{ $config->{'context'}->{'project_ids'} } );
     }
-    return $candidates[0];
+
+    return -3;
 }
 
 sub getPossibleTestStatuses {
@@ -1234,7 +1292,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.026
+version 0.027
 
 =head1 SYNOPSIS
 
@@ -1266,7 +1324,7 @@ Creates new C<TestRail::API> object.
 
 =item STRING C<USER> - Your TestRail User.
 
-=item STRING C<PASSWORD> - Your TestRail password.
+=item STRING C<PASSWORD> - Your TestRail password, or a valid API key (TestRail 4.2 and above).
 
 =item BOOLEAN C<DEBUG> - Print the JSON responses from TL with your requests.
 
@@ -1803,6 +1861,20 @@ Returns run definition HASHREF.
 
     $tr->getRunByID(7779311);
 
+=head2 B<closeRun (run_id)>
+
+Close the specified run.
+
+=over 4
+
+=item INTEGER C<RUN ID> - ID of desired run.
+
+=back
+
+Returns run definition HASHREF on success, false on failure.
+
+    $tr->closeRun(90210);
+
 =head2 B<getRunSummary(runs)>
 
 Returns array of hashrefs describing the # of tests in the run(s) with the available statuses.
@@ -1959,9 +2031,23 @@ Returns plan definition HASHREF.
 
     $tr->getPlanByID(2);
 
+=head2 B<getPlanSummary(plan_ID)>
+
+Returns hashref describing the various pass, fail, etc. percentages for tests in the plan.
+The 'totals' key has total cases in each status ('status' => count)
+The 'percentages' key has the same, but as a percentage of the total.
+
+=over 4
+
+=item SCALAR C<plan_ID> - ID of your test plan.
+
+=back
+
+    $tr->getPlanSummary($plan_id);
+
 =head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
 
-Create a run.
+Create a run in a plan.
 
 =over 4
 
@@ -1982,6 +2068,20 @@ Create a run.
 Returns run definition HASHREF.
 
     $tr->createRun(1,1345,'PlannedRun',3,[1,4,77],[3,4,5,6]);
+
+=head2 B<closePlan (plan_id)>
+
+Close the specified plan.
+
+=over 4
+
+=item INTEGER C<PLAN ID> - ID of desired plan.
+
+=back
+
+Returns plan definition HASHREF on success, false on failure.
+
+    $tr->closePlan(75020);
 
 =head1 MILESTONE METHODS
 
