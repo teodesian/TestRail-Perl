@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 139;
+use Test::More 'tests' => 141;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -74,6 +74,8 @@ isnt( exception {$tr->createRunInPlan() },undef,'createRunInPlan returns error w
 isnt( exception {$tr->translateConfigNamesToIds()}, undef,'translateConfigNamesToIds returns error when no arguments are passed');
 isnt( exception {$tr->userNamesToIds()}, undef,'userNamesToIds returns error when no arguments are passed');
 isnt( exception {$tr->statusNamesToIds()}, undef,'statusNamesToIds returns error when no arguments are passed');
+isnt( exception {$tr->getRunSummary()}, undef,'getRunSummary returns error when no arguments are passed');
+isnt( exception {$tr->getPlanSummary()}, undef,'getPlanSummary returns error when no arguments are passed');
 
 #1-arg functions
 is(exception {$tr->deleteCase(1)},            undef,'deleteCase returns no error when int arg passed');

@@ -7,6 +7,8 @@ Revision history for Perl module TestRail::API
     - Fix issue where specifying sections past the first defined in a project would fail to restrict spawning to said sections
     - Add Plan Summarizer function
     - Always append the full raw TAP to all results
+    - Add closePlan and closeRun functions to TestRail::API
+    - Add option to binaries, plugin to close plan/run if no untested/retest exist at end of TAP parse
 
 0.026 2015-06-06 TEODESIAN
     - Add --no-match option to testrail-tests to find orphan tests in a tree

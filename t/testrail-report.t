@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 14;
+use Test::More 'tests' => 16;
 
 my @args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "CRUSH ALL HUMANS" --run "SEND T-1000 INFILTRATION UNITS BACK IN TIME" --mock t/test_multiple_files.tap});
 my $out = `@args`;
@@ -42,6 +42,12 @@ $out = `@args`;
 is($? >> 8, 0, "Exit code OK reported with spawn");
 $matches = () = $out =~ m/with specified sections/ig;
 is($matches,1,"Attempts to spawn work");
+
+#Test that the autoclose option works
+@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "FinalRun" --plan "FinalPlan" --config "testConfig" --case-ok --autoclose --mock t/fake.tap});
+$out = `@args`;
+is($? >> 8, 0, "Exit code OK when doing autoclose");
+like($out,qr/closing plan/i,"Run closure reported to user");
 
 #Test that help works
 @args = ($^X,qw{bin/testrail-report --help});

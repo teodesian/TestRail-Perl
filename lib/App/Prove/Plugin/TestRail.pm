@@ -36,6 +36,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     step_results=sr_sys_name
     spawn=123
     sections=section1:section2:section3: ... :sectionN
+    autoclose=0
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 Values passed in via query string will override values in \$HOME/.testrailrc.
@@ -81,18 +82,19 @@ sub load {
     $app->merge(1);
 
     #XXX I can't figure out for the life of me any other way to pass this data. #YOLO
-    $ENV{'TESTRAIL_APIURL'}   = $params->{apiurl};
-    $ENV{'TESTRAIL_USER'}     = $params->{user};
-    $ENV{'TESTRAIL_PASS'}     = $params->{password};
-    $ENV{'TESTRAIL_PROJ'}     = $params->{project};
-    $ENV{'TESTRAIL_RUN'}      = $params->{run};
-    $ENV{'TESTRAIL_PLAN'}     = $params->{plan};
-    $ENV{'TESTRAIL_CONFIGS'}  = $params->{configs};
-    $ENV{'TESTRAIL_VERSION'}  = $params->{version};
-    $ENV{'TESTRAIL_CASEOK'}   = $params->{case_per_ok};
-    $ENV{'TESTRAIL_STEPS'}    = $params->{step_results};
-    $ENV{'TESTRAIL_SPAWN'}    = $params->{spawn};
-    $ENV{'TESTRAIL_SECTIONS'} = $params->{sections};
+    $ENV{'TESTRAIL_APIURL'}    = $params->{apiurl};
+    $ENV{'TESTRAIL_USER'}      = $params->{user};
+    $ENV{'TESTRAIL_PASS'}      = $params->{password};
+    $ENV{'TESTRAIL_PROJ'}      = $params->{project};
+    $ENV{'TESTRAIL_RUN'}       = $params->{run};
+    $ENV{'TESTRAIL_PLAN'}      = $params->{plan};
+    $ENV{'TESTRAIL_CONFIGS'}   = $params->{configs};
+    $ENV{'TESTRAIL_VERSION'}   = $params->{version};
+    $ENV{'TESTRAIL_CASEOK'}    = $params->{case_per_ok};
+    $ENV{'TESTRAIL_STEPS'}     = $params->{step_results};
+    $ENV{'TESTRAIL_SPAWN'}     = $params->{spawn};
+    $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
+    $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     return $class;
 }
 

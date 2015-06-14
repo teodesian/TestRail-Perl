@@ -8,7 +8,7 @@ my @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test
 my $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
-like($out,qr/^TestingSuite\nOtherOtherSuite$/,"Gets run correctly looking for passes");
+like($out,qr/^TestingSuite\nOtherOtherSuite\nFinalRun$/,"Gets run correctly looking for passes");
 
 #check status filters
 @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock --status passed});

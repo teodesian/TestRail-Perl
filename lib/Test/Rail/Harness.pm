@@ -49,14 +49,17 @@ sub make_parser {
     $args->{'project'} = $ENV{'TESTRAIL_PROJ'};
     $args->{'run'}     = $ENV{'TESTRAIL_RUN'};
     $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
+    
     @configs = split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
-    $args->{'configs'} = \@configs if scalar(@configs);
+    $args->{'configs'}        = \@configs if scalar(@configs);
     $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
     $args->{'spawn'}          = $ENV{'TESTRAIL_SPAWN'};
+    
     @sections = split(/:/,$ENV{'TESTRAIL_SECTIONS'}) if $ENV{'TESTRAIL_SECTIONS'};
-    $args->{'sections'} = \@sections if scalar(@sections);
+    $args->{'sections'}  = \@sections if scalar(@sections);
+    $args->{'autoclose'} = $ENV{'TESTRAIL_AUTOCLOSE'};
 
     #for Testability of plugin
     if ($ENV{'TESTRAIL_MOCKED'}) {

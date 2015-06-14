@@ -76,6 +76,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
+=item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'untested' or 'retest', go ahead and close the run.  Default false.
+
 =back
 
 =back
@@ -128,6 +130,7 @@ sub new {
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
         'sections'     => delete $opts->{'sections'},
+        'autoclose'    => delete $opts->{'autoclose'},
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'}
@@ -253,7 +256,6 @@ sub new {
         confess("Could not spawn run with requested parameters!") if !$tropts->{'run_id'};
         print "# Success!\n"
     }
-
     confess("No run ID provided, and no run with specified name exists in provided project/plan!") if !$tropts->{'run_id'};
 
     $self = $class->SUPER::new($opts);
@@ -454,6 +456,7 @@ sub EOFCallback {
 
     if ($self->{'tr_opts'}->{'case_per_ok'}) {
         print "# Nothing left to do.\n";
+        $self->_test_closure();
         undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -483,6 +486,7 @@ sub EOFCallback {
 
     print "# Setting results...\n";
     my $cres = _set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
+    $self->_test_closure();
     $self->{'global_status'} = $status;
 
     undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
@@ -548,6 +552,28 @@ sub _compute_elapsed {
     }
     undef $datestr if $datestr eq "0m 0s";
     return $datestr;
+}
+
+sub _test_closure {
+    my ($self) = @_;
+    return unless $self->{'tr_opts'}->{'autoclose'};
+    my $is_plan = $self->{'tr_opts'}->{'plan'} ? 1 : 0;
+    my $id      = $self->{'tr_opts'}->{'plan'} ? $self->{'tr_opts'}->{'plan'}->{'id'} : $self->{'tr_opts'}->{'run'};
+  
+    if ($is_plan) {
+        my $plan_summary = $self->{'tr_opts'}->{'testrail'}->getPlanSummary($id);
+
+        return if ( $plan_summary->{'totals'}->{'untested'} + $plan_summary->{'totals'}->{'retest'} );
+        print "# No more outstanding cases detected.  Closing Plan.\n";
+        $self->{'plan_closed'} = 1;
+        return $self->{'tr_opts'}->{'testrail'}->closePlan($id);
+    }
+
+    my ($run_summary) = $self->{'tr_opts'}->{'testrail'}->getRunSummary($id);
+    return if ( $run_summary->{'run_status'}->{'untested'} + $run_summary->{'run_status'}->{'retest'} );
+    print "# No more outstanding cases detected.  Closing Run.\n";
+    $self->{'run_closed'} = 1;
+    return $self->{'tr_opts'}->{'testrail'}->closeRun($self->{'tr_opts'}->{'run_id'});
 }
 
 1;

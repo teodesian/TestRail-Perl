@@ -3,7 +3,7 @@ use warnings;
 
 #Test things we can only mock, because the API doesn't support them.
 
-use Test::More 'tests' => 9;
+use Test::More 'tests' => 13;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Scalar::Util qw{reftype};
@@ -34,3 +34,9 @@ $projResType = $tr->getTestResultFieldByName('moo_results');
 is($projResType,0,"Bad name returns no result field");
 $projResType = $tr->getTestResultFieldByName('step_results',66669);
 is($projResType,-3,"Bad project returns no result field");
+
+# I can't delete closed plans, so...test closePlan et cetera
+is(reftype($tr->closeRun(666)),'HASH',"Can close run that exists");
+is($tr->closeRun(90210),-404,"Can't close run that doesn't exist");
+is(reftype($tr->closePlan(23)),'HASH',"Can close plan that exists");
+is($tr->closePlan(75020),-404,"Can't close plan that doesn't exist");

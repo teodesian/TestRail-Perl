@@ -1217,6 +1217,29 @@ sub getRunByID {
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
+=head2 B<closeRun (run_id)>
+
+Close the specified run.
+
+=over 4
+
+=item INTEGER C<RUN ID> - ID of desired run.
+
+=back
+
+Returns run definition HASHREF on success, false on failure.
+
+    $tr->closeRun(90210);
+
+=cut
+
+sub closeRun {
+    my ($self,$run_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    return $self->_doRequest("index.php?/api/v2/close_run/$run_id",'POST');
+}
+
 =head2 B<getRunSummary(runs)>
 
 Returns array of hashrefs describing the # of tests in the run(s) with the available statuses.
@@ -1236,6 +1259,8 @@ Returns ARRAY of run HASHREFs with the added key 'run_status' holding a hashref 
 
 sub getRunSummary {
     my ($self,@runs) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("All Plans passed must be HASHREFs") unless scalar( grep {(reftype($_) || 'undef') eq 'HASH'} @runs ) == scalar(@runs);
 
     #Translate custom statuses
     my $statuses = $self->getPossibleTestStatuses();
@@ -1548,6 +1573,8 @@ sub getPlanByID {
 =head2 B<getPlanSummary(plan_ID)>
 
 Returns hashref describing the various pass, fail, etc. percentages for tests in the plan.
+The 'totals' key has total cases in each status ('status' => count)
+The 'percentages' key has the same, but as a percentage of the total.
 
 =over 4
 
@@ -1590,7 +1617,7 @@ sub getPlanSummary {
 
 =head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
 
-Create a run.
+Create a run in a plan.
 
 =over 4
 
@@ -1644,6 +1671,29 @@ sub createRunInPlan {
     };
     my $result = $self->_doRequest("index.php?/api/v2/add_plan_entry/$plan_id",'POST',$stuff);
     return $result;
+}
+
+=head2 B<closePlan (plan_id)>
+
+Close the specified plan.
+
+=over 4
+
+=item INTEGER C<PLAN ID> - ID of desired plan.
+
+=back
+
+Returns plan definition HASHREF on success, false on failure.
+
+    $tr->closePlan(75020);
+
+=cut
+
+sub closePlan {
+    my ($self,$plan_id) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    return $self->_doRequest("index.php?/api/v2/close_plan/$plan_id",'POST');
 }
 
 =head1 MILESTONE METHODS

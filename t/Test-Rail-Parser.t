@@ -7,7 +7,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 62;
+use Test::More 'tests' => 78;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -521,5 +521,111 @@ if (!$res) {
     is($tap->{'global_status'},8, "Test global result is TODO PASS on todo pass test");
 }
 
+#Check autoclose functionality against Run with all tests in run status.
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/skip.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'FinalRun',
+        'project'             => 'TestProject',
+        'merge'               => 1,
+        'autoclose'           => 1,
+        'spawn'               => 9,
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
 
-0;
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'run_closed'},1, "Run closed by parser when all tests done");
+}
+
+#Check autoclose functionality against Run with not all tests in run status.
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/todo_pass.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'BogoRun',
+        'project'             => 'TestProject',
+        'merge'               => 1,
+        'autoclose'           => 1,
+        'spawn'               => 9,
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'run_closed'},undef, "Run not closed by parser when results are outstanding");
+}
+
+#Check that autoclose works against plan wiht all tests in run status
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/fake.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'FinalRun',
+        'plan'                => 'FinalPlan',
+        'project'             => 'TestProject',
+        'configs'             => ['testConfig'],
+        'merge'               => 1,
+        'autoclose'           => 1,
+        'case_per_ok'         => 1
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'plan_closed'},1, "Plan closed by parser when all tests done");
+}
+
+#Check that autoclose works against plan wiht all tests not in run status
+undef $tap;
+$res = exception {
+    $tap = Test::Rail::Parser->new({
+        'source'              => 't/fake.test',
+        'apiurl'              => $apiurl,
+        'user'                => $login,
+        'pass'                => $pw,
+        'debug'               => $debug,
+        'browser'             => $browser,
+        'run'                 => 'BogoRun',
+        'plan'                => 'BogoPlan',
+        'project'             => 'TestProject',
+        'spawn'               => 9,
+        'merge'               => 1,
+        'autoclose'           => 1,
+        'case_per_ok'         => 1
+    });
+};
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'plan_closed'},undef, "Plan not closed by parser when results are outstanding");
+}
+
