@@ -8,6 +8,7 @@ use warnings;
 use utf8;
 
 use File::HomeDir qw{my_home};
+use TestRail::Utils;
 
 =head1 SYNOPSIS
 
