@@ -94,6 +94,9 @@ Your TestRail install must have 3 custom statuses with the internal
 names 'skip', 'todo_pass', and 'todo_fail', to represent those
 states which TAP can have.
 
+Also, be sure your tests don't output non-TAP (unknown) lines ending in dots (.)
+This will cause the preceding characters to be interpreted as a test name, which may lead to unexpected results.
+
 =head2 TESTING OPTIONS:
 
     --mock don't do any real HTTP requests.
@@ -220,6 +223,12 @@ REQUIREMENTS:
   names 'skip', 'todo_pass', and 'todo_fail', to represent those
   states which TAP can have.
 
+  Also, be sure your tests don't output non-TAP (unknown) lines
+  ending in dots (.)
+  This will cause the preceding characters to be interpreted as
+  a test name, which may lead to unexpected results.
+
+
 TESTING OPTIONS:
 
     --mock don't do any real HTTP requests.
@@ -259,7 +268,6 @@ if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
     ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir,1);
 }
 
-#XXX not even close to optimized, don't slurp in the future
 #If argument is passed use it instead of stdin
 my $file = $ARGV[0];
 die "No Such File $file" if ($file && !-e $file);
@@ -269,12 +277,10 @@ if ($file) {
     open($fh,'<',$file);
     while (<$fh>) {
         $_ = colorstrip($_); #strip prove brain damage
-        if ($_ =~ /(.*)\s\.\.$/) {
-            #File marker from default prove
-            unless ($_ =~ /^[ok|not ok] - /) {
-                push(@files,$fcontents) if $fcontents;
-                $fcontents = '';
-            }
+
+        if (TestRail::Utils::getFilenameFromTapLine($_)) {
+            push(@files,$fcontents) if $fcontents;
+            $fcontents = '';
         }
         $fcontents .= $_;
     }
@@ -292,12 +298,9 @@ if ($file) {
     }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
-        if ($_ =~ /(.*)\s\.\.$/) {
-            #File marker from default prove
-            unless ($_ =~ /^[ok|not ok] - /) {
-                push(@files,$fcontents) if $fcontents;
-                $fcontents = '';
-            }
+        if (TestRail::Utils::getFilenameFromTapLine($_)) {
+            push(@files,$fcontents) if $fcontents;
+            $fcontents = '';
         }
         $fcontents .= $_;
     }
@@ -351,7 +354,6 @@ $result_options = {'version' => $version} if $version;
 
 my $tap;
 foreach my $phil (@files) {
-    print "Processing $phil...\n";
     $tap = Test::Rail::Parser->new({
         'tap'          => $phil,
         'apiurl'       => $apiurl,

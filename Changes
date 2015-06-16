@@ -2,6 +2,7 @@ Revision history for Perl module TestRail::API
 
 0.028 2015-06-15 TEODESIAN
     - Hotfix: forgot to include a module in the prove plugin.  How did this pass compile.t? A mystery.
+    - Fix an issue where testrail-report incorrectly identified (or failed to identify) the file tested.
 
 0.027 2015-06-14 TEODESIAN
     - If no tests are run (environment fail), set test status to 'retest' on non case-per-ok tests

@@ -1,4 +1,5 @@
 *.swp
+*.swo
 Makefile.old
 cover/
 .build/

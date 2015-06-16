@@ -12,6 +12,7 @@ use Carp qw{cluck confess};
 use POSIX qw{floor};
 
 use TestRail::API;
+use TestRail::Utils;
 use Scalar::Util qw{reftype};
 
 use File::Basename qw{basename};
@@ -297,18 +298,8 @@ sub unknownCallback {
     $self->{'raw_output'} .= "$line\n";
 
     #try to pick out the filename if we are running this on TAP in files
-
-    #old prove
-    if ($line =~ /^Running\s(.*)/) {
-        #TODO figure out which testsuite this implies
-        $self->{'file'} = $1;
-        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
-    }
-    #RAW tap #XXX this regex could be improved
-    if ($line =~ /(.*)\s\.\.\s*$/) {
-        $self->{'file'} = $1 unless $line =~ /^[ok|not ok] - /; #a little more careful
-    }
-    print "# $line\n" if ($line =~ /^error/i);
+    my $file = TestRail::Utils::getFilenameFromTapLine($line);
+    $self->{'file'} = $file if $file;
 }
 
 =head2 commentCallback
