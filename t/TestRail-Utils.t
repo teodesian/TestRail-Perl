@@ -34,7 +34,6 @@ while (<$fh>) {
 }
 close($fh);
 push(@files,$fcontents);
-diag explain \@files;
 is(scalar(@files),2,"Detects # of filenames correctly in TAP");
 
 $fcontents = '';
@@ -49,7 +48,6 @@ while (<$fh>) {
 }
 close($fh);
 push(@files,$fcontents);
-diag explain \@files;
 is(scalar(@files),7,"Detects # of filenames correctly in TAP");
 
 
