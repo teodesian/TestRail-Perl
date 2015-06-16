@@ -38,6 +38,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     spawn=123
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
+    encoding=UTF-8
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 Values passed in via query string will override values in \$HOME/.testrailrc.
@@ -96,6 +97,7 @@ sub load {
     $ENV{'TESTRAIL_SPAWN'}     = $params->{spawn};
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
+    $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
     return $class;
 }
 

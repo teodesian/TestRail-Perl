@@ -9,7 +9,7 @@ use Test::LWP::UserAgent::TestRailMock;
 use Scalar::Util qw{reftype};
 
 my $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
-my $tr = TestRail::API->new('http://hokum.bogus','fake','fake',1);
+my $tr = TestRail::API->new('http://hokum.bogus','fake','fake',undef,1);
 $tr->{'browser'} = $browser;
 $tr->{'debug'} = 0;
 

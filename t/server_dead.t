@@ -11,7 +11,7 @@ use Class::Inspector;
 use Test::LWP::UserAgent;
 use HTTP::Response;
 
-my $tr = TestRail::API->new('http://hokum.bogus','bogus','bogus',1);
+my $tr = TestRail::API->new('http://hokum.bogus','bogus','bogus',undef,1);
 $tr->{'browser'} = Test::LWP::UserAgent->new();
 $tr->{'browser'}->map_response(qr/.*/, HTTP::Response->new('500', 'ERROR', ['Content-Type' => 'text/plain'], ''));
 

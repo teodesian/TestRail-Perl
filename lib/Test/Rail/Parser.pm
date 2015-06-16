@@ -79,6 +79,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'untested' or 'retest', go ahead and close the run.  Default false.
 
+=item B<encoding> - STRING (optional): Character encoding of TAP to be parsed and the various inputs parameters for the parser.  Defaults to UTF-8, see L<Encode::Supported> for a list of supported encodings.
+
 =back
 
 =back
@@ -130,6 +132,7 @@ sub new {
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
+        'encoding'     => delete $opts->{'encoding'},
         'sections'     => delete $opts->{'sections'},
         'autoclose'    => delete $opts->{'autoclose'},
         #Stubs for extension by subclassers
@@ -140,7 +143,7 @@ sub new {
     confess("case_per_ok and step_results options are mutually exclusive") if ($tropts->{'case_per_ok'} && $tropts->{'step_results'});
 
     #Allow natural confessing from constructor
-    my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'debug'});
+    my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'encoding'},$tropts->{'debug'});
     $tropts->{'testrail'} = $tr;
     $tr->{'browser'} = $tropts->{'browser'} if defined($tropts->{'browser'}); #allow mocks
     $tr->{'debug'} = 0; #Always suppress in production

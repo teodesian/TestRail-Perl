@@ -19,7 +19,7 @@ my $is_mock = (!$apiurl && !$login && !$pw);
 like(exception {TestRail::API->new('trash');}, qr/invalid uri/i, "Non-URIs bounce constructor");
 
 #XXX for some insane reason 'hokum.bogus' seems to be popular with cpantesters
-my $bogoError = exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',0); };
+my $bogoError = exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',undef,0); };
 SKIP: {
     skip("Some CPANTesters like to randomly redirect all DNS misses to some other host, apparently", 1) if ($bogoError =~ m/404|302/);
     like($bogoError, qr/Could not communicate with TestRail Server/i,"Bogus Testrail URI rejected");
@@ -28,13 +28,13 @@ SKIP: {
 SKIP: {
     skip("Testing authentication not supported with mock",2) if ($is_mock);
 
-    like(exception {TestRail::API->new($apiurl,'lies','moreLies',0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
-    like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
+    like(exception {TestRail::API->new($apiurl,'lies','moreLies',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
+    like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
 }
 
 ($apiurl,$login,$pw) = ('http://testrail.local','teodesian@cpan.org','fake') if $is_mock;
 
-my $tr = new TestRail::API($apiurl,$login,$pw,1);
+my $tr = new TestRail::API($apiurl,$login,$pw,undef,1);
 
 #Mock if necesary
 $tr->{'debug'} = 0;

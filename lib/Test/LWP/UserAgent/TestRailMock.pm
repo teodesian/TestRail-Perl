@@ -25,7 +25,7 @@ The module was mostly auto-generated, with a few manual tweaks.
 
     use Test::LWP::UserAgent::TestRailMock;
     use TestRail::API;
-    my $tr = TestRail::API->new('http://testrail.local','teodesian@cpan.org','bogus',0);
+    my $tr = TestRail::API->new('http://testrail.local','teodesian@cpan.org','bogus',undef,1);
     $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
 
 =cut

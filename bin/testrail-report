@@ -34,6 +34,9 @@ these in as needed, supposing you are not redirecting input
     --config [someconfig] : filter run by the provided configuration.
       This option can be passed multiple times for detailed filtering.
 
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
+
 Test plans can have runs with the same name, but different configurations, which is understandably confusing.
 You can do the same outside of plans, and without configurations; but doing so is ill advised, and the only option from there is to use IDs.
 So, try not to do that if you want to use this tool, and want sanity in your Test management system.
@@ -148,6 +151,9 @@ PARAMETERS:
     --configs [someconfigs] : filter run by the provided configuration.
       This option can be passed multiple times for detailed filtering.
 
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
+
   Test plans can have runs with the same name, but different
   configurations, which is understandably confusing.  You can do the
   same outside of plans, and without configurations; but doing so is
@@ -239,7 +245,7 @@ TESTING OPTIONS:
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose,$encoding);
 
 #parse switches
 GetOptions(
@@ -257,6 +263,7 @@ GetOptions(
     'spawn=i'        => \$spawn,
     'section=s@'     => \$sections,
     'autoclose'      => \$autoclose,
+    'e|encoding=s'   => \$encoding,
     'help'           => \$help
 );
 
@@ -371,6 +378,7 @@ foreach my $phil (@files) {
         'spawn'        => $spawn,
         'sections'     => $sections,
         'autoclose'    => $autoclose,
+        'encoding'     => $encoding,
         'merge'        => 1
     });
     $tap->run();

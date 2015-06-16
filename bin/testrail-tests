@@ -23,6 +23,8 @@ testrail-tests - list tests in a run matching the provided filters.
     -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
     --no-match [dir]: attempt to find filenames that do not match test names in the provided dir.
     -n --no-recurse: if match (or no-match) passed, do not recurse subdirectories.
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
 
 =head3 OPTIONAL PARAMETERS
 
@@ -89,6 +91,9 @@ PARAMETERS:
 
     -n --no-recurse: if match passed, do not recurse subdirectories.
 
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
+
   [OPTIONAL PARAMETERS]
 
     -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
@@ -120,9 +125,9 @@ TESTING OPTIONS:
 my %opts;
 
 GetOptions(
-    'apiurl=s'          => \$opts{'apiurl'},
-    'password=s'        => \$opts{'pass'},
-    'user=s'            => \$opts{'user'},
+    'apiurl=s'        => \$opts{'apiurl'},
+    'password=s'      => \$opts{'pass'},
+    'user=s'          => \$opts{'user'},
     'j|project=s'     => \$opts{'project'},
     'p|plan=s'        => \$opts{'plan'},
     'r|run=s'         => \$opts{'run'},
@@ -133,6 +138,7 @@ GetOptions(
     'm|match=s'       => \$opts{'match'},
     'no-match=s'      => \$opts{'no-match'},
     'n|no-recurse'    => \$opts{'no-recurse'},
+    'e|encoding=s'    => \$opts{'encoding'},
     'h|help'          => \$opts{'help'}
 );
 
@@ -188,7 +194,7 @@ if ($opts{mock}) {
     $opts{debug} = 1;
 }
 
-my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'debug'});
+my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'encoding'},$opts{'debug'});
 $tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
 $tr->{'debug'} = 0;
 
