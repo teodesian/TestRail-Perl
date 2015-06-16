@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.027';
+$Test::Rail::Parser::VERSION = '0.028';
 use strict;
 use warnings;
 use utf8;
@@ -12,6 +12,7 @@ use Carp qw{cluck confess};
 use POSIX qw{floor};
 
 use TestRail::API;
+use TestRail::Utils;
 use Scalar::Util qw{reftype};
 
 use File::Basename qw{basename};
@@ -45,6 +46,7 @@ sub new {
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
         'spawn'        => delete $opts->{'spawn'},
+        'encoding'     => delete $opts->{'encoding'},
         'sections'     => delete $opts->{'sections'},
         'autoclose'    => delete $opts->{'autoclose'},
 
@@ -58,8 +60,8 @@ sub new {
 
     #Allow natural confessing from constructor
     my $tr = TestRail::API->new(
-        $tropts->{'apiurl'}, $tropts->{'user'},
-        $tropts->{'pass'},   $tropts->{'debug'}
+        $tropts->{'apiurl'},   $tropts->{'user'}, $tropts->{'pass'},
+        $tropts->{'encoding'}, $tropts->{'debug'}
     );
     $tropts->{'testrail'} = $tr;
     $tr->{'browser'}      = $tropts->{'browser'}
@@ -268,21 +270,8 @@ sub unknownCallback {
     $self->{'raw_output'} .= "$line\n";
 
     #try to pick out the filename if we are running this on TAP in files
-
-    #old prove
-    if ( $line =~ /^Running\s(.*)/ ) {
-
-        #TODO figure out which testsuite this implies
-        $self->{'file'} = $1;
-        print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
-    }
-
-    #RAW tap #XXX this regex could be improved
-    if ( $line =~ /(.*)\s\.\.\s*$/ ) {
-        $self->{'file'} = $1
-          unless $line =~ /^[ok|not ok] - /;    #a little more careful
-    }
-    print "# $line\n" if ( $line =~ /^error/i );
+    my $file = TestRail::Utils::getFilenameFromTapLine($line);
+    $self->{'file'} = $file if $file;
 }
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
@@ -602,7 +591,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 DESCRIPTION
 
@@ -661,6 +650,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 =item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
 =item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'untested' or 'retest', go ahead and close the run.  Default false.
+
+=item B<encoding> - STRING (optional): Character encoding of TAP to be parsed and the various inputs parameters for the parser.  Defaults to UTF-8, see L<Encode::Supported> for a list of supported encodings.
 
 =back
 

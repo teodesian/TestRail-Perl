@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.027';
+$Test::Rail::Harness::VERSION = '0.028';
 use strict;
 use warnings;
 
@@ -23,13 +23,13 @@ sub make_parser {
     my @sections = ();
 
     #XXX again, don't see any way of getting this downrange to my parser :(
-    $args->{'apiurl'}  = $ENV{'TESTRAIL_APIURL'};
-    $args->{'user'}    = $ENV{'TESTRAIL_USER'};
-    $args->{'pass'}    = $ENV{'TESTRAIL_PASS'};
-    $args->{'project'} = $ENV{'TESTRAIL_PROJ'};
-    $args->{'run'}     = $ENV{'TESTRAIL_RUN'};
-    $args->{'plan'}    = $ENV{'TESTRAIL_PLAN'};
-
+    $args->{'apiurl'}   = $ENV{'TESTRAIL_APIURL'};
+    $args->{'user'}     = $ENV{'TESTRAIL_USER'};
+    $args->{'pass'}     = $ENV{'TESTRAIL_PASS'};
+    $args->{'encoding'} = $ENV{'TESTRAIL_ENCODING'};
+    $args->{'project'}  = $ENV{'TESTRAIL_PROJ'};
+    $args->{'run'}      = $ENV{'TESTRAIL_RUN'};
+    $args->{'plan'}     = $ENV{'TESTRAIL_PLAN'};
     @configs = split( /:/, $ENV{'TESTRAIL_CONFIGS'} )
       if $ENV{'TESTRAIL_CONFIGS'};
     $args->{'configs'} = \@configs if scalar(@configs);
@@ -75,7 +75,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 DESCRIPTION
 

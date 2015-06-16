@@ -24,7 +24,7 @@ like(
 
 #XXX for some insane reason 'hokum.bogus' seems to be popular with cpantesters
 my $bogoError = exception {
-    TestRail::API->new( 'http://hokum.bogus', 'lies', 'moreLies', 0 );
+    TestRail::API->new( 'http://hokum.bogus', 'lies', 'moreLies', undef, 0 );
 };
 SKIP: {
     skip(
@@ -42,14 +42,17 @@ SKIP: {
     skip( "Testing authentication not supported with mock", 2 ) if ($is_mock);
 
     like(
-        exception { TestRail::API->new( $apiurl, 'lies', 'moreLies', 0 ); },
+        exception {
+            TestRail::API->new( $apiurl, 'lies', 'moreLies', undef, 0 );
+        },
         qr/Bad user credentials/i,
         "Bogus Testrail User rejected"
     );
     like(
         exception {
             TestRail::API->new( $apiurl, $login,
-                'm043L13s                      ', 0 );
+                'm043L13s                      ',
+                undef, 0 );
         },
         qr/Bad user credentials/i,
         "Bogus Testrail Password rejected"
@@ -60,7 +63,7 @@ SKIP: {
   ( 'http://testrail.local', 'teodesian@cpan.org', 'fake' )
   if $is_mock;
 
-my $tr = new TestRail::API( $apiurl, $login, $pw, 1 );
+my $tr = new TestRail::API( $apiurl, $login, $pw, undef, 1 );
 
 #Mock if necesary
 $tr->{'debug'} = 0;

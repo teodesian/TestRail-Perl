@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.027';
+$TestRail::API::VERSION = '0.028';
 
 use 5.010;
 
@@ -19,9 +19,10 @@ use HTTP::Request;
 use LWP::UserAgent;
 use Data::Validate::URI qw{is_uri};
 use List::Util 1.33;
+use Encode ();
 
 sub new {
-    my ( $class, $apiurl, $user, $pass, $debug ) = @_;
+    my ( $class, $apiurl, $user, $pass, $encoding, $debug ) = @_;
     confess("Constructor must be called statically, not by an instance")
       if ref($class);
     confess("Invalid URI passed to constructor") if !is_uri($apiurl);
@@ -34,6 +35,7 @@ sub new {
         pass            => $pass,
         apiurl          => $apiurl,
         debug           => $debug,
+        encoding        => $encoding || 'UTF-8',
         testtree        => [],
         flattree        => [],
         user_cache      => [],
@@ -44,6 +46,21 @@ sub new {
         global_limit    => 250,                   #Discovered by experimentation
         browser         => new LWP::UserAgent()
     };
+
+    #Check chara encoding
+    $self->{'encoding-nonaliased'} =
+      Encode::resolve_alias( $self->{'encoding'} );
+    confess("Invalid encoding alias '"
+          . $self->{'encoding'}
+          . "' passed, see Encoding::Supported for a list of allowed encodings"
+    ) unless $self->{'encoding-nonaliased'};
+
+    confess("Invalid encoding '"
+          . $self->{'encoding-nonaliased'}
+          . "' passed, see Encoding::Supported for a list of allowed encodings"
+      )
+      unless grep { $_ eq $self->{'encoding-nonaliased'} }
+      ( Encode->encodings(":all") );
 
     #Create default request to pass on to LWP::UserAgent
     $self->{'default_request'} = new HTTP::Request();
@@ -104,11 +121,15 @@ sub _doRequest {
 
     my $coder = JSON::MaybeXS->new;
 
-    #Data sent is JSON
-    my $content = $data ? $coder->encode($data) : '';
+    #Data sent is JSON, and encoded per user preference
+    my $content =
+      $data
+      ? Encode::encode( $self->{'encoding-nonaliased'}, $coder->encode($data) )
+      : '';
 
     $req->content($content);
-    $req->header( "Content-Type" => "application/json" );
+    $req->header(
+        "Content-Type" => "application/json; charset=" . $self->{'encoding'} );
 
     my $response = $self->{'browser'}->request($req);
 
@@ -1292,7 +1313,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 SYNOPSIS
 
@@ -1314,7 +1335,7 @@ I recommend using the excellent L<Attempt> module for this purpose.
 
 =head1 CONSTRUCTOR
 
-=head2 B<new (api_url, user, password)>
+=head2 B<new (api_url, user, password, encoding, debug)>
 
 Creates new C<TestRail::API> object.
 
@@ -1326,7 +1347,9 @@ Creates new C<TestRail::API> object.
 
 =item STRING C<PASSWORD> - Your TestRail password, or a valid API key (TestRail 4.2 and above).
 
-=item BOOLEAN C<DEBUG> - Print the JSON responses from TL with your requests.
+=item STRING C<ENCODING> - The character encoding used by the caller.  Defaults to 'UTF-8', see L<Encode::Supported> and  for supported encodings.
+
+=item BOOLEAN C<DEBUG> (optional) - Print the JSON responses from TL with your requests. Default false.
 
 =back
 

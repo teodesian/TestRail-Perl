@@ -48,6 +48,9 @@ PARAMETERS:
     --configs [someconfigs] : filter run by the provided configuration.
       This option can be passed multiple times for detailed filtering.
 
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
+
   Test plans can have runs with the same name, but different
   configurations, which is understandably confusing.  You can do the
   same outside of plans, and without configurations; but doing so is
@@ -123,6 +126,12 @@ REQUIREMENTS:
   names 'skip', 'todo_pass', and 'todo_fail', to represent those
   states which TAP can have.
 
+  Also, be sure your tests don't output non-TAP (unknown) lines
+  ending in dots (.)
+  This will cause the preceding characters to be interpreted as
+  a test name, which may lead to unexpected results.
+
+
 TESTING OPTIONS:
 
     --mock don't do any real HTTP requests.
@@ -133,7 +142,7 @@ TESTING OPTIONS:
 
 #Main loop------------
 
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose);
+my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose,$encoding);
 
 #parse switches
 GetOptions(
@@ -151,6 +160,7 @@ GetOptions(
     'spawn=i'        => \$spawn,
     'section=s@'     => \$sections,
     'autoclose'      => \$autoclose,
+    'e|encoding=s'   => \$encoding,
     'help'           => \$help
 );
 
@@ -162,7 +172,6 @@ if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
     ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir,1);
 }
 
-#XXX not even close to optimized, don't slurp in the future
 #If argument is passed use it instead of stdin
 my $file = $ARGV[0];
 die "No Such File $file" if ($file && !-e $file);
@@ -172,12 +181,10 @@ if ($file) {
     open($fh,'<',$file);
     while (<$fh>) {
         $_ = colorstrip($_); #strip prove brain damage
-        if ($_ =~ /(.*)\s\.\.$/) {
-            #File marker from default prove
-            unless ($_ =~ /^[ok|not ok] - /) {
-                push(@files,$fcontents) if $fcontents;
-                $fcontents = '';
-            }
+
+        if (TestRail::Utils::getFilenameFromTapLine($_)) {
+            push(@files,$fcontents) if $fcontents;
+            $fcontents = '';
         }
         $fcontents .= $_;
     }
@@ -195,12 +202,9 @@ if ($file) {
     }
     while (<>) {
         $_ = colorstrip($_); #strip prove brain damage
-        if ($_ =~ /(.*)\s\.\.$/) {
-            #File marker from default prove
-            unless ($_ =~ /^[ok|not ok] - /) {
-                push(@files,$fcontents) if $fcontents;
-                $fcontents = '';
-            }
+        if (TestRail::Utils::getFilenameFromTapLine($_)) {
+            push(@files,$fcontents) if $fcontents;
+            $fcontents = '';
         }
         $fcontents .= $_;
     }
@@ -254,7 +258,6 @@ $result_options = {'version' => $version} if $version;
 
 my $tap;
 foreach my $phil (@files) {
-    print "Processing $phil...\n";
     $tap = Test::Rail::Parser->new({
         'tap'          => $phil,
         'apiurl'       => $apiurl,
@@ -272,6 +275,7 @@ foreach my $phil (@files) {
         'spawn'        => $spawn,
         'sections'     => $sections,
         'autoclose'    => $autoclose,
+        'encoding'     => $encoding,
         'merge'        => 1
     });
     $tap->run();
@@ -295,7 +299,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 SYNOPSIS
 
@@ -328,6 +332,9 @@ these in as needed, supposing you are not redirecting input
 
     --config [someconfig] : filter run by the provided configuration.
       This option can be passed multiple times for detailed filtering.
+
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
 
 Test plans can have runs with the same name, but different configurations, which is understandably confusing.
 You can do the same outside of plans, and without configurations; but doing so is ill advised, and the only option from there is to use IDs.
@@ -388,6 +395,9 @@ See L<App::Prove::Plugin::TestRail> for more information.
 Your TestRail install must have 3 custom statuses with the internal
 names 'skip', 'todo_pass', and 'todo_fail', to represent those
 states which TAP can have.
+
+Also, be sure your tests don't output non-TAP (unknown) lines ending in dots (.)
+This will cause the preceding characters to be interpreted as a test name, which may lead to unexpected results.
 
 =head2 TESTING OPTIONS:
 

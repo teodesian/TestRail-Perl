@@ -32,6 +32,8 @@ PARAMETERS:
 
     -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
     -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
 
   [CONFIG OPTIONS]
     In your \$HOME, (or the current directory, if your system has no
@@ -59,14 +61,15 @@ TESTING OPTIONS:
 my %opts;
 
 GetOptions(
-    'apiurl=s'          => \$opts{'apiurl'},
-    'password=s'        => \$opts{'pass'},
-    'user=s'            => \$opts{'user'},
-    'j|project=s'     => \$opts{'project'},
-    'c|config=s@'     => \$opts{'configs'},
-    's|status=s@'     => \$opts{'statuses'},
-    'mock'            => \$opts{'mock'},
-    'h|help'          => \$opts{'help'}
+    'apiurl=s'     => \$opts{'apiurl'},
+    'password=s'   => \$opts{'pass'},
+    'user=s'       => \$opts{'user'},
+    'j|project=s'  => \$opts{'project'},
+    'c|config=s@'  => \$opts{'configs'},
+    's|status=s@'  => \$opts{'statuses'},
+    'mock'         => \$opts{'mock'},
+    'e|encoding=s' => \$opts{'encoding'},
+    'h|help'       => \$opts{'help'}
 );
 
 if ($opts{help}) { help(); }
@@ -110,7 +113,7 @@ if ($opts{mock}) {
     $opts{debug} = 1;
 }
 
-my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'debug'});
+my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'encoding'},$opts{'debug'});
 $tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
 $tr->{'debug'} = 0;
 
@@ -186,7 +189,7 @@ testrail-runs - List runs in a TestRail project matching the provided filters
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 SYNOPSIS
 
@@ -207,6 +210,8 @@ Groups by plan for runs which are children of a plan.
 
     -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
     -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
+    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
+                   See L<Encode::Supported> for supported encodings.
 
 =head3 CONFIG OPTIONS
 

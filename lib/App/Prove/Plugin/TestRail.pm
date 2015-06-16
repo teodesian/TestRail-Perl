@@ -2,12 +2,13 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.027';
+$App::Prove::Plugin::TestRail::VERSION = '0.028';
 use strict;
 use warnings;
 use utf8;
 
 use File::HomeDir qw{my_home};
+use TestRail::Utils;
 
 sub load {
     my ( $class, $p ) = @_;
@@ -53,6 +54,7 @@ sub load {
     $ENV{'TESTRAIL_SPAWN'}     = $params->{spawn};
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
+    $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
     return $class;
 }
 
@@ -70,7 +72,7 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 SYNOPSIS
 
@@ -98,6 +100,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     spawn=123
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
+    encoding=UTF-8
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 Values passed in via query string will override values in \$HOME/.testrailrc.

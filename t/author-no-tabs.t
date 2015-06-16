@@ -10,7 +10,7 @@ BEGIN {
 use strict;
 use warnings;
 
-# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.15
+# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.09
 
 use Test::More 0.88;
 use Test::NoTabs;
@@ -52,6 +52,7 @@ my @files = (
     't/release-synopsis.t',
     't/release-test-version.t',
     't/release-unused-vars.t',
+    't/seq_multiple_files.tap',
     't/server_dead.t',
     't/skip.test',
     't/skipall.test',

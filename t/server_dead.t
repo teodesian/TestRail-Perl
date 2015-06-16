@@ -5,13 +5,13 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 52;
+use Test::More 'tests' => 54;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
 use HTTP::Response;
 
-my $tr = TestRail::API->new( 'http://hokum.bogus', 'bogus', 'bogus', 1 );
+my $tr = TestRail::API->new( 'http://hokum.bogus', 'bogus', 'bogus', undef, 1 );
 $tr->{'browser'} = Test::LWP::UserAgent->new();
 $tr->{'browser'}->map_response(
     qr/.*/,
@@ -79,3 +79,5 @@ is( $tr->getUserByID(1),           0,    'getUserByID returns error' );
 is( $tr->getUserByName('zap'),     0,    'getUserByName returns error' );
 is( $tr->getUsers(),               -500, 'getUsers returns error' );
 is( $tr->getConfigurations(1),     -500, 'getConfigurations returns error' );
+is( $tr->closePlan(1),             -500, 'closePlan returns error' );
+is( $tr->closeRun(1),              -500, 'closeRun returns error' );

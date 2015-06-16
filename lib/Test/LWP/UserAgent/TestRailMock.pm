@@ -2,7 +2,7 @@
 # PODNAME: Test::LWP::UserAgent::TestRailMock
 
 package Test::LWP::UserAgent::TestRailMock;
-$Test::LWP::UserAgent::TestRailMock::VERSION = '0.027';
+$Test::LWP::UserAgent::TestRailMock::VERSION = '0.028';
 use strict;
 use warnings;
 
@@ -2606,13 +2606,13 @@ Test::LWP::UserAgent::TestRailMock - Provides an interface to something like Tes
 
 =head1 VERSION
 
-version 0.027
+version 0.028
 
 =head1 SYNOPSIS
 
     use Test::LWP::UserAgent::TestRailMock;
     use TestRail::API;
-    my $tr = TestRail::API->new('http://testrail.local','teodesian@cpan.org','bogus',0);
+    my $tr = TestRail::API->new('http://testrail.local','teodesian@cpan.org','bogus',undef,1);
     $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
 
 =head1 DESCRIPTION

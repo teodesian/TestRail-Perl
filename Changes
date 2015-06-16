@@ -1,5 +1,10 @@
 Revision history for Perl module TestRail::API
 
+0.028 2015-06-16 TEODESIAN
+    - Hotfix: forgot to include a module in the prove plugin.  How did this pass compile.t? A mystery.
+    - Fix an issue where testrail-report incorrectly identified (or failed to identify) the file tested.
+    - Add character encoding support to TestRail::API and all its callers (default to utf8)
+
 0.027 2015-06-14 TEODESIAN
     - If no tests are run (environment fail), set test status to 'retest' on non case-per-ok tests
     - If the only oddities in a test are passing TODO tests, mark entire run as TODO PASS.
