@@ -553,7 +553,7 @@ sub _test_closure {
     return unless $self->{'tr_opts'}->{'autoclose'};
     my $is_plan = $self->{'tr_opts'}->{'plan'} ? 1 : 0;
     my $id      = $self->{'tr_opts'}->{'plan'} ? $self->{'tr_opts'}->{'plan'}->{'id'} : $self->{'tr_opts'}->{'run'};
-  
+
     if ($is_plan) {
         my $plan_summary = $self->{'tr_opts'}->{'testrail'}->getPlanSummary($id);
 

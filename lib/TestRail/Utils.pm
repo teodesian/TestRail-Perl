@@ -108,7 +108,7 @@ sub getFilenameFromTapLine {
     return 0 if $dotty =~ /\d/; #Apparently looking for literal dots returns numbers too. who knew?
     chomp $dotty;
     my $line = join(' ',@process_split);
-    
+
     #IF it ends in a bunch of dots
     #AND it isn't an ok/not ok
     #AND it isn't a comment

@@ -165,7 +165,7 @@ my ($status_id) = $tr->statusNamesToIds($status);
         'status_id' => $status_id,
         'comment'   => $reason,
         'version'   => $opts{'version'}
-    }    
+    }
 } @$cases;
 
 my $results = $tr->bulkAddResults($run->{'id'},$cases);

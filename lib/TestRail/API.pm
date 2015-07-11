@@ -1876,7 +1876,7 @@ Returns ARRAYREF of test definition HASHREFs.
 =cut
 
 sub getTests {
-    my ($self,$run_id,$status_ids,$assignedto_ids,$section_ids) = @_;
+    my ($self,$run_id,$status_ids,$assignedto_ids) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Run ID must be integer") unless $self->_checkInteger($run_id);
     confess("Status IDs must be ARRAYREF") unless !defined($status_ids) || ( reftype($status_ids) || 'undef' ) eq 'ARRAY';
