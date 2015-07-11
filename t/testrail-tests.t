@@ -90,7 +90,7 @@ like($out,qr/\nskipall\.test$/,"Gets test correctly in no plan mode, no recurse"
 @args = ($^X,qw{bin/testrail-tests --help});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK asking for help");
-like($out,qr/usage/i,"Help output OK");
+like($out,qr/encoding of arguments/i,"Help output OK");
 
 #Verify no-match and match are mutually exclusive
 @args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa });

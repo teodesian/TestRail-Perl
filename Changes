@@ -1,5 +1,10 @@
 Revision history for Perl module TestRail::API
 
+0.029 2015-07-11 TEODESIAN
+    - Add bulkAddResults function to TestRail::API
+    - Add new script testrail-bulk-mark-results
+    - Re-factor part of the scripts into TestRail::Utils::interrogateUser
+
 0.028 2015-06-16 TEODESIAN
     - Hotfix: forgot to include a module in the prove plugin.  How did this pass compile.t? A mystery.
     - Fix an issue where testrail-report incorrectly identified (or failed to identify) the file tested.

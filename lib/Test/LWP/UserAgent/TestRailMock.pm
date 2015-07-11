@@ -2251,4 +2251,31 @@ $VAR5 = '{"id":1066,"name":"BogoPlan","description":"zippy","milestone_id":null,
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 }
 
+{
+
+$VAR1 = 'index.php?/api/v2/add_results/22';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-response-num' => 1,
+                 'client-date' => 'Sat, 11 Jul 2015 20:09:43 GMT',
+                 'date' => 'Sat, 11 Jul 2015 20:09:42 GMT',
+                 '::std_case' => {
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-date' => 'Client-Date',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '179',
+                 'connection' => 'close'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":515,"test_id":286,"status_id":1,"created_by":1,"created_on":1436645382,"assignedto_id":null,"comment":"REAPER FORCES INBOUND","version":null,"elapsed":null,"defects":null}]';
+
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+}
+
 1;

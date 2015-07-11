@@ -34,4 +34,4 @@ is($out,'',"Gets no run correctly when filtering by unassigned config");
 @args = ($^X,qw{bin/testrail-runs --help});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for help");
-like($out,qr/usage/i,"Help output OK");
+like($out,qr/encoding of arguments/i,"Help output OK");

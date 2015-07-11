@@ -53,7 +53,7 @@ like($out,qr/closing plan/i,"Run closure reported to user");
 @args = ($^X,qw{bin/testrail-report --help});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK reported with help");
-$matches = () = $out =~ m/usage/ig;
+$matches = () = $out =~ m/encoding of arguments/ig;
 is($matches,1,"Help output OK");
 
 

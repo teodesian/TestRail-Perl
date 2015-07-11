@@ -4,7 +4,7 @@ use warnings;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 73;
+use Test::More tests => 74;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -164,6 +164,10 @@ my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'
 ok(defined($result->{'id'}),"Can add test results");
 my $results = $tr->getTestResults($tests->[0]->{'id'});
 is($results->[0]->{'id'},$result->{'id'},"Can get results for test");
+
+#Bulk add results
+my $results = $tr->bulkAddResults($new_run->{'id'}, [{ 'test_id' => $tests->[0]->{'id'},'status_id' => $statusTypes->[0]->{'id'}, "comment" => "REAPER FORCES INBOUND" }]);
+ok(defined($results->[0]->{'id'}),"Can bulk add test results");
 
 #Test status and assignedto filtering
 my $filteredTests = $tr->getTests($new_run->{'id'},[$status_ids[0]]);

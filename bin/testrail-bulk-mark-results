@@ -1,14 +1,16 @@
 #!/usr/bin/env perl
-# ABSTRACT: List tests in a TestRail run matching the provided filters
-# PODNAME: testrail-tests
+# ABSTRACT: Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
+# PODNAME: testrail-bulk-mark-results
 
-=head1 SYNOPSIS
+=head1 USAGE
 
-  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
+  testrail-bulk-mark-results [OPTIONS] status [reason]
 
 =head1 DESCRIPTION
 
-testrail-tests - list tests in a run matching the provided filters.
+Sometimes it is useful to mark entire runs of tests when, for example, a prerequisite test in a sequence invalidates all further tests.
+For example, if a binary produced for test fails to run at all, more detailed testing will be impossible;
+it would save time to just mark everything as blocked.
 
 =head2 PARAMETERS:
 
@@ -20,17 +22,13 @@ testrail-tests - list tests in a run matching the provided filters.
 =head3 SEMI-OPTIONAL PARAMETERS
 
     -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
-    -m --match [dir]: attempt to find filenames matching the test names in the provided dir.
-    --no-match [dir]: attempt to find filenames that do not match test names in the provided dir.
-    -n --no-recurse: if match (or no-match) passed, do not recurse subdirectories.
     -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
                    See L<Encode::Supported> for supported encodings.
 
 =head3 OPTIONAL PARAMETERS
 
     -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
-    -s --status [status]: only list tests marked as [status] in testrail.  Can be passed multiple times.
-    -a --assignedto [user]: only list tests assigned to user. Can be passed multiple times.
+    -a --assignedto [user]: only mark tests assigned to user. Can be passed multiple times.
 
 =head3 CONFIG OPTIONS
 
@@ -63,6 +61,8 @@ use TestRail::API;
 use TestRail::Utils;
 
 use Getopt::Long;
+Getopt::Long::Configure('pass_through');
+
 use File::HomeDir qw{my_home};
 use File::Find;
 use Cwd qw{abs_path};
@@ -86,23 +86,18 @@ GetOptions(
     'p|plan=s'        => \$opts{'plan'},
     'r|run=s'         => \$opts{'run'},
     'c|config=s@'     => \$opts{'configs'},
-    's|status=s@'     => \$opts{'statuses'},
     'a|assignedto=s@' => \$opts{'users'},
     'mock'            => \$opts{'mock'},
-    'm|match=s'       => \$opts{'match'},
-    'no-match=s'      => \$opts{'no-match'},
-    'n|no-recurse'    => \$opts{'no-recurse'},
     'e|encoding=s'    => \$opts{'encoding'},
     'h|help'          => \$opts{'help'}
 );
 
 if ($opts{help}) { help(); }
-if ($opts{'match'} && $opts{'no-match'}) {
-    print "Error! match and no-match options are mutually exclusive.\n";
-    exit 255;
-}
 
+my $status = $ARGV[0];
+my $reason = $ARGV[1];
 
+die("No status to set provided.") unless $status;
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
 if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
@@ -145,17 +140,7 @@ if (!$run) {
     exit 2;
 }
 
-my ($status_ids,$user_ids);
-
-#Process statuses
-if ($opts{'statuses'}) {
-    eval { @$status_ids = $tr->statusNamesToIds(@{$opts{'statuses'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 4;
-    }
-}
-
+my $user_ids;
 #Process assignedto ids
 if ($opts{'users'}) {
     eval { @$user_ids = $tr->userNamesToIds(@{$opts{'users'}}); };
@@ -165,31 +150,28 @@ if ($opts{'users'}) {
     }
 }
 
-my $cases = $tr->getTests($run->{'id'},$status_ids,$user_ids);
+my $cases = $tr->getTests($run->{'id'},undef,$user_ids);
 
 if (!$cases) {
-    print "No cases in TestRail!\n";
+    print "No cases in TestRail to mark!\n";
     exit 3;
 }
 
-my @tests =  map {$_->{'title'}} @$cases;
-my @realtests;
+my ($status_id) = $tr->statusNamesToIds($status);
 
-if ($opts{'match'} || $opts{'no-match'}) {
-    my $dir = $opts{'match'} ? $opts{'match'} : $opts{'no-match'};
-    if (!$opts{'no-recurse'}) {
-        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $dir );
-        @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
-    } else {
-        #Handle special windows case -- glob doesn't prepend abspath
-        @realtests = glob("$dir/*");
-        @tests = map {$^O eq 'MSWin32' ? "$dir/$_" : $_ } grep {my $fname = $_; grep { basename($_) eq $fname} @realtests } @tests;
-    }
-    @tests = grep {my $otest = basename($_); scalar(grep {basename($_) eq $otest} @tests) == 0} @realtests if $opts{'no-match'}; #invert the list in this case.
-}
+@$cases = map {
+    {
+        'test_id' => $_->{'id'},
+        'status_id' => $status_id,
+        'comment'   => $reason,
+        'version'   => $opts{'version'}
+    }    
+} @$cases;
 
-@tests = map { abs_path($_) } @tests if $opts{'match'};
-print join("\n",@tests)."\n" if scalar(@tests);
+my $results = $tr->bulkAddResults($run->{'id'},$cases);
+
+print "Successfully set the status of ".scalar(@$results)." cases to $status.\n";
+
 exit 0;
 
 __END__

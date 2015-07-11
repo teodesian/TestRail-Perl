@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 141;
+use Test::More 'tests' => 144;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -76,6 +76,7 @@ isnt( exception {$tr->userNamesToIds()}, undef,'userNamesToIds returns error whe
 isnt( exception {$tr->statusNamesToIds()}, undef,'statusNamesToIds returns error when no arguments are passed');
 isnt( exception {$tr->getRunSummary()}, undef,'getRunSummary returns error when no arguments are passed');
 isnt( exception {$tr->getPlanSummary()}, undef,'getPlanSummary returns error when no arguments are passed');
+isnt( exception {$tr->bulkAddResults()}, undef,'bulkAddResults returns error when no arguments are passed');
 
 #1-arg functions
 is(exception {$tr->deleteCase(1)},            undef,'deleteCase returns no error when int arg passed');
@@ -131,6 +132,7 @@ isnt(exception {$tr->getTestSuiteByName(1)}, undef,'getTestSuiteByName with 1 ar
 isnt(exception {$tr->getChildRunByName({}) },undef,'getChildRunByName returns error when 1 argument passed');
 isnt( exception {$tr->createRunInPlan(1) },undef,'createRunInPlan returns error when 1 argument passed');
 isnt( exception {$tr->translateConfigNamesToIds(1)}, undef,'translateConfigNamesToIds returns error when 1 argument passed');
+isnt( exception {$tr->bulkAddResults(1)}, undef,'bulkAddResults returns error when 1 argument is passed');
 
 #2 arg functions
 is(exception {$tr->createMilestone(1,'whee')}, undef,'createMilestone with 2 args returns no error');
@@ -146,6 +148,7 @@ is(exception {$tr->getTestSuiteByName(1,'zap')}, undef,'getTestSuiteByName with 
 is(exception {$tr->createCase(1,'whee')}, undef,'createCase with 2 args returns no error');
 is(exception {$tr->getChildRunByName({},'whee')},undef,'getChildRunByName returns no error when 2 arguments passed');
 is(exception {$tr->translateConfigNamesToIds(1,[1,2,3])}, undef,'translateConfigNamesToIds returns no error when 2 arguments passed');
+is(exception {$tr->bulkAddResults(1,[])}, undef,'bulkAddResults returns no error when 2 arguments passed');
 
 isnt(exception {$tr->createRun(1,1)}, undef,'createRun with 2 args returns error');
 isnt(exception {$tr->createSection(1,1)}, undef,'createSection with 2 args returns error');

@@ -27,6 +27,26 @@ sub userInput {
  return $rt;
 }
 
+=head2 interrogateUser($options,@keys)
+
+Wait for specified keys via userInput, and put them into $options HASHREF, if they are not already defined.
+Returns modified $options HASHREF.
+Dies if the user provides no value.
+
+=cut
+
+sub interrogateUser {
+    my ($options,@keys) = @_;
+    foreach my $key (@keys) {
+        if (!$options->{$key}) {
+            print "Type the $key for your testLink install below:\n";
+            $options->{$key} = TestRail::Utils::userInput();
+            die "$key cannot be blank!" unless $options->{$key};
+        }
+    }
+    return $options;
+}
+
 =head2 parseConfig(homedir)
 
 Parse .testrailrc in the provided home directory.

@@ -169,6 +169,7 @@ sub _doRequest {
 
     my $response = $self->{'browser'}->request($req);
 
+    #Uncomment to generate mocks
     #use Data::Dumper;
     #print Dumper($path,'200','OK',$response->headers,$response->content);
 
@@ -1856,15 +1857,15 @@ sub getMilestoneByID {
 
 =head2 B<getTests (run_id,status_ids,assignedto_ids)>
 
-Get tests for some run.  Optionally filter by provided status_ids.
+Get tests for some run.  Optionally filter by provided status_ids and assigned_to ids.
 
 =over 4
 
 =item INTEGER C<RUN ID> - ID of parent run.
 
-=item ARRAYREF C<STATUS IDS> (optional) - IDs of relevant test statuses to filter by.  get with getPossibleTestStatuses.
+=item ARRAYREF C<STATUS IDS> (optional) - IDs of relevant test statuses to filter by.  Get with getPossibleTestStatuses.
 
-=item ARRAYREF C<ASSIGNEDTO IDS> (optional) - IDs of users assigned to test to filter by.  get with getUsers.
+=item ARRAYREF C<ASSIGNEDTO IDS> (optional) - IDs of users assigned to test to filter by.  Get with getUsers.
 
 =back
 
@@ -1875,11 +1876,12 @@ Returns ARRAYREF of test definition HASHREFs.
 =cut
 
 sub getTests {
-    my ($self,$run_id,$status_ids,$assignedto_ids) = @_;
+    my ($self,$run_id,$status_ids,$assignedto_ids,$section_ids) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("Run ID must be integer") unless $self->_checkInteger($run_id);
     confess("Status IDs must be ARRAYREF") unless !defined($status_ids) || ( reftype($status_ids) || 'undef' ) eq 'ARRAY';
     confess("Assigned to IDs must be ARRAYREF") unless !defined($assignedto_ids) || ( reftype($assignedto_ids) || 'undef' ) eq 'ARRAY';
+
     my $query_string = '';
     $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
     my $results = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
@@ -2108,6 +2110,30 @@ sub createTestResults {
     }
 
     return $self->_doRequest("index.php?/api/v2/add_result/$test_id",'POST',$stuff);
+}
+
+=head2 bulkAddResults(run_id,results)
+
+Add multiple results to a run, where each result is a HASHREF with keys as outlined in the get_results API call documentation.
+
+=over 4
+
+=item INTEGER C<RUN_ID> - ID of desired run to add results to
+
+=item ARRAYREF C<RESULTS> - Array of result objects to upload.
+
+=back
+
+Returns ARRAYREF of result definition HASHREFs.
+
+=cut
+
+sub bulkAddResults {
+    my ($self, $run_id, $results) = @_;
+    confess("Object methods must be called by an instance") unless ref($self);
+    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    confess("results must be arrayref") unless ( reftype($results) || 'undef' ) eq 'ARRAY';
+    return $self->_doRequest("index.php?/api/v2/add_results/$run_id", 'POST', { 'results' => $results });
 }
 
 =head2 B<getTestResults(test_id,limit,offset)>

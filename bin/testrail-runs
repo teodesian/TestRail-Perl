@@ -60,45 +60,11 @@ use File::Find;
 use Cwd qw{abs_path};
 use File::Basename qw{basename};
 
+use Pod::Perldoc 3.10;
+
 sub help {
-    print("
-testrail-tests - list tests in a run matching the provided filters.
-
-USAGE:
-
-  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
-
-PARAMETERS:
-  [MANDATORY PARAMETERS]
-    -j --project [project]: desired project name.
-
-  [OPTIONAL PARAMETERS]
-
-    -c --config [config]: configuration name to filter runs.  Can be passed multiple times.
-    -s --status [status]: only list runs with one or more tests having [status] in testrail.  Can be passed multiple times.
-    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
-                   See L<Encode::Supported> for supported encodings.
-
-  [CONFIG OPTIONS]
-    In your \$HOME, (or the current directory, if your system has no
-    concept of a home directory) put a file called .testrailrc with
-    key=value syntax separated by newlines.
-    Valid Keys are: apiurl,user,password
-
-  [CONFIG OVERRIDES]
-    These override the config, if present.
-    If neither are used, you will be prompted.
-
-  --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password or API key (TestRail 4.4 and above).
-  --user    [name] : Your TestRail User Name.
-
-TESTING OPTIONS:
-
-    --mock: don't do any real HTTP requests.
-    --help: show this output
-
-");
+    @ARGV = ($0);
+    Pod::Perldoc->run();
     exit 0;
 }
 
@@ -124,32 +90,7 @@ if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{us
     ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir,1);
 }
 
-#Interrogate user if they didn't provide info
-if (!$opts{apiurl}) {
-    print "Type the API endpoint url for your testLink install below:\n";
-    $opts{apiurl} = TestRail::Utils::userInput();
-}
-
-if (!$opts{user}) {
-    print "Type your testLink user name below:\n";
-    $opts{user} = TestRail::Utils::userInput();
-}
-
-if (!$opts{pass}) {
-    print "Type the password for your testLink user below:\n";
-    $opts{pass} = TestRail::Utils::userInput();
-}
-
-if (!$opts{apiurl} || !$opts{pass} || !$opts{user}) {
-    print "ERROR: api url, username and password cannot be blank.\n";
-    exit 1;
-}
-
-#Interrogate user if they didn't provide info
-if (!$opts{project}) {
-    print "Type the name of the project you are testing under:\n";
-    $opts{project} = TestRail::Utils::userInput();
-}
+TestRail::Utils::interrogateUser(\%opts,qw{apiurl user pass project});
 
 if ($opts{mock}) {
     use Test::LWP::UserAgent::TestRailMock;
@@ -231,4 +172,4 @@ L<File::HomeDir> for the finding of .testrailrc
 
 =head1 SPECIAL THANKS
 
-Thanks to cPanel Inc, for graciously funding the creation of this module.
+Thanks to cPanel Inc, for graciously funding the creation of this distribution.
