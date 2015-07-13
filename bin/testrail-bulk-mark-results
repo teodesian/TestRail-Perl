@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# ABSTRACT: List tests in a TestRail run matching the provided filters
-# PODNAME: testrail-tests
+# ABSTRACT: Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
+# PODNAME: testrail-bulk-mark-results
 
 use strict;
 use warnings;
@@ -8,53 +8,56 @@ use utf8;
 
 use TestRail::API;
 use TestRail::Utils;
-use TestRail::Utils::Find;
 
 use Getopt::Long;
+Getopt::Long::Configure('pass_through');
+
 use File::HomeDir qw{my_home};
 
 my $opts = {};
 
-#Parse config file if we are missing api url/key or user
+# Parse config file
 my $homedir = my_home() || '.';
 if ( -e $homedir . '/.testrailrc' ) {
     $opts = TestRail::Utils::parseConfig($homedir);
 }
 
+# Override configuration with switches
 GetOptions(
     'apiurl=s'        => \$opts->{'apiurl'},
     'password=s'      => \$opts->{'password'},
     'user=s'          => \$opts->{'user'},
+    'assignedto=s@'   => \$opts->{'users'},
+    'status=s@'       => \$opts->{'statuses'},
     'j|project=s'     => \$opts->{'project'},
     'p|plan=s'        => \$opts->{'plan'},
     'r|run=s'         => \$opts->{'run'},
     'c|config=s@'     => \$opts->{'configs'},
-    's|status=s@'     => \$opts->{'statuses'},
     'a|assignedto=s@' => \$opts->{'users'},
-    'm|match=s'       => \$opts->{'match'},
-    'no-match=s'      => \$opts->{'no-match'},
-    'n|no-recurse'    => \$opts->{'no-recurse'},
     'e|encoding=s'    => \$opts->{'encoding'},
-    'extension=s'     => \$opts->{'extension'},
     'h|help'          => \$opts->{'help'}
 );
 
 if ( $opts->{help} ) { TestRail::Utils::help(); }
 
+my $status = $ARGV[0];
+my $reason = $ARGV[1];
+
+die("No status to set provided.") unless $status;
 TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project run} );
 
 my $tr = TestRail::API->new(
     $opts->{apiurl},     $opts->{user}, $opts->{password},
     $opts->{'encoding'}, $opts->{'debug'}
 );
+$opts->{'set_status_to'} = $status;
+$opts->{'reason'}        = $reason;
+my $results = TestRail::Utils::Results::bulkMarkResults( $opts, $tr );
 
-my ($cases) = TestRail::Utils::getTests( $opts, $tr );
-die "No cases in TestRail!\n" unless $cases;
-
-$opts->{'names-only'} = 1;
-my @tests = TestRail::Utils::Find::findTests( $opts, @$cases );
-
-print join( "\n", @tests ) . "\n" if scalar(@tests);
+print "Successfully set the status of "
+  . scalar(@$results)
+  . " cases to $status.\n"
+  if $results;
 
 exit 0;
 
@@ -64,19 +67,21 @@ exit 0;
 
 =head1 NAME
 
-testrail-tests - List tests in a TestRail run matching the provided filters
+testrail-bulk-mark-results - Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
 
 =head1 VERSION
 
 version 0.029
 
-=head1 SYNOPSIS
-
-  testrail-tests [OPTIONS] | xargs prove -PTestrail=...
-
 =head1 DESCRIPTION
 
-testrail-tests - list tests in a run matching the provided filters.
+Sometimes it is useful to mark entire runs of tests when, for example, a prerequisite test in a sequence invalidates all further tests.
+For example, if a binary produced for test fails to run at all, more detailed testing will be impossible;
+it would save time to just mark everything as blocked.
+
+=head1 USAGE
+
+  testrail-bulk-mark-results [OPTIONS] status [reason]
 
 =head1 PARAMETERS:
 
@@ -102,15 +107,9 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 =over 4
 
--p --plan       : desired plan name.  Required if the run passed is a child of a plan.
+-p --plan     : desired plan name.  Required if the run passed is a child of a plan.
 
--m --match      : attempt to find filenames matching the test names in the provided directory.
-
---no-match      : attempt to find filenames that do not match test names in the provided directory.
-
--n --no-recurse : if match (or no-match) passed, do not recurse subdirectories.
-
--e --encoding   : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+-e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
 
 =back
 
@@ -120,11 +119,9 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -c --config     : configuration name to filter plans in run.  Can be passed multiple times.
 
--s --status     : only list tests marked as [status] in testrail.  Can be passed multiple times.
+-s --status     : only mark tests already marked as [status] in testrail.  Can be passed multiple times.
 
--a --assignedto : only list tests assigned to user. Can be passed multiple times.
-
---extension     : only list files ending in the provided string (e.g. .pl, .pm, .t, .test)
+-a --assignedto : only mark tests assigned to user. Can be passed multiple times.
 
 =back
 

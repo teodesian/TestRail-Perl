@@ -2,282 +2,92 @@
 # ABSTRACT: Upload your TAP results to TestRail after they've finished
 # PODNAME: testrail-report
 
-
 use strict;
 use warnings;
 
 use TestRail::Utils;
 use Getopt::Long;
-use Term::ANSIColor 2.01 qw(colorstrip);
 use Test::Rail::Parser;
-use IO::Interactive::Tiny ();
 use File::HomeDir qw{my_home};
 
 print "testrail-report\n----------------------\n";
 
-sub help {
-    print "testrail-report - report raw TAP results to a TestRail install
-
-USAGE:
-  testrail-report [OPTIONS] tapfile
-  prove -v sometest.t > results.tap && testrail-report [OPTIONS] \\
-  results.tap
-
-  prove -v sometest.t | testrail-report [OPTIONS]
-
-  prove -PTestRail='http://some.testlink.install/','someUser',\\
-  'somePassword' sometest.t
-
-PARAMETERS:
-  [MANDATORY PARAMETERS]
-  --project [someproject] : associate results (if any) with the
-                            provided project name.
-
-  --run [somerun] : associates results (if any) with the provided run
-                    name.
-
-  IF none of these options are provided, you will be asked to type
-  these in as needed, supposing you are not redirecting input
-  (such as piping into this command).
-
-  [SEMI-OPTIONAL PARAMETERS]
-
-    --plan [someplan] : look for the provided run name within
-      the provided plan.
-
-    --configs [someconfigs] : filter run by the provided configuration.
-      This option can be passed multiple times for detailed filtering.
-
-    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
-                   See L<Encode::Supported> for supported encodings.
-
-  Test plans can have runs with the same name, but different
-  configurations, which is understandably confusing.  You can do the
-  same outside of plans, and without configurations; but doing so is
-  ill-advised, and the only option from there is to use IDs.  So, try
-  not to do that if you want to use this tool, and want sanity in your
-  Test Management System.
-
-  The way around this is to specify what plan and configuration
-  you want to set results for.  This should provide sufficient
-  uniqueness to get to any run using words.
-
-  [OPTIONAL PARAMETERS]
-
-    --spawn [testsuite_id] : Attempt to create a run based on the
-      provided testsuite ID.  Uses the name provided with --run.
-
-      If plans/configurations are supplied, it will attempt to create
-      it as a child of the provided plan, and with the supplied
-      configurations.
-
-      If the specified run already exists, the
-      program will simply use the existing run,
-      and disregard the supplied testsuite_id.
-
-      If the specified plan does not exist, it will be created
-      as well.
-
-    --section [section_name] : When spawning, restrict the cases used
-      in the provided testsuite ID to these sections.
-
-      Option may be passed multiple times to specify multiple sections.
-
-
-  [CONFIG OVERRIDES]
-  In your \$HOME, (or the current directory, if your system has no
-  concept of a home directory) put a file called .testrailrc with
-  key=value syntax separated by newlines.
-  Valid Keys are: apiurl,user,password
-
-  [CONFIG OPTIONS] - These override the config, if present.
-                     If neither are used, you will be prompted.
-
-  --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
-  --user    [name] : Your TestRail User Name.
-
-  [BEHAVIOR]
-  --case-ok      : Whether to consider each OK to correspond to
-                   a test in TestRail
-
-  --step-results [name] : 'System Name' of a 'step_results' type field
-                    to set for your tests.
-
-  These options are mutually exclusive.  If neither is set, the
-  overall result of the test will be used as the pass/fail for the test.
-
-  [RESULT OPTIONS]
-
-    --version : String describing the version of the system under test.
-    --autoclose : If there are no more tests in 'untested' or 'retest'
-                  status for the specified run/plan, close it.
-
-PROVE PLUGIN:
-
-  passing -PTestRail=apiurl,user,pass,project,run to prove will
-  automatically upload your test results while the test is running if
-  real-time results are desired.
-
-  See App::Prove::Plugin::TestRail for more information.
-
-REQUIREMENTS:
-  Your TestRail install must have 3 custom statuses with the internal
-  names 'skip', 'todo_pass', and 'todo_fail', to represent those
-  states which TAP can have.
-
-  Also, be sure your tests don't output non-TAP (unknown) lines
-  ending in dots (.)
-  This will cause the preceding characters to be interpreted as
-  a test name, which may lead to unexpected results.
-
-
-TESTING OPTIONS:
-
-    --mock don't do any real HTTP requests.
-
-";
-    exit 0;
-}
-
 #Main loop------------
-
-my ($help,$apiurl,$user,$password,$project,$run,$case_per_ok,$step_results,$mock,$configs,$plan,$version,$spawn,$sections,$autoclose,$encoding);
+my %opts;
 
 #parse switches
 GetOptions(
-    'run=s'          => \$run,
-    'apiurl=s'       => \$apiurl,
-    'password=s'     => \$password,
-    'user=s'         => \$user,
-    'project=s'      => \$project,
-    'case-ok'        => \$case_per_ok,
-    'step-results=s' => \$step_results,
-    'mock'           => \$mock,
-    'config=s@'      => \$configs,
-    'plan=s'         => \$plan,
-    'version=s'      => \$version,
-    'spawn=i'        => \$spawn,
-    'section=s@'     => \$sections,
-    'autoclose'      => \$autoclose,
-    'e|encoding=s'   => \$encoding,
-    'help'           => \$help
+    'run=s'          => \$opts{run},
+    'apiurl=s'       => \$opts{apiurl},
+    'password=s'     => \$opts{password},
+    'user=s'         => \$opts{user},
+    'project=s'      => \$opts{project},
+    'case-ok'        => \$opts{case_per_ok},
+    'step-results=s' => \$opts{step_results},
+    'config=s@'      => \$opts{configs},
+    'plan=s'         => \$opts{plan},
+    'version=s'      => \$opts{version},
+    'spawn=i'        => \$opts{spawn},
+    'section=s@'     => \$opts{sections},
+    'autoclose'      => \$opts{autoclose},
+    'e|encoding=s'   => \$opts{encoding},
+    'help'           => \$opts{help}
 );
 
-if ($help) { help(); }
+if ( $opts{help} ) { TestRail::Utils::help(); }
 
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';
-if (-e $homedir . '/.testrailrc' && (!$apiurl || !$password || !$user) ) {
-    ($apiurl,$password,$user) = TestRail::Utils::parseConfig($homedir,1);
+if ( -e $homedir . '/.testrailrc'
+    && ( !$opts{apiurl} || !$opts{password} || !$opts{user} ) )
+{
+    ( $opts{apiurl}, $opts{password}, $opts{user} ) =
+      TestRail::Utils::parseConfig( $homedir, 1 );
 }
 
 #If argument is passed use it instead of stdin
 my $file = $ARGV[0];
-die "No Such File $file" if ($file && !-e $file);
-my ($fh,$fcontents,@files);
+die "No Such File $file" if ( $file && !-e $file );
 
-if ($file) {
-    open($fh,'<',$file);
-    while (<$fh>) {
-        $_ = colorstrip($_); #strip prove brain damage
+die
+  "ERROR: Interactive mode not allowed when piping input.  See --help for options."
+  if ( !$opts{run}
+    || !$opts{apiurl}
+    || !$opts{password}
+    || !$opts{user}
+    || !$opts{project} );
 
-        if (TestRail::Utils::getFilenameFromTapLine($_)) {
-            push(@files,$fcontents) if $fcontents;
-            $fcontents = '';
-        }
-        $fcontents .= $_;
-    }
-    close($fh);
-    push(@files,$fcontents) if $fcontents;
-} else {
-    #Just read STDIN, print help if no file was passed
-    if (IO::Interactive::Tiny::is_interactive()) {
-        print "ERROR: no file passed, and no data piped in! See --help for usage.\n";
-        exit(1);
-    }
-    if ( !$run || !$apiurl || !$password || !$user || !$project ) {
-        print "ERROR: Interactive mode not allowed when piping input.  See --help for options.\n";
-        exit(1);
-    }
-    while (<>) {
-        $_ = colorstrip($_); #strip prove brain damage
-        if (TestRail::Utils::getFilenameFromTapLine($_)) {
-            push(@files,$fcontents) if $fcontents;
-            $fcontents = '';
-        }
-        $fcontents .= $_;
-    }
-    help() if !$fcontents; #Nothing passed to stdin!
-    push(@files,$fcontents) if $fcontents;
-}
+my @files = TestRail::Utils::TAP2TestFiles($file);
 
-#Interrogate user if they didn't provide info
-if (!$apiurl) {
-    print "Type the API endpoint url for your testLink install below:\n";
-    $apiurl = TestRail::Utils::userInput();
-}
+TestRail::Utils::interrogateUser( \%opts,
+    qw{apiurl user password project run} );
 
-if (!$user) {
-    print "Type your testLink user name below:\n";
-    $user = TestRail::Utils::userInput();
-}
-
-if (!$password) {
-    print "Type the password for your testLink user below:\n";
-    $password = TestRail::Utils::userInput();
-}
-
-if (!$apiurl || !$password || !$user) {
-    print "ERROR: api url, username and password cannot be blank.\n";
-    exit 1;
-}
-
-#Interrogate user if they didn't provide info
-if (!$project) {
-    print "Type the name of the project you are testing under:\n";
-    $project = TestRail::Utils::userInput();
-}
-
-# Interrogate user if options were not passed
-if (!$run) {
-    print "Type the name of the existing run you would like to run against:\n";
-    $run = TestRail::Utils::userInput();
-}
-
-my $debug = 0;
-my $browser;
-if ($mock) {
-    use Test::LWP::UserAgent::TestRailMock;
-    $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $debug = 1;
-}
-
-my $result_options = undef;
-$result_options = {'version' => $version} if $version;
+$opts{result_options} = { 'version' => $opts{version} } if $opts{version};
 
 my $tap;
 foreach my $phil (@files) {
-    $tap = Test::Rail::Parser->new({
-        'tap'          => $phil,
-        'apiurl'       => $apiurl,
-        'user'         => $user,
-        'pass'         => $password,
-        'run'          => $run,
-        'project'      => $project,
-        'case_per_ok'  => $case_per_ok,
-        'step_results' => $step_results,
-        'debug'        => $debug,
-        'browser'      => $browser,
-        'plan'         => $plan,
-        'configs'      => $configs,
-        'result_options' => $result_options,
-        'spawn'        => $spawn,
-        'sections'     => $sections,
-        'autoclose'    => $autoclose,
-        'encoding'     => $encoding,
-        'merge'        => 1
-    });
+    $tap = Test::Rail::Parser->new(
+        {
+            'tap'            => $phil,
+            'apiurl'         => $opts{apiurl},
+            'user'           => $opts{user},
+            'pass'           => $opts{password},
+            'run'            => $opts{run},
+            'project'        => $opts{project},
+            'case_per_ok'    => $opts{case_per_ok},
+            'step_results'   => $opts{step_results},
+            'debug'          => $opts{debug},
+            'browser'        => $opts{browser},
+            'plan'           => $opts{plan},
+            'configs'        => $opts{configs},
+            'result_options' => $opts{result_options},
+            'spawn'          => $opts{spawn},
+            'sections'       => $opts{sections},
+            'autoclose'      => $opts{autoclose},
+            'encoding'       => $opts{encoding},
+            'merge'          => 1
+        }
+    );
     $tap->run();
 
 }
@@ -299,7 +109,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.028
+version 0.029
 
 =head1 SYNOPSIS
 
@@ -399,10 +209,6 @@ states which TAP can have.
 Also, be sure your tests don't output non-TAP (unknown) lines ending in dots (.)
 This will cause the preceding characters to be interpreted as a test name, which may lead to unexpected results.
 
-=head2 TESTING OPTIONS:
-
-    --mock don't do any real HTTP requests.
-
 =head1 SEE ALSO
 
 L<TestRail::API>
@@ -415,7 +221,7 @@ L<File::HomeDir> for the finding of .testrailrc
 
 =head1 SPECIAL THANKS
 
-Thanks to cPanel Inc, for graciously funding the creation of this module.
+Thanks to cPanel Inc, for graciously funding the creation of this distribution.
 
 =head1 AUTHOR
 

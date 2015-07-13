@@ -1,16 +1,41 @@
-# ABSTRACT: Utilities for the testrail command line functions.
+# ABSTRACT: Utilities for the testrail command line functions, and their main loops.
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.028';
+$TestRail::Utils::VERSION = '0.029';
 use strict;
 use warnings;
+
+use Carp qw{confess cluck};
+use Pod::Perldoc 3.10;
+
+use IO::Interactive::Tiny ();
+use Term::ANSIColor 2.01 qw(colorstrip);
+use Scalar::Util qw{blessed};
+
+sub help {
+    @ARGV = ($0);
+    Pod::Perldoc->run();
+    exit 0;
+}
 
 sub userInput {
     local $| = 1;
     my $rt = <STDIN>;
     chomp $rt;
     return $rt;
+}
+
+sub interrogateUser {
+    my ( $options, @keys ) = @_;
+    foreach my $key (@keys) {
+        if ( !$options->{$key} ) {
+            print "Type the $key for your testLink install below:\n";
+            $options->{$key} = TestRail::Utils::userInput();
+            die "$key cannot be blank!" unless $options->{$key};
+        }
+    }
+    return $options;
 }
 
 sub parseConfig {
@@ -68,6 +93,78 @@ sub getFilenameFromTapLine {
     return 0;
 }
 
+sub TAP2TestFiles {
+    my $file = shift;
+    my ( $fh, $fcontents, @files );
+
+    if ($file) {
+        open( $fh, '<', $file );
+        while (<$fh>) {
+            $_ = colorstrip($_);    #strip prove brain damage
+
+            if ( getFilenameFromTapLine($_) ) {
+                push( @files, $fcontents ) if $fcontents;
+                $fcontents = '';
+            }
+            $fcontents .= $_;
+        }
+        close($fh);
+        push( @files, $fcontents ) if $fcontents;
+    }
+    else {
+        #Just read STDIN, print help if no file was passed
+        die
+          "ERROR: no file passed, and no data piped in! See --help for usage.\n"
+          if IO::Interactive::Tiny::is_interactive();
+        while (<>) {
+            $_ = colorstrip($_);    #strip prove brain damage
+            if ( getFilenameFromTapLine($_) ) {
+                push( @files, $fcontents ) if $fcontents;
+                $fcontents = '';
+            }
+            $fcontents .= $_;
+        }
+        push( @files, $fcontents ) if $fcontents;
+    }
+    return @files;
+}
+
+sub getRunInformation {
+    my ( $tr, $opts ) = @_;
+    confess("First argument must be instance of TestRail::API")
+      unless blessed($tr) eq 'TestRail::API';
+
+    my $project = $tr->getProjectByName( $opts->{'project'} );
+    confess "No such project '$opts->{project}'.\n" if !$project;
+
+    my ( $run, $plan );
+
+    if ( $opts->{'plan'} ) {
+        $plan = $tr->getPlanByName( $project->{'id'}, $opts->{'plan'} );
+        confess "No such plan '$opts->{plan}'!\n" if !$plan;
+        $run =
+          $tr->getChildRunByName( $plan, $opts->{'run'}, $opts->{'configs'} );
+    }
+    else {
+        $run = $tr->getRunByName( $project->{'id'}, $opts->{'run'} );
+    }
+
+    confess
+      "No such run '$opts->{run}' matching the provided configs (if any).\n"
+      if !$run;
+
+    #If the run/plan has a milestone set, then return it too
+    my $milestone;
+    my $mid = $plan ? $plan->{'milestone_id'} : $run->{'milestone_id'};
+    if ($mid) {
+        $milestone = $tr->getMilestoneByID($mid);
+        confess "Could not fetch run milestone!"
+          unless $milestone;    #hope this doesn't happen
+    }
+
+    return ( $project, $plan, $run, $milestone );
+}
+
 1;
 
 __END__
@@ -78,21 +175,27 @@ __END__
 
 =head1 NAME
 
-TestRail::Utils - Utilities for the testrail command line functions.
+TestRail::Utils - Utilities for the testrail command line functions, and their main loops.
 
 =head1 VERSION
 
-version 0.028
+version 0.029
 
-=head1 DESCRIPTION
+=head1 SCRIPT HELPER FUNCTIONS
 
-Utilities for the testrail command line functions.
+=head2 help
 
-=head1 FUNCTIONS
+Print the perldoc for $0 and exit.
 
 =head2 userInput
 
 Wait for user input and return it.
+
+=head2 interrogateUser($options,@keys)
+
+Wait for specified keys via userInput, and put them into $options HASHREF, if they are not already defined.
+Returns modified $options HASHREF.
+Dies if the user provides no value.
 
 =head2 parseConfig(homedir)
 
@@ -102,7 +205,7 @@ Returns:
 
 ARRAY - (apiurl,password,user)
 
-=head2 getFilenameFromTAPLine($line)
+=head2 getFilenameFromTapLine($line)
 
 Analyze TAP output by prove and look for filename boundaries (no other way to figure out what file is run).
 Long story short: don't end 'unknown' TAP lines with any number of dots if you don't want it interpreted as a test name.
@@ -115,6 +218,17 @@ STRING LINE - some line of TAP
 Returns:
 
 STRING filename of the test that output the TAP.
+
+=head2 TAP2TestFiles(file)
+
+Returns ARRAY of TAP output for the various test files therein.
+file is optional, will read TAP from STDIN if not passed.
+
+=head2 getRunInformation
+
+Return the relevant project definition, plan, run and milestone definition HASHREFs for the provided options.
+
+Dies in the event the project/plan/run could not be found.
 
 =head1 SPECIAL THANKS
 

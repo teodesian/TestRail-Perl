@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.028';
+$Test::Rail::Harness::VERSION = '0.029';
 use strict;
 use warnings;
 
@@ -46,7 +46,7 @@ sub make_parser {
 
     #for Testability of plugin
     if ( $ENV{'TESTRAIL_MOCKED'} ) {
-        use Test::LWP::UserAgent::TestRailMock;
+        require Test::LWP::UserAgent::TestRailMock;
         $args->{'debug'}   = 1;
         $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     }
@@ -75,7 +75,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.028
+version 0.029
 
 =head1 DESCRIPTION
 

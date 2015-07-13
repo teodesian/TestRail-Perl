@@ -1,10 +1,9 @@
 
 BEGIN {
-    unless ( $ENV{AUTHOR_TESTING} ) {
-        require Test::More;
-        Test::More::plan(
-            skip_all => 'these tests are for testing by the author' );
-    }
+  unless ($ENV{AUTHOR_TESTING}) {
+    require Test::More;
+    Test::More::plan(skip_all => 'these tests are for testing by the author');
+  }
 }
 
 use strict;
@@ -15,8 +14,9 @@ use Test::More;
 use Test::Spelling 0.12;
 use Pod::Wordlist;
 
+
 add_stopwords(<DATA>);
-all_pod_files_spelling_ok(qw( bin lib  ));
+all_pod_files_spelling_ok( qw( bin lib  ) );
 __DATA__
 GETTERS
 TESTSUITE
@@ -90,6 +90,15 @@ userInput
 autoclose
 closeRun
 closePlan
+lockTest
+getRunInformation
+assignedto
+lockname
+lifo
+milesort
+findRuns
+findTests
+assignee
 George
 Baugh
 teodesian
@@ -99,14 +108,14 @@ neil
 lib
 TestRail
 Utils
-Test
-LWP
-UserAgent
-TestRailMock
-Rail
-Harness
+Lock
+Results
 App
 Prove
 Plugin
+Test
+Rail
+Harness
+Find
 Parser
 API

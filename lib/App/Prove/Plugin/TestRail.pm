@@ -2,7 +2,7 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.028';
+$App::Prove::Plugin::TestRail::VERSION = '0.029';
 use strict;
 use warnings;
 use utf8;
@@ -72,7 +72,7 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.028
+version 0.029
 
 =head1 SYNOPSIS
 
@@ -97,6 +97,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     version=xx.xx.xx.xx
     case_per_ok=0
     step_results=sr_sys_name
+    lockname=internal_lock_name
     spawn=123
     sections=section1:section2:section3: ... :sectionN
     autoclose=0

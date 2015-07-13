@@ -1,10 +1,9 @@
 
 BEGIN {
-    unless ( $ENV{AUTHOR_TESTING} ) {
-        require Test::More;
-        Test::More::plan(
-            skip_all => 'these tests are for testing by the author' );
-    }
+  unless ($ENV{AUTHOR_TESTING}) {
+    require Test::More;
+    Test::More::plan(skip_all => 'these tests are for testing by the author');
+  }
 }
 
 use strict;
@@ -16,24 +15,30 @@ use Test::More 0.88;
 use Test::NoTabs;
 
 my @files = (
+    'bin/testrail-bulk-mark-results',
+    'bin/testrail-lock',
     'bin/testrail-report',
     'bin/testrail-runs',
     'bin/testrail-tests',
     'lib/App/Prove/Plugin/TestRail.pm',
-    'lib/Test/LWP/UserAgent/TestRailMock.pm',
     'lib/Test/Rail/Harness.pm',
     'lib/Test/Rail/Parser.pm',
     'lib/TestRail/API.pm',
     'lib/TestRail/Utils.pm',
+    'lib/TestRail/Utils/Find.pm',
+    'lib/TestRail/Utils/Lock.pm',
+    'lib/TestRail/Utils/Results.pm',
     't/.testrailrc',
     't/00-compile.t',
     't/App-Prove-Plugin-Testrail.t',
     't/Test-Rail-Parser.t',
     't/TestRail-API-mockOnly.t',
     't/TestRail-API.t',
+    't/TestRail-Utils-Find.t',
+    't/TestRail-Utils-Lock.t',
+    't/TestRail-Utils-Results.t',
     't/TestRail-Utils.t',
     't/arg_types.t',
-    't/author-classSafety.t',
     't/author-critic.t',
     't/author-eol.t',
     't/author-no-tabs.t',
@@ -41,6 +46,11 @@ my @files = (
     't/fake.tap',
     't/fake.test',
     't/faker.test',
+    't/lib/Test/LWP/UserAgent/TestRailMock.pm',
+    't/lock_data/lockme.test',
+    't/lock_data/lockmealso.test',
+    't/lock_data/lockmetoo.test',
+    't/lock_data/sortalockme.test',
     't/notests.test',
     't/pass.test',
     't/release-cpan-changes.t',
@@ -58,6 +68,8 @@ my @files = (
     't/skipall.test',
     't/test_multiple_files.tap',
     't/test_subtest.tap',
+    't/testrail-bulk-mark-results.t',
+    't/testrail-lock.t',
     't/testrail-report.t',
     't/testrail-runs.t',
     't/testrail-tests.t',

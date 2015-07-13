@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
 use Test::More 'tests' => 6;
 use Test::Fatal;
 use App::Prove;
@@ -13,60 +16,34 @@ $ENV{'TESTRAIL_MOCKED'} = 1;
 
 #Test the same sort of data as would come from the Test::Rail::Parser case
 my $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestingSuite,version=0.014,case_per_ok=1",
-    't/fake.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestingSuite,version=0.014,case_per_ok=1",'t/fake.test');
 
-is( exception { $prove->run() },
-    undef, "Running TR parser case via plugin functions" );
+is (exception {$prove->run()},undef,"Running TR parser case via plugin functions");
 
 #Check that plan, configs and version also make it through
 $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=Executing the great plan,version=0.014,case_per_ok=1,plan=GosPlan,configs=testConfig",
-    't/fake.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=Executing the great plan,version=0.014,case_per_ok=1,plan=GosPlan,configs=testConfig",'t/fake.test');
 
-is( exception { $prove->run() },
-    undef,
-    "Running TR parser case via plugin functions works with configs/plans" );
+is (exception {$prove->run()},undef,"Running TR parser case via plugin functions works with configs/plans");
 
 #Check that spawn options make it through
 
 $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestingSuite2,version=0.014,case_per_ok=1,spawn=9",
-    't/skipall.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestingSuite2,version=0.014,case_per_ok=1,spawn=9",'t/skipall.test');
 
-is( exception { $prove->run() },
-    undef,
-    "Running TR parser case via plugin functions works with configs/plans" );
+is (exception {$prove->run()},undef,"Running TR parser case via plugin functions works with configs/plans");
 
 $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=bogoPlan,run=bogoRun,version=0.014,case_per_ok=1,spawn=9",
-    't/skipall.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=bogoPlan,run=bogoRun,version=0.014,case_per_ok=1,spawn=9",'t/skipall.test');
 
-is( exception { $prove->run() },
-    undef, "Running TR parser spawns both runs and plans" );
+is (exception {$prove->run()},undef,"Running TR parser spawns both runs and plans");
 
 $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=bogoRun,version=0.014,case_per_ok=1,spawn=9,sections=fake.test:CARBON LIQUEFACTION",
-    't/fake.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=bogoRun,version=0.014,case_per_ok=1,spawn=9,sections=fake.test:CARBON LIQUEFACTION",'t/fake.test');
 
-is( exception { $prove->run() },
-    undef, "Running TR parser can discriminate by sections correctly" );
+is (exception {$prove->run()},undef,"Running TR parser can discriminate by sections correctly");
 
 $prove = App::Prove->new();
-$prove->process_args(
-    "-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=FinalPlan,run=FinalRun,configs=testConfig,version=0.014,case_per_ok=1,autoclose=1",
-    't/fake.test'
-);
+$prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=FinalPlan,run=FinalRun,configs=testConfig,version=0.014,case_per_ok=1,autoclose=1",'t/fake.test');
 
-is( exception { $prove->run() },
-    undef, "Running TR parser with autoclose works correctly" );
+is (exception {$prove->run()},undef,"Running TR parser with autoclose works correctly");
