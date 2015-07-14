@@ -12,44 +12,61 @@ Sometimes it is useful to mark entire runs of tests when, for example, a prerequ
 For example, if a binary produced for test fails to run at all, more detailed testing will be impossible;
 it would save time to just mark everything as blocked.
 
-=head2 PARAMETERS:
+=head1 PARAMETERS:
 
-=head3 MANDATORY PARAMETERS
+=head2 MANDATORY PARAMETERS
 
-    -j --project [project]: desired project name.
-    -r --run [run]: desired run name.
+=over 4
 
-=head3 SEMI-OPTIONAL PARAMETERS
+--apiurl     : full URL to get to TestRail index document
 
-    -p --plan [plan]: desired plan name.  Required if the run passed is a child of a plan.
-    -e --encoding: Character encoding of arguments.  Defaults to UTF-8.
-                   See L<Encode::Supported> for supported encodings.
+--password   : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
 
-=head3 OPTIONAL PARAMETERS
+--user       : Your TestRail User Name.
 
-    -c --config [config]: configuration name to filter plans in run.  Can be passed multiple times.
-    -a --assignedto [user]: only mark tests assigned to user. Can be passed multiple times.
+-j --project : desired project name.
 
-=head3 CONFIG OPTIONS
+-r --run     : desired run name.
 
-    In your \$HOME, (or the current directory, if your system has no
-    concept of a home directory) put a file called .testrailrc with
-    key=value syntax separated by newlines.
-    Valid Keys are: apiurl,user,password
+=back
 
-=head3 CONFIG OVERRIDES
+All mandatory options not passed with the above switches, or in your ~/.testrailrc will be prompted for.
 
-    These override the config, if present.
-    If neither are used, you will be prompted.
+=head2 SEMI-OPTIONAL PARAMETERS
 
-  --apiurl   [url] : full URL to get to TestRail index document
-  --password [key] : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
-  --user    [name] : Your TestRail User Name.
+=over 4
 
-=head2 TESTING OPTIONS:
+-p --plan     : desired plan name.  Required if the run passed is a child of a plan.
 
-    --mock: don't do any real HTTP requests.
-    --help: show this output
+-e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+
+=back
+
+=head2 OPTIONAL PARAMETERS
+
+=over 4
+
+-c --config     : configuration name to filter plans in run.  Can be passed multiple times.
+
+-a --assignedto : only mark tests assigned to user. Can be passed multiple times.
+
+=back
+
+=head1 CONFIGURATION FILE
+
+In your \$HOME, (or the current directory, if your system has no concept of a home directory) put a file called .testrailrc with key=value syntax separated by newlines.
+Valid Keys are the same as documented by L<App::Prove::Plugin::TestRail>.
+All options specified thereby are overridden by passing the command-line switches above.
+
+=head1 MISCELLANEOUS OPTIONS:
+
+=over 4
+
+--mock : don't do any real HTTP requests.
+
+--help : show this output
+
+=back
 
 =cut
 
@@ -64,86 +81,76 @@ use Getopt::Long;
 Getopt::Long::Configure('pass_through');
 
 use File::HomeDir qw{my_home};
-use File::Find;
-use Cwd qw{abs_path};
-use File::Basename qw{basename};
 
-use Pod::Perldoc 3.10;
+my $opts = {};
 
-sub help {
-    @ARGV = ($0);
-    Pod::Perldoc->run();
-    exit 0;
+# Parse config file
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc') {
+    $opts = TestRail::Utils::parseConfig($homedir);
 }
 
-my %opts;
-
+# Override configuration with switches
 GetOptions(
-    'apiurl=s'        => \$opts{'apiurl'},
-    'password=s'      => \$opts{'pass'},
-    'user=s'          => \$opts{'user'},
-    'j|project=s'     => \$opts{'project'},
-    'p|plan=s'        => \$opts{'plan'},
-    'r|run=s'         => \$opts{'run'},
-    'c|config=s@'     => \$opts{'configs'},
-    'a|assignedto=s@' => \$opts{'users'},
-    'mock'            => \$opts{'mock'},
-    'e|encoding=s'    => \$opts{'encoding'},
-    'h|help'          => \$opts{'help'}
+    'apiurl=s'        => \$opts->{'apiurl'},
+    'password=s'      => \$opts->{'password'},
+    'user=s'          => \$opts->{'user'},
+    'j|project=s'     => \$opts->{'project'},
+    'p|plan=s'        => \$opts->{'plan'},
+    'r|run=s'         => \$opts->{'run'},
+    'c|config=s@'     => \$opts->{'configs'},
+    'a|assignedto=s@' => \$opts->{'users'},
+    'mock'            => \$opts->{'mock'},
+    'e|encoding=s'    => \$opts->{'encoding'},
+    'h|help'          => \$opts->{'help'}
 );
 
-if ($opts{help}) { help(); }
+if ($opts->{help}) { TestRail::Utils::help(); }
 
 my $status = $ARGV[0];
 my $reason = $ARGV[1];
 
 die("No status to set provided.") unless $status;
-#Parse config file if we are missing api url/key or user
-my $homedir = my_home() || '.';
-if (-e $homedir . '/.testrailrc' && (!$opts{apiurl} || !$opts{pass} || !$opts{user}) ) {
-    ($opts{apiurl},$opts{pass},$opts{user}) = TestRail::Utils::parseConfig($homedir,1);
-}
+TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});
 
-TestRail::Utils::interrogateUser(\%opts,qw{apiurl user pass project run});
-
-if ($opts{mock}) {
+if ($opts->{mock}) {
     use Test::LWP::UserAgent::TestRailMock;
-    $opts{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts{debug} = 1;
+    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts->{debug} = 1;
 }
 
-my $tr = TestRail::API->new($opts{apiurl},$opts{user},$opts{pass},$opts{'encoding'},$opts{'debug'});
-$tr->{'browser'} = $opts{'browser'} if $opts{'browser'};
+my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
+$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
 $tr->{'debug'} = 0;
 
-my $project = $tr->getProjectByName($opts{'project'});
+my $project = $tr->getProjectByName($opts->{'project'});
 if (!$project) {
-    print "No such project '$opts{project}'.\n";
+    print "No such project '$opts->{project}'.\n";
     exit 6;
 }
 
 my ($run,$plan);
 
-if ($opts{'plan'}) {
-    $plan = $tr->getPlanByName($project->{'id'},$opts{'plan'});
+if ($opts->{'plan'}) {
+    $plan = $tr->getPlanByName($project->{'id'},$opts->{'plan'});
     if (!$plan) {
-        print "No such plan '$opts{plan}'!\n";
+        print "No such plan '$opts->{plan}'!\n";
         exit 1;
     }
-    $run = $tr->getChildRunByName($plan,$opts{'run'}, $opts{'configs'});
+    $run = $tr->getChildRunByName($plan,$opts->{'run'}, $opts->{'configs'});
 } else {
-    $run = $tr->getRunByName($project->{'id'},$opts{'run'});
+    $run = $tr->getRunByName($project->{'id'},$opts->{'run'});
 }
 
 if (!$run) {
-    print "No such run '$opts{run}' matching the provided configs (if any).\n";
+    print "No such run '$opts->{run}' matching the provided configs (if any).\n";
     exit 2;
 }
 
 my $user_ids;
 #Process assignedto ids
-if ($opts{'users'}) {
-    eval { @$user_ids = $tr->userNamesToIds(@{$opts{'users'}}); };
+if ($opts->{'users'}) {
+    eval { @$user_ids = $tr->userNamesToIds(@{$opts->{'users'}}); };
     if ($@) {
         print "$@\n";
         exit 5;
@@ -164,7 +171,7 @@ my ($status_id) = $tr->statusNamesToIds($status);
         'test_id' => $_->{'id'},
         'status_id' => $status_id,
         'comment'   => $reason,
-        'version'   => $opts{'version'}
+        'version'   => $opts->{'version'}
     }
 } @$cases;
 

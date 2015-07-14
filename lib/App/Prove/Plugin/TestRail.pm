@@ -35,6 +35,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     version=xx.xx.xx.xx
     case_per_ok=0
     step_results=sr_sys_name
+    lockname=internal_lock_name
     spawn=123
     sections=section1:section2:section3: ... :sectionN
     autoclose=0

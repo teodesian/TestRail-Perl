@@ -12,7 +12,21 @@ package TestRail::Utils;
 use strict;
 use warnings;
 
+use Pod::Perldoc 3.10;
+
 =head1 FUNCTIONS
+
+=head2 help
+
+Print the perldoc for $0 and exit.
+
+=cut
+
+sub help {
+    @ARGV = ($0);
+    Pod::Perldoc->run();
+    exit 0;
+}
 
 =head2 userInput
 

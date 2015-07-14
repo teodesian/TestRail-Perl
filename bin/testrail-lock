@@ -1,0 +1,223 @@
+#!/usr/bin/env perl
+# ABSTRACT: Lock a test in a TestRail, and return the test name if successful.
+# PODNAME: testrail-lock
+
+=head1 SYNOPSIS
+
+  # Lock a group of tests and execute them
+  testrail-tests [OPTIONS] | xargs testrail-lock [OPTIONS] | xargs prove -PTestrail=...
+
+=head1 DESCRIPTION
+
+testrail-lock - pick an untested/retest test in TestRail, lock it, and return the test name if successful.
+
+It is useful to lock the test in situations where you have multiple disconnected test running processes trying to allocate resources toward testing outstanding cases so that effort is not duplicated.
+This is accomplished via setting a special locking result on a test rather than simple assignment, as detecting lock conflicts is impossible then due to a lack of assignment history.
+Results, however have a history of results set, so we use that fact to detect if a locking collision occured (race condition) and fail to return a result when another process locked during our attempt to lock.
+
+Will respect test priority when making the choice of what test to lock.
+
+This obviously does not make sense with case_per_ok test upload; support for locking entire sections when in case_per_ok upload mode is not supported at this time.
+
+=head1 PARAMETERS:
+
+=head2 MANDATORY PARAMETERS
+
+=over 4
+
+--apiurl      : full URL to get to TestRail index document
+
+--password    : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
+
+--user        : Your TestRail User Name.
+
+-j --project  : desired project name.
+
+-r --run      : desired run name.
+
+-l --lockname : internal name of lock status.
+
+=back
+
+All mandatory options not passed with the above switches, or in your ~/.testrailrc will be prompted for.
+
+=head2 SEMI-OPTIONAL PARAMETERS
+
+=over 4
+
+-p --plan     : desired plan name.  Required if the run passed is a child of a plan.
+
+-e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+
+=back
+
+=head2 OPTIONAL PARAMETERS
+
+=over 4
+
+-c --config : configuration name to filter plans in run.  Can be passed multiple times.
+
+=back
+
+=head1 CONFIGURATION FILE
+
+In your $HOME, (or the current directory, if your system has no concept of a home directory) put a file called .testrailrc with key=value syntax separated by newlines.
+Valid Keys are the same as documented by L<App::Prove::Plugin::TestRail>.
+All options specified thereby are overridden by passing the command-line switches above.
+
+=head1 MISCELLANEOUS OPTIONS:
+
+=over 4
+
+--mock : don't do any real HTTP requests.  Used only by tests.
+
+--help : show this output
+
+=back
+
+=cut
+
+use strict;
+use warnings;
+use utf8;
+
+use TestRail::API;
+use TestRail::Utils;
+
+use Getopt::Long;
+use File::HomeDir qw{my_home};
+use File::Find;
+use Cwd qw{abs_path};
+use File::Basename qw{basename};
+use Sys::Hostname qw{hostname};
+
+my $hostname = hostname();
+
+my $opts = {};
+
+#Parse config file if we are missing api url/key or user
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc') {
+    $opts = TestRail::Utils::parseConfig($homedir);
+}
+
+GetOptions(
+    'apiurl=s'        => \$opts->{'apiurl'},
+    'password=s'      => \$opts->{'password'},
+    'user=s'          => \$opts->{'user'},
+    'l|lockname=s'    => \$opts->{'lockname'},
+    'j|project=s'     => \$opts->{'project'},
+    'p|plan=s'        => \$opts->{'plan'},
+    'r|run=s'         => \$opts->{'run'},
+    'c|config=s@'     => \$opts->{'configs'},
+    'mock'            => \$opts->{'mock'},
+    'e|encoding=s'    => \$opts->{'encoding'},
+    'h|help'          => \$opts->{'help'}
+);
+
+if ($opts->{help}) { help(); }
+
+TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run lockname});
+
+if ($opts->{mock}) {
+    use Test::LWP::UserAgent::TestRailMock;
+    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts->{debug} = 1;
+}
+
+my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
+$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
+$tr->{'debug'} = 0;
+
+my $project = $tr->getProjectByName($opts->{'project'});
+if (!$project) {
+    warn "No such project '$opts->{project}'.\n";
+    exit 6;
+}
+
+my ($run,$plan);
+
+if ($opts->{'plan'}) {
+    $plan = $tr->getPlanByName($project->{'id'},$opts->{'plan'});
+    if (!$plan) {
+        warn "No such plan '$opts->{plan}'!\n";
+        exit 1;
+    }
+    $run = $tr->getChildRunByName($plan,$opts->{'run'}, $opts->{'configs'});
+} else {
+    $run = $tr->getRunByName($project->{'id'},$opts->{'run'});
+}
+
+if (!$run) {
+    warn "No such run '$opts->{run}' matching the provided configs (if any).\n";
+    exit 2;
+}
+
+my $status_ids;
+
+# Process statuses
+@$status_ids = $tr->statusNamesToIds($opts->{'lockname'},'untested','retest');
+my ($lock_status_id,$untested_id,$retest_id) = @$status_ids;
+
+my $cases = $tr->getTests($run->{'id'});
+my @statuses_to_check_for = ($untested_id,$retest_id);
+@statuses_to_check_for = ($lock_status_id) if $opts->{'simulate_race_condition'}; #Unit test stuff
+
+# Limit to only non-locked and open cases
+@$cases = grep { my $tstatus = $_->{'status_id'}; scalar(grep { $tstatus eq $_ } @statuses_to_check_for) } @$cases;
+@$cases = sort { $a->{'priority_id'} <=> $b->{'priority_id'} } @$cases; #Sort by priority
+
+TRY_AGAIN:
+
+my $test = shift @$cases;
+
+if (!$test) {
+    warn "No outstanding cases in the provided run.\n";
+    exit 3;
+}
+
+my $res = $tr->createTestResults($test->{'id'},$lock_status_id,"Test Locked by $hostname.\n\nIf this result is preceded immediately by another lock statement like this, please disregard, as a lock collision occurred.");
+
+#If we've got more than 100 lock conflicts, we have big-time problems
+my $results = $tr->getTestResults($test->{'id'},100);
+
+#Remember, we're returned results from newest to oldest...
+my $next_one = 0;
+foreach my $result (@$results) {
+    unless ($result->{'status_id'} == $lock_status_id) {
+        #Clearly no lock conflict going on here if next_one is true
+        last if $next_one;
+        #Otherwise just skip it until we get to the test we locked
+        next;
+    }
+
+    if ($result->{id} == $res->{'id'}) {
+        $next_one = 1;
+        next;
+    }
+
+    if ($next_one) {
+        #If we got this far, a lock conflict occurred. Try the next one.
+        warn "Lock conflict detected.  Trying again...\n";
+        goto TRY_AGAIN;
+    }
+}
+
+if (!$next_one) {
+    warn "Failed to lock case!";
+    exit 4;
+}
+
+print $test->{'title'}."\n";
+
+exit 0;
+
+__END__
+
+L<TestRail::API>
+
+L<File::HomeDir> for the finding of .testrailrc
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this distribution.

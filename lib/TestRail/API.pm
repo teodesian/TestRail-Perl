@@ -2019,7 +2019,7 @@ The names referred to here are 'internal names' rather than the labels shown in 
 
 =back
 
-Returns ARRAY of status IDs.
+Returns ARRAY of status IDs in the same order as the status names passed.
 
 Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
 
@@ -2029,7 +2029,16 @@ sub statusNamesToIds {
     my ($self,@names) = @_;
     confess("Object methods must be called by an instance") unless ref($self);
     confess("At least one status name must be provided") if !scalar(@names);
-    my @ret = grep {defined $_} map {my $status = $_; my @list = grep {$status->{'name'} eq $_} @names; scalar(@list) ? $status->{'id'} : undef} @{$self->getPossibleTestStatuses()};
+    my $statuses = $self->getPossibleTestStatuses();
+    my @ret;
+    foreach my $name (@names) {
+        foreach my $status (@$statuses) {
+            if ($status->{'name'} eq $name) {
+                push @ret, $status->{'id'};
+                last;
+            }
+        }
+    }
     confess("One or more status names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
     return @ret;
 };
