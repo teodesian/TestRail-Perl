@@ -2113,7 +2113,7 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
-$VAR1 = 'index.php?/api/v2/get_runs/9&limit=250';
+$VAR1 = 'index.php?/api/v2/get_runs/9&offset=0&limit=250';
 $VAR2 = '200';
 $VAR3 = 'OK';
 $VAR4 = bless( {
@@ -2169,7 +2169,7 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
-$VAR1 = 'index.php?/api/v2/get_plans/9&limit=250';
+$VAR1 = 'index.php?/api/v2/get_plans/9&offset=0&limit=250';
 $VAR2 = '200';
 $VAR3 = 'OK';
 $VAR4 = bless( {

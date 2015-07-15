@@ -16,7 +16,7 @@ my $pw     = $ENV{'TESTRAIL_PASSWORD'};
 #Mock if nothing is provided
 my $is_mock = (!$apiurl && !$login && !$pw);
 
-like(exception {TestRail::API->new('trash');}, qr/invalid uri/i, "Non-URIs bounce constructor");
+like(exception {TestRail::API->new('trash','bogus','bogus');}, qr/invalid uri/i, "Non-URIs bounce constructor");
 
 #XXX for some insane reason 'hokum.bogus' seems to be popular with cpantesters
 my $bogoError = exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',undef,0); };
@@ -166,7 +166,7 @@ my $results = $tr->getTestResults($tests->[0]->{'id'});
 is($results->[0]->{'id'},$result->{'id'},"Can get results for test");
 
 #Bulk add results
-my $results = $tr->bulkAddResults($new_run->{'id'}, [{ 'test_id' => $tests->[0]->{'id'},'status_id' => $statusTypes->[0]->{'id'}, "comment" => "REAPER FORCES INBOUND" }]);
+$results = $tr->bulkAddResults($new_run->{'id'}, [{ 'test_id' => $tests->[0]->{'id'},'status_id' => $statusTypes->[0]->{'id'}, "comment" => "REAPER FORCES INBOUND" }]);
 ok(defined($results->[0]->{'id'}),"Can bulk add test results");
 
 #Test status and assignedto filtering

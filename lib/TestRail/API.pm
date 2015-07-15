@@ -28,10 +28,14 @@ use 5.010;
 use strict;
 use warnings;
 
+
 use Carp qw{cluck confess};
 use Scalar::Util qw{reftype looks_like_number};
 use Clone 'clone';
 use Try::Tiny;
+
+use Types::Standard qw( slurpy ClassName Object Str Int Bool HashRef ArrayRef Maybe Optional);
+use Type::Params qw( compile );
 
 use JSON::MaybeXS 1.001000 ();
 use HTTP::Request;
@@ -70,11 +74,10 @@ Does not do above checks if debug is passed.
 =cut
 
 sub new {
-    my ($class,$apiurl,$user,$pass,$encoding,$debug) = @_;
-    confess("Constructor must be called statically, not by an instance") if ref($class);
+    state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]]);
+    my ($class,$apiurl,$user,$pass,$encoding,$debug) = $check->(@_);
+
     confess("Invalid URI passed to constructor") if !is_uri($apiurl);
-    $user //= $ENV{'TESTRAIL_USER'};
-    $pass //= $ENV{'TESTRAIL_PASSWORD'};
     $debug //= 0;
 
     my $self = {
@@ -137,20 +140,21 @@ Accessors for these parameters you pass into the constructor, in case you forget
 =cut
 
 sub apiurl {
-  my $self = shift;
-  confess("Object methods must be called by an instance") unless ref($self);
-  return $self->{'apiurl'}
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+    return $self->{'apiurl'}
 }
 sub debug {
-  my $self = shift;
-  confess("Object methods must be called by an instance") unless ref($self);
-  return $self->{'debug'};
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+    return $self->{'debug'};
 }
 
 #Convenient JSON-HTTP fetcher
 sub _doRequest {
-    my ($self,$path,$method,$data) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object, Str, Optional[Maybe[Str]], Optional[Maybe[HashRef]]);
+    my ($self,$path,$method,$data) = $check->(@_);
+
     my $req = clone $self->{'default_request'};
     $method //= 'GET';
 
@@ -210,8 +214,9 @@ Returns ARRAYREF of user definition HASHREFs.
 =cut
 
 sub getUsers {
-    my $self = shift;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+
     my $res = $self->_doRequest('index.php?/api/v2/get_users');
     return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
     $self->{'user_cache'} = $res;
@@ -231,9 +236,9 @@ Returns user def HASHREF.
 
 #I'm just using the cache for the following methods because it's more straightforward and faster past 1 call.
 sub getUserByID {
-    my ($self,$user) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("User ID must be integer") unless $self->_checkInteger($user);
+    state $check = compile(Object, Int);
+    my ($self,$user) = $check->(@_);
+
     $self->getUsers() if !defined($self->{'user_cache'});
     return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
@@ -243,9 +248,9 @@ sub getUserByID {
 }
 
 sub getUserByName {
-    my ($self,$user) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("User must be string") unless $self->_checkString($user);
+    state $check = compile(Object, Str);
+    my ($self,$user) = $check->(@_);
+
     $self->getUsers() if !defined($self->{'user_cache'});
     return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
@@ -255,9 +260,9 @@ sub getUserByName {
 }
 
 sub getUserByEmail {
-    my ($self,$email) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Email must be string") unless $self->_checkString($email);
+    state $check = compile(Object, Str);
+    my ($self,$email) = $check->(@_);
+
     $self->getUsers() if !defined($self->{'user_cache'});
     return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
     foreach my $usr (@{$self->{'user_cache'}}) {
@@ -283,11 +288,12 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 =cut
 
 sub userNamesToIds {
-    my ($self,@names) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("At least one user name must be provided") if !scalar(@names);
-    my @ret = grep {defined $_} map {my $user = $_; my @list = grep {$user->{'name'} eq $_} @names; scalar(@list) ? $user->{'id'} : undef} @{$self->getUsers()};
-    confess("One or more user names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    state $check = compile(Object, slurpy ArrayRef[Str]);
+    my ($self,$names) = $check->(@_);
+
+    confess("At least one user name must be provided") if !scalar(@$names);
+    my @ret = grep {defined $_} map {my $user = $_; my @list = grep {$user->{'name'} eq $_} @$names; scalar(@list) ? $user->{'id'} : undef} @{$self->getUsers()};
+    confess("One or more user names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
     return @ret;
 };
 
@@ -316,13 +322,11 @@ Returns project definition HASHREF on success, false otherwise.
 =cut
 
 sub createProject {
-    my ($self,$name,$desc,$announce) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]]);
+    my ($self,$name,$desc,$announce) = $check->(@_);
+
     $desc     //= 'res ipsa loquiter';
     $announce //= 0;
-    confess("Project description must be string") unless $self->_checkString($desc);
-    confess("Announce must be integer") unless $self->_checkInteger($announce);
 
     my $input = {
         name              => $name,
@@ -332,7 +336,6 @@ sub createProject {
 
     my $result = $self->_doRequest('index.php?/api/v2/add_project','POST',$input);
     return $result;
-
 }
 
 =head2 B<deleteProject (id)>
@@ -353,9 +356,9 @@ Returns BOOLEAN.
 =cut
 
 sub deleteProject {
-    my ($self,$proj) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($proj);
+    state $check = compile(Object, Int);
+    my ($self,$proj) = $check->(@_);
+
     my $result = $self->_doRequest('index.php?/api/v2/delete_project/'.$proj,'POST');
     return $result;
 }
@@ -371,8 +374,8 @@ Returns array of project definition HASHREFs, false otherwise.
 =cut
 
 sub getProjects {
-    my $self = shift;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
 
     my $result = $self->_doRequest('index.php?/api/v2/get_projects');
 
@@ -406,9 +409,8 @@ Returns desired project def HASHREF, false otherwise.
 =cut
 
 sub getProjectByName {
-    my ($self,$project) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project must be string.") unless $self->_checkString($project);
+    state $check = compile(Object, Str);
+    my ($self,$project) = $check->(@_);
 
     #See if we already have the project list...
     my $projects = $self->{'testtree'};
@@ -441,10 +443,8 @@ Returns desired project def HASHREF, false otherwise.
 =cut
 
 sub getProjectByID {
-    my ($self,$project) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("No project provided.") unless $project;
-    confess("Project ID must be integer") unless $self->_checkInteger($project);
+    state $check = compile(Object, Int);
+    my ($self,$project) = $check->(@_);
 
     #See if we already have the project list...
     my $projects = $self->{'testtree'};
@@ -481,13 +481,10 @@ Returns TS definition HASHREF on success, false otherwise.
 =cut
 
 sub createTestSuite {
-    my ($self,$project_id,$name,$details) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Name must be a string") unless $self->_checkString($name);
-    $details ||= 'res ipsa loquiter';
-    confess("Project details must be a string") unless $self->_checkString($details);
+    state $check = compile(Object, Int, Str, Optional[Maybe[Str]]);
+    my ($self,$project_id,$name,$details) = $check->(@_);
 
+    $details //= 'res ipsa loquiter';
     my $input = {
         name        => $name,
         description => $details
@@ -515,9 +512,8 @@ Returns BOOLEAN.
 =cut
 
 sub deleteTestSuite {
-    my ($self,$suite_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
+    state $check = compile(Object, Int);
+    my ($self,$suite_id) = $check->(@_);
 
     my $result = $self->_doRequest('index.php?/api/v2/delete_suite/'.$suite_id,'POST');
     return $result;
@@ -541,9 +537,9 @@ Returns ARRAYREF of testsuite definition HASHREFs, 0 on error.
 =cut
 
 sub getTestSuites {
-    my ($self,$proj) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($proj);
+    state $check = compile(Object, Int);
+    my ($self,$proj) = $check->(@_);
+
     return $self->_doRequest('index.php?/api/v2/get_suites/'.$proj);
 }
 
@@ -566,10 +562,8 @@ Returns desired testsuite definition HASHREF, false otherwise.
 =cut
 
 sub getTestSuiteByName {
-    my ($self,$project_id,$testsuite_name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Testsuite Name must be String") unless $self->_checkString($testsuite_name);
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$testsuite_name) = $check->(@_);
 
     #TODO cache
     my $suites = $self->getTestSuites($project_id);
@@ -597,9 +591,8 @@ Returns desired testsuite definition HASHREF, false otherwise.
 =cut
 
 sub getTestSuiteByID {
-    my ($self,$testsuite_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Testsuite ID must be integer") unless $self->_checkInteger($testsuite_id);
+    state $check = compile(Object, Int);
+    my ($self,$testsuite_id) = $check->(@_);
 
     my $result = $self->_doRequest('index.php?/api/v2/get_suite/'.$testsuite_id);
     return $result;
@@ -630,12 +623,8 @@ Returns new section definition HASHREF, false otherwise.
 =cut
 
 sub createSection {
-    my ($self,$project_id,$suite_id,$name,$parent_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
-    confess("Section name must be string") unless $self->_checkString($name);
-    confess("Parent section ID must be integer") unless !defined($parent_id) || $self->_checkInteger($parent_id);
+    state $check = compile(Object, Int, Int, Str, Optional[Maybe[Int]]);
+    my ($self,$project_id,$suite_id,$name,$parent_id) = $check->(@_);
 
     my $input = {
         name     => $name,
@@ -645,7 +634,6 @@ sub createSection {
 
     my $result = $self->_doRequest('index.php?/api/v2/add_section/'.$project_id,'POST',$input);
     return $result;
-
 }
 
 =head2 B<deleteSection (section_id)>
@@ -665,13 +653,11 @@ Returns BOOLEAN.
 =cut
 
 sub deleteSection {
-    my ($self,$section_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Section ID must be integer") unless $self->_checkInteger($section_id);
+    state $check = compile(Object, Int);
+    my ($self,$section_id) = $check->(@_);
 
     my $result = $self->_doRequest('index.php?/api/v2/delete_section/'.$section_id,'POST');
     return $result;
-
 }
 
 =head2 B<getSections (project_id,suite_id)>
@@ -693,10 +679,9 @@ Returns ARRAYREF of section definition HASHREFs.
 =cut
 
 sub getSections {
-    my ($self,$project_id,$suite_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
+    state $check = compile(Object, Int, Int);
+    my ($self,$project_id,$suite_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
 }
 
@@ -719,9 +704,9 @@ Returns section definition HASHREF.
 =cut
 
 sub getSectionByID {
-    my ($self,$section_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Section ID must be integer") unless $self->_checkInteger($section_id);
+    state $check = compile(Object, Int);
+    my ($self,$section_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_section/$section_id");
 }
 
@@ -746,11 +731,9 @@ Returns section definition HASHREF.
 =cut
 
 sub getSectionByName {
-    my ($self,$project_id,$suite_id,$section_name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be an integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be an integer") unless $self->_checkInteger($suite_id);
-    confess("Section Name must be a string") unless $self->_checkString($section_name);
+    state $check = compile(Object, Int, Int, Str);
+    my ($self,$project_id,$suite_id,$section_name) = $check->(@_);
+
     my $sections = $self->getSections($project_id,$suite_id);
     return -500 if !$sections || (reftype($sections) || 'undef') ne 'ARRAY';
     foreach my $sec (@$sections) {
@@ -780,16 +763,15 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 =cut
 
 sub sectionNamesToIds {
-    my ($self,$project_id,$suite_id,@names) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be an integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be an integer") unless $self->_checkInteger($suite_id);
-    confess("At least one section name must be provided") if !scalar(@names);
+    state $check = compile(Object, Int, Int, slurpy ArrayRef[Str]);
+    my ($self,$project_id,$suite_id,$names) = $check->(@_);
+
+    confess("At least one section name must be provided") if !scalar(@$names);
 
     my $sections = $self->getSections($project_id,$suite_id);
     confess("Invalid project/suite ($project_id,$suite_id) provided.") unless (reftype($sections) || 'undef') eq 'ARRAY';
-    my @ret = grep {defined $_} map {my $section = $_; my @list = grep {$section->{'name'} eq $_} @names; scalar(@list) ? $section->{'id'} : undef} @$sections;
-    confess("One or more user names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    my @ret = grep {defined $_} map {my $section = $_; my @list = grep {$section->{'name'} eq $_} @$names; scalar(@list) ? $section->{'id'} : undef} @$sections;
+    confess("One or more user names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
     return @ret;
 }
 
@@ -806,8 +788,9 @@ Returns ARRAYREF of case type definition HASHREFs.
 =cut
 
 sub getCaseTypes {
-    my $self = shift;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+
     my $types = $self->_doRequest("index.php?/api/v2/get_case_types");
     return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
     $self->{'type_cache'} = $types if !$self->{'type_cache'}; #We can't change this with API, so assume it is static
@@ -831,10 +814,9 @@ Returns case type definition HASHREF.
 =cut
 
 sub getCaseTypeByName {
-    #Useful for marking automated tests, etc
-    my ($self,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Case type must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Str);
+    my ($self,$name) = $check->(@_);
+
     my $types = $self->getCaseTypes();
     return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
     foreach my $type (@$types) {
@@ -881,13 +863,8 @@ Returns new case definition HASHREF, false otherwise.
 =cut
 
 sub createCase {
-    my ($self,$section_id,$title,$type_id,$opts,$extras) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Section ID ($section_id) must be integer") unless $self->_checkInteger($section_id);
-    confess("title must be string") unless $self->_checkString($title);
-    confess("Type ID must be integer") unless !defined($type_id) || $self->_checkInteger($type_id);
-    confess("Options must be HASHREF") unless !defined($opts) || (reftype($opts) || 'undef') ne 'HASH';
-    confess("Extras must be HASHREF") unless !defined($extras) || (reftype($extras) || 'undef') ne 'HASH';
+    state $check = compile(Object, Int, Str, Optional[Maybe[Int]], Optional[Maybe[HashRef]], Optional[Maybe[HashRef]]);
+    my ($self,$section_id,$title,$type_id,$opts,$extras) = $check->(@_);
 
     my $stuff = {
         title   => $title,
@@ -930,9 +907,9 @@ Returns BOOLEAN.
 =cut
 
 sub deleteCase {
-    my ($self,$case_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Case ID must be integer") unless $self->_checkInteger($case_id);
+    state $check = compile(Object, Int);
+    my ($self,$case_id) = $check->(@_);
+
     my $result = $self->_doRequest("index.php?/api/v2/delete_case/$case_id",'POST');
     return $result;
 }
@@ -958,11 +935,9 @@ Returns ARRAYREF of test case definition HASHREFs.
 =cut
 
 sub getCases {
-    my ($self,$project_id,$suite_id,$section_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
-    confess("Section ID must be integer") unless $self->_checkInteger($section_id);
+    state $check = compile(Object, Int, Int, Int);
+    my ($self,$project_id,$suite_id,$section_id) = $check->(@_);
+
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
     $url .= "&section_id=$section_id" if $section_id;
     return $self->_doRequest($url);
@@ -991,12 +966,9 @@ Returns test case definition HASHREF.
 =cut
 
 sub getCaseByName {
-    my ($self,$project_id,$suite_id,$section_id,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
-    confess("Section ID must be integer") unless $self->_checkInteger($section_id);
-    confess("Test Case name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Int, Int, Int, Str);
+    my ($self,$project_id,$suite_id,$section_id,$name) = $check->(@_);
+
     my $cases = $self->getCases($project_id,$suite_id,$section_id);
     return -500 if !$cases || (reftype($cases) || 'undef') ne 'ARRAY';
     foreach my $case (@$cases) {
@@ -1022,9 +994,9 @@ Returns test case definition HASHREF.
 =cut
 
 sub getCaseByID {
-    my ($self,$case_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Case ID must be integer") unless $self->_checkInteger($case_id);
+    state $check = compile(Object, Int);
+    my ($self,$case_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_case/$case_id");
 }
 
@@ -1060,15 +1032,8 @@ Returns run definition HASHREF.
 
 #If you pass an array of case ids, it implies include_all is false
 sub createRun {
-    my ($self,$project_id,$suite_id,$name,$desc,$milestone_id,$assignedto_id,$case_ids) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
-    confess("Name must be string") unless $self->_checkString($name);
-    confess("Description must be string") unless !defined($desc) || $self->_checkString($desc);
-    confess("Milestone ID must be integer") unless !defined($milestone_id) || $self->_checkInteger($milestone_id);
-    confess("Assigned To ID must be integer") unless !defined($assignedto_id) || $self->_checkInteger($assignedto_id);
-    confess("Case IDs must be ARRAYREF") unless !defined($case_ids) || (reftype($case_ids) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, Int, Int, Str, Optional[Maybe[Str]], Optional[Maybe[Int]], Optional[Maybe[Int]],  Optional[Maybe[ArrayRef[Int]]]);
+    my ($self,$project_id,$suite_id,$name,$desc,$milestone_id,$assignedto_id,$case_ids) = $check->(@_);
 
     my $stuff = {
         suite_id      => $suite_id,
@@ -1101,9 +1066,9 @@ Returns BOOLEAN.
 =cut
 
 sub deleteRun {
-    my ($self,$run_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    state $check = compile(Object, Int);
+    my ($self,$run_id) = $check->(@_);
+
     my $result = $self->_doRequest("index.php?/api/v2/delete_run/$run_id",'POST');
     return $result;
 }
@@ -1127,9 +1092,9 @@ Returns ARRAYREF of run definition HASHREFs.
 =cut
 
 sub getRuns {
-    my ($self,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+
     my $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},0);
     return $initial_runs unless (reftype($initial_runs) || 'undef') eq 'ARRAY';
     my $runs = [];
@@ -1164,15 +1129,13 @@ Returns ARRAYREF of run definition HASHREFs.
 =cut
 
 sub getRunsPaginated {
-    my ($self,$project_id,$limit,$offset) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Limit must be integer") unless !defined($limit) || $self->_checkInteger($limit);
-    confess("Offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
+    my ($self,$project_id,$limit,$offset) = $check->(@_);
+
     confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
     my $apiurl = "index.php?/api/v2/get_runs/$project_id";
-    $apiurl .= "&offset=$offset" if $offset;
-    $apiurl .= "&limit=$limit" if $limit;
+    $apiurl .= "&offset=$offset" if defined($offset);
+    $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     return $self->_doRequest($apiurl);
 }
 
@@ -1195,10 +1158,9 @@ Returns run definition HASHREF.
 =cut
 
 sub getRunByName {
-    my ($self,$project_id,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Run name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$name) = $check->(@_);
+
     my $runs = $self->getRuns($project_id);
     return -500 if !$runs || (reftype($runs) || 'undef') ne 'ARRAY';
     foreach my $run (@$runs) {
@@ -1224,9 +1186,9 @@ Returns run definition HASHREF.
 =cut
 
 sub getRunByID {
-    my ($self,$run_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    state $check = compile(Object, Int);
+    my ($self,$run_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_run/$run_id");
 }
 
@@ -1247,9 +1209,9 @@ Returns run definition HASHREF on success, false on failure.
 =cut
 
 sub closeRun {
-    my ($self,$run_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
+    state $check = compile(Object, Int);
+    my ($self,$run_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/close_run/$run_id",'POST');
 }
 
@@ -1271,9 +1233,9 @@ Returns ARRAY of run HASHREFs with the added key 'run_status' holding a hashref 
 =cut
 
 sub getRunSummary {
-    my ($self,@runs) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("All Plans passed must be HASHREFs") unless scalar( grep {(reftype($_) || 'undef') eq 'HASH'} @runs ) == scalar(@runs);
+    state $check = compile(Object, slurpy ArrayRef[HashRef]);
+    my ($self,$runs) = $check->(@_);
+    confess("At least one run must be passed!") unless scalar(@$runs);
 
     #Translate custom statuses
     my $statuses = $self->getPossibleTestStatuses();
@@ -1282,7 +1244,7 @@ sub getRunSummary {
     @shash{map { ( $_->{'id'} < 6 ) ? $_->{'name'}."_count" : "custom_status".($_->{'id'} - 5)."_count" } @$statuses } = map { $_->{'id'} } @$statuses;
     my @sname;
     #Create listing of keys/values
-    @runs = map {
+    @$runs = map {
         my $run = $_;
         @{$run->{statuses}}{grep {$_ =~ m/_count$/} keys(%$run)} = grep {$_ =~ m/_count$/} keys(%$run);
         foreach my $status (keys(%{$run->{'statuses'}})) {
@@ -1291,9 +1253,9 @@ sub getRunSummary {
             $run->{'statuses_clean'}->{$sname[0]->{'name'}} = $run->{$status};
         }
         $run;
-    } @runs;
+    } @$runs;
 
-    return map { {'id' => $_->{'id'}, 'name' => $_->{'name'}, 'run_status' => $_->{'statuses_clean'}, 'config_ids' => $_->{'config_ids'} } } @runs;
+    return map { {'id' => $_->{'id'}, 'name' => $_->{'name'}, 'run_status' => $_->{'statuses_clean'}, 'config_ids' => $_->{'config_ids'} } } @$runs;
 
 }
 
@@ -1314,10 +1276,9 @@ Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract 
 =cut
 
 sub getChildRuns {
-    my ($self,$plan) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
-    return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, HashRef);
+    my ($self,$plan) = $check->(@_);
+
     return 0 unless defined($plan->{'entries'}) && (reftype($plan->{'entries'}) || 'undef') eq 'ARRAY';
     my $entries = $plan->{'entries'};
     my $plans = [];
@@ -1347,11 +1308,9 @@ Will throw a fatal error if one or more of the configurations passed does not ex
 =cut
 
 sub getChildRunByName {
-    my ($self,$plan,$name,$configurations) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan must be HASHREF") unless defined($plan) && (reftype($plan) || 'undef') eq 'HASH';
-    confess("Run name must be STRING") unless $self->_checkString($name);
-    confess("Configurations must be ARRAYREF") unless !defined($configurations) || (reftype($configurations) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, HashRef, Str, Optional[Maybe[ArrayRef[Str]]]);
+    my ($self,$plan,$name,$configurations) = $check->(@_);
+
     my $runs = $self->getChildRuns($plan);
     return 0 if !$runs;
 
@@ -1403,24 +1362,19 @@ Create a test plan.
 
 Returns test plan definition HASHREF, or false on failure.
 
-    $entries = {
+    $entries = [{
         suite_id => 345,
         include_all => 1,
         assignedto_id => 1
-    }
+    }];
 
     $tr->createPlan(1,'Gosplan','Robo-Signed Soviet 5-year plan',22,$entries);
 
 =cut
 
 sub createPlan {
-    my ($self,$project_id,$name,$desc,$milestone_id,$entries) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Plan name must be string") unless $self->_checkString($name);
-    confess("Description must be string") unless !defined($desc) || $self->_checkString($desc);
-    confess("Milestone ID must be integer") unless !defined($milestone_id) || $self->_checkInteger($milestone_id);
-    confess("Entries must be ARRAYREF") unless !defined($entries) || (reftype($entries) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, Int, Str, Optional[Maybe[Str]], Optional[Maybe[Int]], Optional[Maybe[ArrayRef[HashRef]]]);
+    my ($self,$project_id,$name,$desc,$milestone_id,$entries) = $check->(@_);
 
     my $stuff = {
         name          => $name,
@@ -1450,9 +1404,9 @@ Returns BOOLEAN.
 =cut
 
 sub deletePlan {
-    my ($self,$plan_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    state $check = compile(Object, Int);
+    my ($self,$plan_id) = $check->(@_);
+
     my $result = $self->_doRequest("index.php?/api/v2/delete_plan/$plan_id",'POST');
     return $result;
 }
@@ -1478,9 +1432,9 @@ Use getPlanByID or getPlanByName if you want that, in particular if you are inte
 =cut
 
 sub getPlans {
-    my ($self,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+
     my $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},0);
     return $initial_plans unless (reftype($initial_plans) || 'undef') eq 'ARRAY';
     my $plans = [];
@@ -1515,15 +1469,13 @@ Returns ARRAYREF of plan definition HASHREFs.
 =cut
 
 sub getPlansPaginated {
-    my ($self,$project_id,$limit,$offset) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Limit must be integer") unless !defined($limit) || $self->_checkInteger($limit);
-    confess("Offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
+    my ($self,$project_id,$limit,$offset) = $check->(@_);
+
     confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
     my $apiurl = "index.php?/api/v2/get_plans/$project_id";
-    $apiurl .= "&offset=$offset" if $offset;
-    $apiurl .= "&limit=$limit" if $limit;
+    $apiurl .= "&offset=$offset" if defined($offset);
+    $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     return $self->_doRequest($apiurl);
 }
 
@@ -1546,10 +1498,9 @@ Returns plan definition HASHREF.
 =cut
 
 sub getPlanByName {
-    my ($self,$project_id,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Plan name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$name) = $check->(@_);
+
     my $plans = $self->getPlans($project_id);
     return -500 if !$plans || (reftype($plans) || 'undef') ne 'ARRAY';
     foreach my $plan (@$plans) {
@@ -1577,9 +1528,9 @@ Returns plan definition HASHREF.
 =cut
 
 sub getPlanByID {
-    my ($self,$plan_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    state $check = compile(Object, Int);
+    my ($self,$plan_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_plan/$plan_id");
 }
 
@@ -1600,9 +1551,9 @@ The 'percentages' key has the same, but as a percentage of the total.
 =cut
 
 sub getPlanSummary {
-    my ($self,$plan_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    state $check = compile(Object, Int);
+    my ($self,$plan_id) = $check->(@_);
+
     my $runs = $self->getPlanByID( $plan_id );
     $runs = $self->getChildRuns( $runs );
     @$runs = $self->getRunSummary(@{$runs});
@@ -1656,14 +1607,8 @@ Returns run definition HASHREF.
 
 #If you pass an array of case ids, it implies include_all is false
 sub createRunInPlan {
-    my ($self,$plan_id,$suite_id,$name,$assignedto_id,$config_ids,$case_ids) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
-    confess("Suite ID must be integer") unless $self->_checkInteger($suite_id);
-    confess("Name must be string") unless $self->_checkString($name);
-    confess("Assigned To ID must be integer") unless !defined($assignedto_id) || $self->_checkInteger($assignedto_id);
-    confess("Config IDs must be ARRAYREF") unless !defined($config_ids) || (reftype($config_ids) || 'undef') eq 'ARRAY';
-    confess("Case IDs must be ARRAYREF") unless !defined($case_ids) || (reftype($case_ids) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, Int, Int, Str, Optional[Maybe[Int]], Optional[Maybe[ArrayRef[Int]]], Optional[Maybe[ArrayRef[Int]]]);
+    my ($self,$plan_id,$suite_id,$name,$assignedto_id,$config_ids,$case_ids) = $check->(@_);
 
     my $runs = [
         {
@@ -1703,9 +1648,9 @@ Returns plan definition HASHREF on success, false on failure.
 =cut
 
 sub closePlan {
-    my ($self,$plan_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Plan ID must be integer") unless $self->_checkInteger($plan_id);
+    state $check = compile(Object, Int);
+    my ($self,$plan_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/close_plan/$plan_id",'POST');
 }
 
@@ -1734,12 +1679,8 @@ Returns milestone definition HASHREF, or false on failure.
 =cut
 
 sub createMilestone {
-    my ($self,$project_id,$name,$desc,$due_on) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Name must be string") unless $self->_checkString($name);
-    confess("Description must be string") unless !defined($desc) || $self->_checkString($desc);
-    confess("Due on must be unix time stamp (integer)") unless !defined($due_on) || $self->_checkInteger($due_on);
+    state $check = compile(Object, Int, Str, Optional[Maybe[Str]], Optional[Maybe[Int]]);
+    my ($self,$project_id,$name,$desc,$due_on) = $check->(@_);
 
     my $stuff = {
         name        => $name,
@@ -1768,9 +1709,9 @@ Returns BOOLEAN.
 =cut
 
 sub deleteMilestone {
-    my ($self,$milestone_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Milestone ID must be integer") unless $self->_checkInteger($milestone_id);
+    state $check = compile(Object, Int);
+    my ($self,$milestone_id) = $check->(@_);
+
     my $result = $self->_doRequest("index.php?/api/v2/delete_milestone/$milestone_id",'POST');
     return $result;
 }
@@ -1793,9 +1734,9 @@ Returns ARRAYREF of milestone definition HASHREFs.
 =cut
 
 sub getMilestones {
-    my ($self,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_milestones/$project_id");
 }
 
@@ -1818,10 +1759,9 @@ Returns milestone definition HASHREF.
 =cut
 
 sub getMilestoneByName {
-    my ($self,$project_id,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be integer") unless $self->_checkInteger($project_id);
-    confess("Milestone name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$name) = $check->(@_);
+
     my $milestones = $self->getMilestones($project_id);
     return -500 if !$milestones || (reftype($milestones) || 'undef') ne 'ARRAY';
     foreach my $milestone (@$milestones) {
@@ -1847,9 +1787,9 @@ Returns milestone definition HASHREF.
 =cut
 
 sub getMilestoneByID {
-    my ($self,$milestone_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Milestone ID must be integer") unless $self->_checkInteger($milestone_id);
+    state $check = compile(Object, Int);
+    my ($self,$milestone_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_milestone/$milestone_id");
 }
 
@@ -1876,11 +1816,8 @@ Returns ARRAYREF of test definition HASHREFs.
 =cut
 
 sub getTests {
-    my ($self,$run_id,$status_ids,$assignedto_ids) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
-    confess("Status IDs must be ARRAYREF") unless !defined($status_ids) || ( reftype($status_ids) || 'undef' ) eq 'ARRAY';
-    confess("Assigned to IDs must be ARRAYREF") unless !defined($assignedto_ids) || ( reftype($assignedto_ids) || 'undef' ) eq 'ARRAY';
+    state $check = compile(Object, Int, Optional[Maybe[ArrayRef[Int]]], Optional[Maybe[ArrayRef[Int]]]);
+    my ($self,$run_id,$status_ids,$assignedto_ids) = $check->(@_);
 
     my $query_string = '';
     $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
@@ -1908,10 +1845,9 @@ Returns test definition HASHREF.
 =cut
 
 sub getTestByName {
-    my ($self,$run_id,$name) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
-    confess("Test name must be string") unless $self->_checkString($name);
+    state $check = compile(Object, Int, Str);
+    my ($self,$run_id,$name) = $check->(@_);
+
     my $tests = $self->getTests($run_id);
     return -500 if !$tests || (reftype($tests) || 'undef') ne 'ARRAY';
     foreach my $test (@$tests) {
@@ -1937,9 +1873,9 @@ Returns test definition HASHREF.
 =cut
 
 sub getTestByID {
-    my ($self,$test_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Test ID must be integer") unless $self->_checkInteger($test_id);
+    state $check = compile(Object, Int);
+    my ($self,$test_id) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/get_test/$test_id");
 }
 
@@ -1952,8 +1888,9 @@ Returns ARRAYREF of result definition HASHREFs.
 =cut
 
 sub getTestResultFields {
-    my $self = shift;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+
     return $self->{'tr_fields'} if defined($self->{'tr_fields'}); #cache
     $self->{'tr_fields'} = $self->_doRequest('index.php?/api/v2/get_result_fields');
     return $self->{'tr_fields'};
@@ -1974,9 +1911,9 @@ Gets a test result field by it's system name.  Optionally filter by project ID.
 =cut
 
 sub getTestResultFieldByName {
-    my ($self,$system_name,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("System name must be string") unless $self->_checkString($system_name);
+    state $check = compile(Object, Str, Optional[Maybe[Int]]);
+    my ($self,$system_name,$project_id) = $check->(@_);
+
     my @candidates = grep { $_->{'name'} eq $system_name} @{$self->getTestResultFields()};
     return 0 if !scalar(@candidates); #No such name
     return -1 if ref($candidates[0]) ne 'HASH';
@@ -2003,8 +1940,9 @@ Returns ARRAYREF of status definition HASHREFs.
 =cut
 
 sub getPossibleTestStatuses {
-    my $self = shift;
-    confess("Object methods must be called by an instance") unless ref($self);
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+
     return $self->_doRequest('index.php?/api/v2/get_statuses');
 }
 
@@ -2026,12 +1964,13 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 =cut
 
 sub statusNamesToIds {
-    my ($self,@names) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("At least one status name must be provided") if !scalar(@names);
+    state $check = compile(Object, slurpy ArrayRef[Str]);
+    my ($self,$names) = $check->(@_);
+    confess("No status names passed!") unless scalar(@$names);
+
     my $statuses = $self->getPossibleTestStatuses();
     my @ret;
-    foreach my $name (@names) {
+    foreach my $name (@$names) {
         foreach my $status (@$statuses) {
             if ($status->{'name'} eq $name) {
                 push @ret, $status->{'id'};
@@ -2039,7 +1978,7 @@ sub statusNamesToIds {
             }
         }
     }
-    confess("One or more status names provided does not exist in TestRail.") unless scalar(@names) == scalar(@ret);
+    confess("One or more status names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
     return @ret;
 };
 
@@ -2091,13 +2030,9 @@ Returns result definition HASHREF.
 =cut
 
 sub createTestResults {
-    my ($self,$test_id,$status_id,$comment,$opts,$custom_fields) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Test ID must be integer") unless $self->_checkInteger($test_id);
-    confess("Status ID must be integer") unless $self->_checkInteger($status_id);
-    confess("Comment must be string") unless !defined($comment) || $self->_checkString($comment);
-    confess("Options must be HASHREF") unless !defined($opts) || (reftype($opts) || 'undef') eq 'HASH';
-    confess("Custom Options must be HASHREF") unless !defined($custom_fields) || (reftype($custom_fields) || 'undef') eq 'HASH';
+    state $check = compile(Object, Int, Int, Optional[Maybe[Str]], Optional[Maybe[HashRef]], Optional[Maybe[HashRef]]);
+    my ($self,$test_id,$status_id,$comment,$opts,$custom_fields) = $check->(@_);
+
     my $stuff = {
         status_id     => $status_id,
         comment       => $comment
@@ -2129,7 +2064,7 @@ Add multiple results to a run, where each result is a HASHREF with keys as outli
 
 =item INTEGER C<RUN_ID> - ID of desired run to add results to
 
-=item ARRAYREF C<RESULTS> - Array of result objects to upload.
+=item ARRAYREF C<RESULTS> - Array of result HASHREFs to upload.
 
 =back
 
@@ -2138,10 +2073,9 @@ Returns ARRAYREF of result definition HASHREFs.
 =cut
 
 sub bulkAddResults {
-    my ($self, $run_id, $results) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Run ID must be integer") unless $self->_checkInteger($run_id);
-    confess("results must be arrayref") unless ( reftype($results) || 'undef' ) eq 'ARRAY';
+    state $check = compile(Object, Int, ArrayRef[HashRef]);
+    my ($self,$run_id, $results) = $check->(@_);
+
     return $self->_doRequest("index.php?/api/v2/add_results/$run_id", 'POST', { 'results' => $results });
 }
 
@@ -2164,13 +2098,11 @@ Returns ARRAYREF of result definition HASHREFs.
 =cut
 
 sub getTestResults {
-    my ($self,$test_id,$limit,$offset) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Test ID must be positive integer") unless $self->_checkInteger($test_id);
-    confess("Result limitation must be positive integer") unless !defined($limit) || ($self->_checkInteger($limit) && $limit > 0);
-    confess("Result offset must be integer") unless !defined($offset) || $self->_checkInteger($offset);
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
+    my ($self,$test_id,$limit,$offset) = $check->(@_);
+
     my $url = "index.php?/api/v2/get_results/$test_id";
-    $url .= "&limit=$limit" if defined($limit);
+    $url .= "&limit=$limit" if $limit;
     $url .= "&offset=$offset" if defined($offset);
     return $self->_doRequest($url);
 }
@@ -2193,9 +2125,9 @@ Returns ARRAYREF of configuration group definition HASHREFs.
 =cut
 
 sub getConfigurationGroups {
-    my ($self,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+
     my $url = "index.php?/api/v2/get_configs/$project_id";
     return $self->{'configurations'}->{$project_id} if $self->{'configurations'}->{$project_id}; #cache this since we can't change it with the API
     $self->{'configurations'}->{$project_id} = $self->_doRequest($url);
@@ -2219,9 +2151,9 @@ Returns result of getConfigurationGroups (likely -500) in the event that call fa
 =cut
 
 sub getConfigurations {
-    my ($self,$project_id) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+
     my $cgroups = $self->getConfigurationGroups($project_id);
     my $configs = [];
     return $cgroups unless (reftype($cgroups) || 'undef') eq 'ARRAY';
@@ -2248,10 +2180,9 @@ Returns ARRAYREF of configuration names, with undef values for unknown configura
 =cut
 
 sub translateConfigNamesToIds {
-    my ($self,$project_id,$configs) = @_;
-    confess("Object methods must be called by an instance") unless ref($self);
-    confess("Project ID must be positive integer") unless $self->_checkInteger($project_id);
-    confess("Configs must be arrayref") unless (reftype($configs) || 'undef') eq 'ARRAY';
+    state $check = compile(Object, Int, ArrayRef[Str]);
+    my ($self,$project_id,$configs) = $check->(@_);
+
     return [] if !scalar(@$configs);
     my $existing_configs = $self->getConfigurations($project_id);
     return map {undef} @$configs if (reftype($existing_configs) || 'undef') ne 'ARRAY';
@@ -2281,7 +2212,9 @@ Convenience method to build the stepResult hashes seen in the custom options for
 
 #Convenience method for building stepResults
 sub buildStepResults {
-    my ($content,$expected,$actual,$status_id) = @_;
+    state $check = compile(Str, Str, Str, Int);
+    my ($content,$expected,$actual,$status_id) = $check->(@_);
+
     return {
         content   => $content,
         expected  => $expected,
@@ -2290,20 +2223,6 @@ sub buildStepResults {
     };
 }
 
-
-#Type checks
-
-sub _checkInteger {
-    shift;
-    my $integer = shift;
-    return ( defined $integer && looks_like_number($integer) && int($integer) == $integer );
-}
-
-sub _checkString {
-  shift;
-  my $str = shift;
-  return ( defined($str) && !ref($str) );
-}
 
 1;
 

@@ -8,6 +8,7 @@ Revision history for Perl module TestRail::API
     - Modify all bin/ scripts to use POD as their help output, move help() to TestRail::Utils
     - Modify all bin/ scripts to parse all the ~/.testrailrc options
     - Fix an issue where statusNamesToIDs would return status IDs in the wrong order.
+    - Re-factor to use Type::Tiny parameter checking.
 
 0.028 2015-06-16 TEODESIAN
     - Hotfix: forgot to include a module in the prove plugin.  How did this pass compile.t? A mystery.

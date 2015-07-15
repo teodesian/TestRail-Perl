@@ -81,17 +81,11 @@ use strict;
 use warnings;
 use utf8;
 
-use TestRail::API;
 use TestRail::Utils;
 
 use Getopt::Long;
 use File::HomeDir qw{my_home};
-use File::Find;
-use Cwd qw{abs_path};
-use File::Basename qw{basename};
 use Sys::Hostname qw{hostname};
-
-my $hostname = hostname();
 
 my $opts = {};
 
@@ -116,100 +110,11 @@ GetOptions(
 );
 
 if ($opts->{help}) { help(); }
+$opts->{'hostname'} = hostname;
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run lockname});
 
-if ($opts->{mock}) {
-    use Test::LWP::UserAgent::TestRailMock;
-    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts->{debug} = 1;
-}
-
-my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
-$tr->{'debug'} = 0;
-
-my $project = $tr->getProjectByName($opts->{'project'});
-if (!$project) {
-    warn "No such project '$opts->{project}'.\n";
-    exit 6;
-}
-
-my ($run,$plan);
-
-if ($opts->{'plan'}) {
-    $plan = $tr->getPlanByName($project->{'id'},$opts->{'plan'});
-    if (!$plan) {
-        warn "No such plan '$opts->{plan}'!\n";
-        exit 1;
-    }
-    $run = $tr->getChildRunByName($plan,$opts->{'run'}, $opts->{'configs'});
-} else {
-    $run = $tr->getRunByName($project->{'id'},$opts->{'run'});
-}
-
-if (!$run) {
-    warn "No such run '$opts->{run}' matching the provided configs (if any).\n";
-    exit 2;
-}
-
-my $status_ids;
-
-# Process statuses
-@$status_ids = $tr->statusNamesToIds($opts->{'lockname'},'untested','retest');
-my ($lock_status_id,$untested_id,$retest_id) = @$status_ids;
-
-my $cases = $tr->getTests($run->{'id'});
-my @statuses_to_check_for = ($untested_id,$retest_id);
-@statuses_to_check_for = ($lock_status_id) if $opts->{'simulate_race_condition'}; #Unit test stuff
-
-# Limit to only non-locked and open cases
-@$cases = grep { my $tstatus = $_->{'status_id'}; scalar(grep { $tstatus eq $_ } @statuses_to_check_for) } @$cases;
-@$cases = sort { $a->{'priority_id'} <=> $b->{'priority_id'} } @$cases; #Sort by priority
-
-TRY_AGAIN:
-
-my $test = shift @$cases;
-
-if (!$test) {
-    warn "No outstanding cases in the provided run.\n";
-    exit 3;
-}
-
-my $res = $tr->createTestResults($test->{'id'},$lock_status_id,"Test Locked by $hostname.\n\nIf this result is preceded immediately by another lock statement like this, please disregard, as a lock collision occurred.");
-
-#If we've got more than 100 lock conflicts, we have big-time problems
-my $results = $tr->getTestResults($test->{'id'},100);
-
-#Remember, we're returned results from newest to oldest...
-my $next_one = 0;
-foreach my $result (@$results) {
-    unless ($result->{'status_id'} == $lock_status_id) {
-        #Clearly no lock conflict going on here if next_one is true
-        last if $next_one;
-        #Otherwise just skip it until we get to the test we locked
-        next;
-    }
-
-    if ($result->{id} == $res->{'id'}) {
-        $next_one = 1;
-        next;
-    }
-
-    if ($next_one) {
-        #If we got this far, a lock conflict occurred. Try the next one.
-        warn "Lock conflict detected.  Trying again...\n";
-        goto TRY_AGAIN;
-    }
-}
-
-if (!$next_one) {
-    warn "Failed to lock case!";
-    exit 4;
-}
-
-print $test->{'title'}."\n";
-
+print TestRail::Utils::pickAndLockTest($opts)."\n";
 exit 0;
 
 __END__

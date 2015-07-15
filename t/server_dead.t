@@ -40,7 +40,7 @@ is($tr->getCaseByName(1,1,1,'hug'),-500,'getCaseByName returns error');
 is($tr->getCaseTypeByName('zap'),-500,'getCaseTypeByName returns error');
 is($tr->getCaseTypes(),-500,'getCaseTypes returns error');
 is($tr->getCases(1,2,3),-500,'getCases returns error');
-is($tr->getMilestoneByID(1,1),-500,'getMilestoneByID returns error');
+is($tr->getMilestoneByID(1),-500,'getMilestoneByID returns error');
 is($tr->getMilestoneByName(1,'hug'),-500,'getMilestoneByName returns error');
 is($tr->getMilestones(1),-500,'getMilestones returns error');
 is($tr->getPlanByID(1),-500,'getPlanByID returns error');

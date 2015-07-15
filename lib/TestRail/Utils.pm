@@ -1,20 +1,15 @@
-# ABSTRACT: Utilities for the testrail command line functions.
+# ABSTRACT: Utilities for the testrail command line functions, and their main loops.
 # PODNAME: TestRail::Utils
-
-=head1 DESCRIPTION
-
-Utilities for the testrail command line functions.
-
-=cut
 
 package TestRail::Utils;
 
 use strict;
 use warnings;
 
+use Carp qw{confess cluck};
 use Pod::Perldoc 3.10;
 
-=head1 FUNCTIONS
+=head1 SCRIPT HELPER FUNCTIONS
 
 =head2 help
 
@@ -131,6 +126,38 @@ sub getFilenameFromTapLine {
 
     return $line if ($dotty =~ /^\.+$/ && !($line =~ /^ok|not ok/) && !($line =~ /^# /) && $line);
     return 0;
+}
+
+
+=head2 getRunInformation
+
+Return the relevant project definition, plan and run definition HASHREFs for the provided options.
+Practically all the binaries need this information, so it has been subroutined out.
+
+
+Dies in the event the project/plan/run could not be found.
+
+=cut
+
+sub getRunInformation {
+    my ($tr,$opts) = @_;
+    confess("First argument must be instance of TestRail::API") unless blessed($tr) eq 'TestRail::API';
+
+    my $project = $tr->getProjectByName($opts->{'project'});
+    confess "No such project '$opts->{project}'.\n" if !$project;
+
+    my ($run,$plan);
+
+    if ($opts->{'plan'}) {
+        $plan = $tr->getPlanByName($project->{'id'},$opts->{'plan'});
+        confess "No such plan '$opts->{plan}'!\n" if !$plan;
+        $run = $tr->getChildRunByName($plan,$opts->{'run'}, $opts->{'configs'});
+    } else {
+        $run = $tr->getRunByName($project->{'id'},$opts->{'run'});
+    }
+
+    confess "No such run '$opts->{run}' matching the provided configs (if any).\n" if !$run;
+    return ($project,$plan,$run);
 }
 
 1;
