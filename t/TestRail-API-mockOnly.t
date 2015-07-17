@@ -3,7 +3,7 @@ use warnings;
 
 #Test things we can only mock, because the API doesn't support them.
 
-use Test::More 'tests' => 13;
+use Test::More 'tests' => 14;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Scalar::Util qw{reftype};
@@ -40,3 +40,7 @@ is(reftype($tr->closeRun(666)),'HASH',"Can close run that exists");
 is($tr->closeRun(90210),-404,"Can't close run that doesn't exist");
 is(reftype($tr->closePlan(23)),'HASH',"Can close plan that exists");
 is($tr->closePlan(75020),-404,"Can't close plan that doesn't exist");
+
+# Test case type method
+my $ct = $tr->getCaseTypeByName("Automated");
+is($ct->{'id'},1,"Can get case type by name");

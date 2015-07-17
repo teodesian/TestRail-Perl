@@ -89,7 +89,6 @@ sub new {
         testtree         => [],
         flattree         => [],
         user_cache       => [],
-        type_cache       => [],
         configurations   => {},
         tr_fields        => undef,
         default_request  => undef,
@@ -175,7 +174,12 @@ sub _doRequest {
 
     #Uncomment to generate mocks
     #use Data::Dumper;
-    #print Dumper($path,'200','OK',$response->headers,$response->content);
+    #open(my $fh, '>>', 'mock.out');
+    #print $fh "{\n\n";
+    #print $fh Dumper($path,'200','OK',$response->headers,$response->content);
+    #print $fh '$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));';
+    #print $fh "\n\n}\n\n";
+    #close $fh;
 
     return $response if !defined($response); #worst case
     if ($response->code == 403) {
@@ -790,11 +794,13 @@ Returns ARRAYREF of case type definition HASHREFs.
 sub getCaseTypes {
     state $check = compile(Object);
     my ($self) = $check->(@_);
+    return $self->{'type_cache'} if defined($self->{'type_cache'});
 
     my $types = $self->_doRequest("index.php?/api/v2/get_case_types");
     return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
-    $self->{'type_cache'} = $types if !$self->{'type_cache'}; #We can't change this with API, so assume it is static
-    return $self->{'type_cache'};
+    $self->{'type_cache'} = $types;
+
+    return $types;
 }
 
 =head2 B<getCaseTypeByName (name)>
@@ -808,6 +814,7 @@ Gets case type by name.
 =back
 
 Returns case type definition HASHREF.
+Dies if named case type does not exist.
 
     $tr->getCaseTypeByName();
 
@@ -822,7 +829,7 @@ sub getCaseTypeByName {
     foreach my $type (@$types) {
         return $type if $type->{'name'} eq $name;
     }
-    return 0;
+    confess("No such case type '$name'!");
 }
 
 =head2 B<createCase(section_id,title,type_id,options,extra_options)>

@@ -11,6 +11,8 @@ use HTTP::Response;
 use HTTP::Request;
 use HTTP::Headers;
 
+use Clone qw{clone};
+
 =head1 DESCRIPTION
 
 Provides a Test::LWP::UserAgent with mappings defined for all the requests made by this module's main test.
@@ -605,7 +607,7 @@ $VAR4 = bless( {
 $VAR5 = '[
     {"id":1,"suite_id":9,"name":"TestingSuite","description":"ACQUIRE CLOTHES, BOOTS AND MOTORCYCLE","milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":1,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":null,"created_on":1419364929,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/22"},
     {"id":2,"suite_id":9,"name":"OtherOtherSuite","description":"bah","completed_on":null},
-    {"id":3,"suite_id":9,"name":"FinalRun","description":"Tests finality","milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":0,"retest_count":0,"failed_count":0,"custom_status1_count":1,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":null,"created_on":1419364929,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/22"}
+    {"id":3,"suite_id":9,"name":"FinalRun","description":"Tests finality","milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":0,"retest_count":0,"failed_count":0,"custom_status1_count":1,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":9,"plan_id":null,"created_on":1419364929,"created_by":1,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/runs\\/view\\/22"},{"id":1099,"suite_id":5,"name":"lockRun","description":"Locky tests","milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":0,"retest_count":5,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":1,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":2,"plan_id":null,"created_on":1437073290,"created_by":1,"url":"http:\\/\\/testrail.local\\/index.php?\\/runs\\/view\\/1099"}
 ]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
@@ -1236,7 +1238,7 @@ $VAR4 = bless( {
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
 $VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
-$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
 
@@ -1263,7 +1265,7 @@ $VAR4 = bless( {
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
 $VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
-$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
 
@@ -1291,7 +1293,7 @@ $VAR4 = bless( {
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
 $VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skipall.test"},{"id":16,"case_id":9,"status_id":3,"assignedto_id":null,"run_id":22,"title":"notests.test"},{"id":17,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"pass.test"},{"id":18,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"todo_pass.test"}]';
-$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
 
@@ -1356,22 +1358,22 @@ $VAR2 = '200';
 $VAR3 = 'OK';
 $VAR4 = bless( {
                  'connection' => 'close',
-                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
                  'client-response-num' => 1,
-                 'date' => 'Tue, 23 Dec 2014 20:02:11 GMT',
+                 'date' => 'Thu, 16 Jul 2015 23:05:53 GMT',
                  'client-peer' => '192.168.122.217:80',
-                 'content-length' => '830',
+                 'content-length' => '1489',
                  '::std_case' => {
                                    'client-date' => 'Client-Date',
                                    'x-powered-by' => 'X-Powered-By',
                                    'client-response-num' => 'Client-Response-Num',
                                    'client-peer' => 'Client-Peer'
                                  },
-                 'client-date' => 'Tue, 23 Dec 2014 20:02:11 GMT',
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:53 GMT',
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":1,"name":"passed","label":"Passed","color_dark":6667107,"color_medium":9820525,"color_bright":12709313,"is_system":true,"is_untested":false,"is_final":true},{"id":2,"name":"blocked","label":"Blocked","color_dark":9474192,"color_medium":13684944,"color_bright":14737632,"is_system":true,"is_untested":false,"is_final":true},{"id":3,"name":"untested","label":"Untested","color_dark":11579568,"color_medium":15395562,"color_bright":15790320,"is_system":true,"is_untested":true,"is_final":false},{"id":4,"name":"retest","label":"Retest","color_dark":13026868,"color_medium":15593088,"color_bright":16448182,"is_system":true,"is_untested":false,"is_final":false},{"id":5,"name":"failed","label":"Failed","color_dark":14250867,"color_medium":15829135,"color_bright":16631751,"is_system":true,"is_untested":false,"is_final":true},{"id":6,"name":"skip","label":"Skipped"},{"id":7,"name":"todo_fail","label":"TODO (failed)"},{"id":8,"name":"todo_pass","label":"TODO (passed)"}]';
+$VAR5 = '[{"id":1,"name":"passed","label":"Passed","color_dark":6667107,"color_medium":9820525,"color_bright":12709313,"is_system":true,"is_untested":false,"is_final":true},{"id":2,"name":"blocked","label":"Blocked","color_dark":9474192,"color_medium":13684944,"color_bright":14737632,"is_system":true,"is_untested":false,"is_final":true},{"id":3,"name":"untested","label":"Untested","color_dark":11579568,"color_medium":15395562,"color_bright":15790320,"is_system":true,"is_untested":true,"is_final":false},{"id":4,"name":"retest","label":"Retest","color_dark":13026868,"color_medium":15593088,"color_bright":16448182,"is_system":true,"is_untested":false,"is_final":false},{"id":5,"name":"failed","label":"Failed","color_dark":14250867,"color_medium":15829135,"color_bright":16631751,"is_system":true,"is_untested":false,"is_final":true},{"id":6,"name":"skip","label":"Skipped","color_dark":0,"color_medium":10526880,"color_bright":13684944,"is_system":false,"is_untested":false,"is_final":true},{"id":7,"name":"todo_fail","label":"Todo Failed","color_dark":0,"color_medium":10526880,"color_bright":13684944,"is_system":false,"is_untested":false,"is_final":true},{"id":8,"name":"todo_pass","label":"Todo Passed","color_dark":0,"color_medium":10526880,"color_bright":13684944,"is_system":false,"is_untested":false,"is_final":true},{"id":9,"name":"locked","label":"Locked","color_dark":14730013,"color_medium":16772121,"color_bright":16110712,"is_system":false,"is_untested":false,"is_final":false}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -2276,6 +2278,722 @@ $VAR4 = bless( {
 $VAR5 = '[{"id":515,"test_id":286,"status_id":1,"created_by":1,"created_on":1436645382,"assignedto_id":null,"comment":"REAPER FORCES INBOUND","version":null,"elapsed":null,"defects":null}]';
 
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_case_types';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 20:59:52 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '285',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 20:59:52 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":1,"name":"Automated","is_default":false},{"id":2,"name":"Functionality","is_default":false},{"id":6,"name":"Other","is_default":true},{"id":3,"name":"Performance","is_default":false},{"id":4,"name":"Regression","is_default":false},{"id":5,"name":"Usability","is_default":false}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+#Lock Mocks
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/590';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:54 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":635,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087955,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/590&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":635,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087955,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":631,"test_id":590,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":622,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087447,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/588';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:57 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":637,"test_id":588,"status_id":9,"created_by":1,"created_on":1437087957,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/588&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:57 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:57 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":637,"test_id":588,"status_id":9,"created_by":1,"created_on":1437087957,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":630,"test_id":588,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":624,"test_id":588,"status_id":9,"created_by":1,"created_on":1437087449,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/590';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:54 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":635,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087955,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/590&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":635,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087955,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":631,"test_id":590,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":622,"test_id":590,"status_id":9,"created_by":1,"created_on":1437087447,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/591';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":639,"test_id":591,"status_id":9,"created_by":1,"created_on":1437087959,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/591&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":639,"test_id":591,"status_id":9,"created_by":1,"created_on":1437087959,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":632,"test_id":591,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":626,"test_id":591,"status_id":9,"created_by":1,"created_on":1437087452,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/593';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":640,"test_id":593,"status_id":9,"created_by":1,"created_on":1437087960,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/593&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":640,"test_id":593,"status_id":9,"created_by":1,"created_on":1437087960,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":634,"test_id":593,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":627,"test_id":593,"status_id":9,"created_by":1,"created_on":1437087453,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/592';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:02 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:01 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":641,"test_id":592,"status_id":9,"created_by":1,"created_on":1437087962,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_results/592&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:02 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '895',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:02 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":641,"test_id":592,"status_id":9,"created_by":1,"created_on":1437087962,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":633,"test_id":592,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":628,"test_id":592,"status_id":9,"created_by":1,"created_on":1437087454,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+sub lockMockStep0 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:54 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:54 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep1 {
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+$VAR1 = 'index.php?/api/v2/add_result/587';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '353',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:55 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":636,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087956,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+$VAR1 = 'index.php?/api/v2/get_results/587&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1250',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":636,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087956,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":629,"test_id":587,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":625,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087451,"assignedto_id":null,"comment":"Test Locked by race.bannon.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":623,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087448,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+return $cloned;
+
+}
+
+sub lockMockStep2 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:56 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep3 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:57 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:57 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep4 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+$VAR1 = 'index.php?/api/v2/add_result/587';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '354',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":638,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087958,"assignedto_id":null,"comment":"Test Locked by race.bannon.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}';
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+$VAR1 = 'index.php?/api/v2/get_results/587&limit=100';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1605',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:58 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":638,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087958,"assignedto_id":null,"comment":"Test Locked by race.bannon.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":636,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087956,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":629,"test_id":587,"status_id":4,"created_by":1,"created_on":1437087814,"assignedto_id":null,"comment":null,"version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":625,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087451,"assignedto_id":null,"comment":"Test Locked by race.bannon.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null},{"id":623,"test_id":587,"status_id":9,"created_by":1,"created_on":1437087448,"assignedto_id":null,"comment":"Test Locked by drs-laptop.\\n\\n        If this result is preceded immediately by another lock statement like this, please disregard it;\\n        a lock collision occurred.","version":null,"elapsed":null,"defects":null,"custom_step_results":null}]';
+
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep5 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:05:59 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep6 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:00 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep7 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:01 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:01 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":4,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
+}
+
+sub lockMockStep8 {
+
+$VAR1 = 'index.php?/api/v2/get_tests/1099';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.9',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 16 Jul 2015 23:06:02 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '1613',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Thu, 16 Jul 2015 23:06:02 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockme.test","type_id":1,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":588,"case_id":15,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmetoo.test","type_id":1,"priority_id":2,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":590,"case_id":16,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"lockmealso.test","type_id":1,"priority_id":5,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":591,"case_id":17,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"sortalockme.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":592,"case_id":18,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"dontlockme_nothere.test","type_id":1,"priority_id":3,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":593,"case_id":19,"status_id":9,"assignedto_id":null,"run_id":1099,"title":"dontlockme_alsonothere.test","type_id":6,"priority_id":1,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+
+my $cloned = clone $mockObject;
+$cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+return $cloned;
+
 }
 
 1;

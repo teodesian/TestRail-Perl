@@ -63,7 +63,7 @@ like($out,qr/skipall\.test$/,"Gets test correctly when filtering by assignment")
 
 @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" --mock --config "testConfig" --assignedto billy});
 $out = `@args`;
-is($? >> 8, 0, "Exit code OK when filtering by assignement");
+is($? >> 8, 0, "Exit code OK when filtering by assignment");
 chomp $out;
 is($out,"","Gets no tests correctly when filtering by wrong assignment");
 
@@ -93,7 +93,7 @@ is($? >> 8, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
 
 #Verify no-match and match are mutually exclusive
-@args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa });
+@args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --mock});
 $out = `@args`;
 isnt($? >> 8, 0, "Exit code not OK asking for mutually exclusive match options");
 like($out,qr/mutually exclusive/i,"Death message OK");

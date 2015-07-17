@@ -3,6 +3,8 @@
 
 package TestRail::Utils::Lock;
 
+use 5.010;
+
 use strict;
 use warnings;
 
@@ -36,16 +38,18 @@ testrail-lock's primary routine.
 
 =item TestRail::API C<HANDLE> - Instance of TestRail::API, in the case where the caller already has a valid object.
 
-There are two special keys, 'mock' and 'simulate_race_condition' in the HASHREF that are used for testing.
+There is a special key, 'mock' in the HASHREF that is used for testing.
+The 'hostname' key must also be passed in the options, as it is required by lockTest, which this calls.
 
 =back
 
 =cut
 
 sub pickAndLockTest {
-    my ($opts, $tr) = @_;
+    state $check = compile(HashRef, Optional[Maybe[Object]]);
+    my ($opts, $tr) = $check->(@_);
 
-    if ($opts->{mock}) {
+    if ($opts->{mock} && !$tr) {
         require Test::LWP::UserAgent::TestRailMock; #LazyLoad
         $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
         $opts->{debug} = 1;
@@ -64,31 +68,34 @@ sub pickAndLockTest {
     my ($lock_status_id,$untested_id,$retest_id) = @$status_ids;
 
     my $cases = $tr->getTests($run->{'id'});
-    my @statuses_to_check_for = ($untested_id,$retest_id);
-    @statuses_to_check_for = ($lock_status_id) if $opts->{'simulate_race_condition'}; #Unit test stuff
+
+    #Filter by case types
+    if ($opts->{'case-types'}) {
+        my @case_types = map { my $cdef = $tr->getCaseTypeByName($_); $cdef->{'id'} } @{ $opts->{'case-types'} };
+        @$cases = grep { my $case_type_id = $_->{'type_id'}; grep {$_ eq $case_type_id} @case_types } @$cases;
+    }
 
     # Limit to only non-locked and open cases
-    @$cases = grep { my $tstatus = $_->{'status_id'}; scalar(grep { $tstatus eq $_ } @statuses_to_check_for) } @$cases;
-    @$cases = sort { $a->{'priority_id'} <=> $b->{'priority_id'} } @$cases; #Sort by priority
+    @$cases = grep { my $tstatus = $_->{'status_id'}; scalar(grep { $tstatus eq $_ } ($untested_id,$retest_id) ) } @$cases;
+    @$cases = sort { $b->{'priority_id'} <=> $a->{'priority_id'} } @$cases; #Sort by priority DESC
 
-    my $test = shift @$cases;
-
-    confess "No outstanding cases in the provided run.\n" if !$test;
+    # Filter by match options
+    @$cases = TestRail::Utils::findTests($opts,@$cases);
 
     my $title;
     foreach my $test (@$cases) {
-        $title = lockTest($test,$lock_status_id,$tr);
+        $title = lockTest($test,$lock_status_id,$opts->{'hostname'},$tr);
         last if $title;
     }
 
-    confess "Failed to lock case!" if !$title;
+    warn "Failed to lock case!  This probably means you don't have any cases left to lock." if !$title;
 
     return $title;
 }
 
 =head2 lockTest(test,lock_status_id,handle)
 
-Lock the specified test.
+Lock the specified test, and return it's title (or full_title if it exists).
 
 =over 4
 
@@ -100,24 +107,24 @@ Lock the specified test.
 
 =back
 
-Returns undef in the event a lock could not occur, and warns on lock collisions.
+Returns undef in the event a lock could not occur, and warns & returns 0 on lock collisions.
 
 =cut
 
 sub lockTest {
-    state $check = compile(HashRef, Int, Object);
-    my ($test,$lock_status_id,$handle) = $check->(@_);
+    state $check = compile(HashRef, Int, Str, Object);
+    my ($test,$lock_status_id,$hostname,$handle) = $check->(@_);
 
-    my $res = $tr->createTestResults(
+    my $res = $handle->createTestResults(
         $test->{id},
         $lock_status_id,
-        "Test Locked by $opts->{hostname}.\n
+        "Test Locked by $hostname.\n
         If this result is preceded immediately by another lock statement like this, please disregard it;
         a lock collision occurred."
     );
 
     #If we've got more than 100 lock conflicts, we have big-time problems
-    my $results = $tr->getTestResults($test->{id},100);
+    my $results = $handle->getTestResults($test->{id},100);
 
     #Remember, we're returned results from newest to oldest...
     my $next_one = 0;
@@ -137,10 +144,12 @@ sub lockTest {
         if ($next_one) {
             #If we got this far, a lock conflict occurred. Try the next one.
             warn "Lock conflict detected.  Try again...\n";
-            return undef;
+            return 0;
         }
     }
-    return $test->{'title'} if $next_one;
+
+    #Prefer full titles (match mode)
+    return defined($test->{'full_title'}) ? $test->{'full_title'} : $test->{'title'} if $next_one;
     return undef;
 }
 

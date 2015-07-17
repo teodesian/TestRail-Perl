@@ -86,9 +86,6 @@ use TestRail::Utils;
 
 use Getopt::Long;
 use File::HomeDir qw{my_home};
-use File::Find;
-use Cwd qw{abs_path};
-use File::Basename qw{basename};
 
 my $opts ={};
 
@@ -117,11 +114,6 @@ GetOptions(
 );
 
 if ($opts->{help}) { TestRail::Utils::help(); }
-
-if ($opts->{'match'} && $opts->{'no-match'}) {
-    print "Error! match and no-match options are mutually exclusive.\n";
-    exit 255;
-}
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});
 
@@ -186,24 +178,11 @@ if (!$cases) {
     exit 3;
 }
 
-my @tests =  map {$_->{'title'}} @$cases;
-my @realtests;
+$opts->{'names-only'} = 1;
+my @tests = TestRail::Utils::findTests($opts,@$cases);
 
-if ($opts->{'match'} || $opts->{'no-match'}) {
-    my $dir = $opts->{'match'} ? $opts->{'match'} : $opts->{'no-match'};
-    if (!$opts->{'no-recurse'}) {
-        File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $dir );
-        @tests = grep {my $real = $_; grep { basename($real) eq $_ } @tests} @realtests; #XXX if you have dups in your tree, be-ware
-    } else {
-        #Handle special windows case -- glob doesn't prepend abspath
-        @realtests = glob("$dir/*");
-        @tests = map {$^O eq 'MSWin32' ? "$dir/$_" : $_ } grep {my $fname = $_; grep { basename($_) eq $fname} @realtests } @tests;
-    }
-    @tests = grep {my $otest = basename($_); scalar(grep {basename($_) eq $otest} @tests) == 0} @realtests if $opts->{'no-match'}; #invert the list in this case.
-}
-
-@tests = map { abs_path($_) } @tests if $opts->{'match'};
 print join("\n",@tests)."\n" if scalar(@tests);
+
 exit 0;
 
 __END__

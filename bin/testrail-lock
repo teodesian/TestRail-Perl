@@ -45,9 +45,17 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 =over 4
 
--p --plan     : desired plan name.  Required if the run passed is a child of a plan.
+-p --plan       : desired plan name.  Required if the run passed is a child of a plan.
 
--e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+-m --match      : attempt to find filenames matching the test names in the provided dir.
+
+--no-match      : attempt to find filenames that do not match test names in the provided dir.
+
+-n --no-recurse : if match (or no-match) passed, do not recurse subdirectories.
+
+-t --case-type  : Only attempt to lock cases of the specified type.  May be passed multiple times.
+
+-e --encoding   : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
 
 =back
 
@@ -104,12 +112,16 @@ GetOptions(
     'p|plan=s'        => \$opts->{'plan'},
     'r|run=s'         => \$opts->{'run'},
     'c|config=s@'     => \$opts->{'configs'},
+    'm|match=s'       => \$opts->{'match'},
+    'no-match=s'      => \$opts->{'no-match'},
+    'n|no-recurse'    => \$opts->{'no-recurse'},
+    't|case-type=s@'  => \$opts->{'case-types'},
     'mock'            => \$opts->{'mock'},
     'e|encoding=s'    => \$opts->{'encoding'},
     'h|help'          => \$opts->{'help'}
 );
 
-if ($opts->{help}) { help(); }
+if ($opts->{help}) { TestRail::Utils::help(); }
 $opts->{'hostname'} = hostname;
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run lockname});
