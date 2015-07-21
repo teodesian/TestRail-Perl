@@ -133,10 +133,9 @@ sub getFilenameFromTapLine {
     return 0;
 }
 
-
 =head2 getRunInformation
 
-Return the relevant project definition, plan and run definition HASHREFs for the provided options.
+Return the relevant project definition, plan, run and milestone definition HASHREFs for the provided options.
 
 Dies in the event the project/plan/run could not be found.
 
@@ -160,7 +159,16 @@ sub getRunInformation {
     }
 
     confess "No such run '$opts->{run}' matching the provided configs (if any).\n" if !$run;
-    return ($project,$plan,$run);
+
+    #If the run/plan has a milestone set, then return it too
+    my $milestone;
+    my $mid = $plan ? $plan->{'milestone_id'} : $run->{'milestone_id'};
+    if ($mid) {
+        $milestone = $tr->getMilestoneByID($mid);
+        confess "Could not fetch run milestone!" unless $milestone; #hope this doesn't happen
+    }
+
+    return ($project, $plan, $run, $milestone);
 }
 
 =head2 findTests(opts,case1,...,caseN)

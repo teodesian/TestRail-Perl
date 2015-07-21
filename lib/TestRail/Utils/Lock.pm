@@ -169,3 +169,9 @@ sub lockTest {
 }
 
 1;
+
+__END__
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this module.
