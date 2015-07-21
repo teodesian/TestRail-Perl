@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 32;
+use Test::More "tests" => 30;
 
 #check plan mode
 my @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" -m t --config testConfig --mock --no-recurse});
@@ -52,8 +52,6 @@ like($out,qr/skipall\.test$/,"Gets test correctly in no plan mode, recurse");
 @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" -m t --mock --config testPlatform1});
 $out = `@args`;
 isnt($? >> 8, 0, "Exit code not OK when passing invalid configs for plan");
-chomp $out;
-like($out,qr/no such run/i,"Gets test correctly in plan mode, recurse");
 
 #check assignedto filters
 @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" --mock --config "testConfig" --assignedto teodesian});
@@ -96,6 +94,3 @@ like($out,qr/encoding of arguments/i,"Help output OK");
 @args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --mock});
 $out = `@args`;
 isnt($? >> 8, 0, "Exit code not OK asking for mutually exclusive match options");
-like($out,qr/mutually exclusive/i,"Death message OK");
-
-

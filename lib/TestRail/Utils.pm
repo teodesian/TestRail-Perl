@@ -137,8 +137,6 @@ sub getFilenameFromTapLine {
 =head2 getRunInformation
 
 Return the relevant project definition, plan and run definition HASHREFs for the provided options.
-Practically all the binaries need this information, so it has been subroutined out.
-
 
 Dies in the event the project/plan/run could not be found.
 

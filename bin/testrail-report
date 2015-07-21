@@ -118,14 +118,6 @@ use File::HomeDir qw{my_home};
 
 print "testrail-report\n----------------------\n";
 
-use Pod::Perldoc 3.10;
-
-sub help {
-    @ARGV = ($0);
-    Pod::Perldoc->run();
-    exit 0;
-}
-
 #Main loop------------
 my %opts;
 
@@ -149,7 +141,7 @@ GetOptions(
     'help'           => \$opts{help}
 );
 
-if ($opts{help}) { help(); }
+if ($opts{help}) { TestRail::Utils::help(); }
 
 #Parse config file if we are missing api url/key or user
 my $homedir = my_home() || '.';

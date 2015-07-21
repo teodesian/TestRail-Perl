@@ -1244,6 +1244,34 @@ $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4
 
 {
 
+$VAR1 = 'index.php?/api/v2/get_tests/1&status_id=1';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:10 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '276',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:11 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+
+{
+
 $VAR1 = 'index.php?/api/v2/get_tests/777';
 $VAR2 = '200';
 $VAR3 = 'OK';

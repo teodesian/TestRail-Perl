@@ -123,29 +123,7 @@ my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opt
 $tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
 $tr->{'debug'} = 0;
 
-my $project = $tr->getProjectByName($opts->{'project'});
-if (!$project) {
-    print "No such project '$opts->{project}'.\n";
-    exit 6;
-}
-
-my ($run,$plan);
-
-if ($opts->{'plan'}) {
-    $plan = $tr->getPlanByName($project->{'id'},$opts->{'plan'});
-    if (!$plan) {
-        print "No such plan '$opts->{plan}'!\n";
-        exit 1;
-    }
-    $run = $tr->getChildRunByName($plan,$opts->{'run'}, $opts->{'configs'});
-} else {
-    $run = $tr->getRunByName($project->{'id'},$opts->{'run'});
-}
-
-if (!$run) {
-    print "No such run '$opts->{run}' matching the provided configs (if any).\n";
-    exit 2;
-}
+my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
 
 my $user_ids;
 #Process assignedto ids

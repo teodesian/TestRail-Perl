@@ -13,7 +13,7 @@ testrail-lock - pick an untested/retest test in TestRail, lock it, and return th
 
 It is useful to lock the test in situations where you have multiple disconnected test running processes trying to allocate resources toward testing outstanding cases so that effort is not duplicated.
 This is accomplished via setting a special locking result on a test rather than simple assignment, as detecting lock conflicts is impossible then due to a lack of assignment history.
-Results, however have a history of results set, so we use that fact to detect if a locking collision occured (race condition) and fail to return a result when another process locked during our attempt to lock.
+Results, however have a history of results set, so we use that fact to detect if a locking collision occurred (race condition) and fail to return a result when another process locked during our attempt to lock.
 
 Will respect test priority when making the choice of what test to lock.
 
@@ -47,9 +47,9 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -p --plan       : desired plan name.  Required if the run passed is a child of a plan.
 
--m --match      : attempt to find filenames matching the test names in the provided dir.
+-m --match      : attempt to find filenames matching the test names in the provided directory.
 
---no-match      : attempt to find filenames that do not match test names in the provided dir.
+--no-match      : attempt to find filenames that do not match test names in the provided directory.
 
 -n --no-recurse : if match (or no-match) passed, do not recurse subdirectories.
 
@@ -126,7 +126,11 @@ $opts->{'hostname'} = hostname;
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run lockname});
 
-print TestRail::Utils::pickAndLockTest($opts)."\n";
+my $ret = TestRail::Utils::pickAndLockTest($opts);
+
+exit 255 if !$ret;
+
+print $ret->{'path'}."\n";
 exit 0;
 
 __END__

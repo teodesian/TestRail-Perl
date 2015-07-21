@@ -30,19 +30,25 @@ my $tr = new TestRail::API($apiurl,$login,$pw,undef,1);
 $tr->{'debug'} = 0;
 
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep0();
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),undef,"Verify that no tests are locked in match mode, as they all are in a subdir, and recurse is off");
+
+my $ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret,0,"Verify that no tests are locked in match mode, as they all are in a subdir, and recurse is off");
 delete $opts->{'no-recurse'};
 
-is(basename( TestRail::Utils::Lock::pickAndLockTest($opts,$tr) ), 'lockmealso.test' , "Verify the highest priority test is chosen first");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is(basename( $ret->{'path'} ), 'lockmealso.test' , "Verify the highest priority test is chosen first");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep1();
 
-is(basename( TestRail::Utils::Lock::pickAndLockTest($opts,$tr) ), 'lockme.test'     , "Verify the highest priority test of type automated is chosen");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is(basename( $ret->{'path'} ), 'lockme.test'     , "Verify the highest priority test of type automated is chosen");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep2();
 
-is(basename( TestRail::Utils::Lock::pickAndLockTest($opts,$tr) ), 'lockmetoo.test'  , "Verify that the highest priority test that exists in the tree is chosen");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is(basename( $ret->{'path'} ), 'lockmetoo.test'  , "Verify that the highest priority test that exists in the tree is chosen");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep3();
 
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),undef,"Verify that no tests are locked, as they either are of the wrong type or do not exist in the match tree");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret,0,"Verify that no tests are locked, as they either are of the wrong type or do not exist in the match tree");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep4();
 
 #Simulate lock collision
@@ -54,17 +60,23 @@ $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep5();
 #Test with a second set of options, verify that no-match and type filtering works
 delete $opts->{'match'};
 $opts->{'case-types'} = ['Other'];
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),'sortalockme.test',"Test which is here but the other type is locked when ommitting match");
+
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret->{'path'},'sortalockme.test',"Test which is here but the other type is locked when ommitting match");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep6();
 
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),'dontlockme_alsonothere.test',"Test which is not here but the other type is locked when omitting match");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret->{'path'},'dontlockme_alsonothere.test',"Test which is not here but the other type is locked when omitting match");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep7();
 
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),undef,"No tests are locked, as they are not the right type");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret,0,"No tests are locked, as they are not the right type");
 
 #Make sure we only grab retest/untested
 delete $opts->{'case-types'};
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),'dontlockme_nothere.test',"Wrong type test which is not here gets locked after we remove all restrictions");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret->{'path'},'dontlockme_nothere.test',"Wrong type test which is not here gets locked after we remove all restrictions");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep8();
 
-is(TestRail::Utils::Lock::pickAndLockTest($opts,$tr),undef,"No tests are locked, as none are untested or retest");
+$ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
+is($ret,0,"No tests are locked, as none are untested or retest");

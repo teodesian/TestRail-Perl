@@ -34,12 +34,17 @@ testrail-lock's primary routine.
 
 =over 4
 
-=item HASHREF C<OPTIONS> - valid keys/values correspond to the longnames of arguments taken by L<testrail-lock>.
+=item HASHREF C<OPTIONS> - valid keys/values correspond to the long names of arguments taken by L<testrail-lock>.
 
 =item TestRail::API C<HANDLE> - Instance of TestRail::API, in the case where the caller already has a valid object.
 
 There is a special key, 'mock' in the HASHREF that is used for testing.
 The 'hostname' key must also be passed in the options, as it is required by lockTest, which this calls.
+
+Returns a HASHREF with the test, project, run and plan (if any) definition HASHREFs as keys.
+Also, a 'path' key will be set which has the full path to the test on disk, if match mode is passed, the case title otherwise.
+
+If the test could not be locked, 0 is returned.
 
 =back
 
@@ -82,15 +87,25 @@ sub pickAndLockTest {
     # Filter by match options
     @$cases = TestRail::Utils::findTests($opts,@$cases);
 
-    my $title;
-    foreach my $test (@$cases) {
+    my ($title,$test);
+    while (@$cases) {
+        $test = shift @$cases;
         $title = lockTest($test,$lock_status_id,$opts->{'hostname'},$tr);
         last if $title;
     }
 
-    warn "Failed to lock case!  This probably means you don't have any cases left to lock." if !$title;
+    if (!$title) {
+        warn "Failed to lock case!  This probably means you don't have any cases left to lock.";
+        return 0;
+    }
 
-    return $title;
+    return {
+        'test'    => $test,
+        'path'    => $title,
+        'project' => $project,
+        'plan'    => $plan,
+        'run'     => $run
+    };
 }
 
 =head2 lockTest(test,lock_status_id,handle)
@@ -99,7 +114,7 @@ Lock the specified test, and return it's title (or full_title if it exists).
 
 =over 4
 
-=item HASHREF C<TEST> - Test object returned by getTest, or a similar method.
+=item HASHREF C<TEST> - Test object returned by getTests, or a similar method.
 
 =item INTEGER C<LOCK_STATUS_ID> - Status used to denote locking of test
 
@@ -107,7 +122,7 @@ Lock the specified test, and return it's title (or full_title if it exists).
 
 =back
 
-Returns undef in the event a lock could not occur, and warns & returns 0 on lock collisions.
+Returns -1 in the event a lock could not occur, and warns & returns 0 on lock collisions.
 
 =cut
 
@@ -150,7 +165,7 @@ sub lockTest {
 
     #Prefer full titles (match mode)
     return defined($test->{'full_title'}) ? $test->{'full_title'} : $test->{'title'} if $next_one;
-    return undef;
+    return -1;
 }
 
 1;
