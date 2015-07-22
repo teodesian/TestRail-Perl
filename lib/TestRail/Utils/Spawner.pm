@@ -49,7 +49,7 @@ Defaults to 180 seconds.
 
 =cut
 
-sub getNeededRuns {
+sub spawn {
 
 }
 
