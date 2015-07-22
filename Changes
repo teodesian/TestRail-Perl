@@ -10,6 +10,8 @@ Revision history for Perl module TestRail::API
     - Fix an issue where statusNamesToIDs would return status IDs in the wrong order.
     - Re-factor to use Type::Tiny parameter checking.
     - Fix getCaseTypeByName, it's apparently been broken/noncovered this whole time
+    - Add options to sort FIFO/LIFO by creation, milestone due date in testrail-runs
+    - Add TestRail::Utils::Find as a backend to testrail-runs, expand unit tests
 
 0.028 2015-06-16 TEODESIAN
     - Hotfix: forgot to include a module in the prove plugin.  How did this pass compile.t? A mystery.

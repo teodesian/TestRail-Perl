@@ -39,6 +39,13 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
 
+-l --lifo     : LIFO sorting of results.  Defaults to FIFO sort if not passed.
+
+-m --milesort : Sort by milestone due time.  Defaults to sorting by run creation time if not passed.
+
+Be aware that when sorting by milestone, if a run has no milestone set, it is considered "earlier" than anything else by perl's comparison routines.
+Ergo if they are the lowest priority, you should consider running LIFO.
+
 =back
 
 =head1 CONFIGURATION FILE
@@ -65,6 +72,7 @@ use utf8;
 
 use TestRail::API;
 use TestRail::Utils;
+use TestRail::Utils::Find;
 
 use Getopt::Long;
 use File::HomeDir qw{my_home};
@@ -86,6 +94,8 @@ GetOptions(
     's|status=s@'  => \$opts->{'statuses'},
     'mock'         => \$opts->{'mock'},
     'e|encoding=s' => \$opts->{'encoding'},
+    'l|lifo'       => \$opts->{'lifo'},
+    'm|milesort'   => \$opts->{'milesort'},
     'h|help'       => \$opts->{'help'}
 );
 
@@ -103,63 +113,7 @@ my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opt
 $tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
 $tr->{'debug'} = 0;
 
-my ($status_ids,$user_ids);
-
-#Process statuses
-if ($opts->{'statuses'}) {
-    eval { @$status_ids = $tr->statusNamesToIds(@{$opts->{'statuses'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 4;
-    }
-}
-
-my $project = $tr->getProjectByName($opts->{'project'});
-if (!$project) {
-    print "No such project '$opts->{project}'.\n";
-    exit 6;
-}
-
-my @pconfigs;
-if (defined $opts->{configs}) {
-    my $avail_configs = $tr->getConfigurations($project->{'id'});
-    my ($cname);
-    @pconfigs = map {$_->{'id'}} grep { $cname = $_->{'name'}; grep {$_ eq $cname} @{$opts->{configs}} } @$avail_configs; #Get a list of IDs from the names passed
-}
-
-if (defined($opts->{configs}) && (scalar(@pconfigs) != scalar(@{$opts->{configs}}))) {
-    print("One or more configurations passed does not exist in your project!\n");
-    exit 7;
-}
-
-my ($runs,$plans,$planRuns,$cruns,$found) = ([],[],[],[],0);
-$runs = $tr->getRuns($project->{'id'}) if (!$opts->{'configs'}); # If configs are passed, global runs are not in consideration.
-$plans = $tr->getPlans($project->{'id'});
-foreach my $plan (@$plans) {
-    $cruns = $tr->getChildRuns($plan);
-    next if !$cruns;
-    foreach my $run (@$cruns) {
-        next if scalar(@pconfigs) != scalar(@{$run->{'config_ids'}});
-
-        #Compare run config IDs against desired, invalidate run if all conditions not satisfied
-        $found = 0;
-        foreach my $cid (@{$run->{'config_ids'}}) {
-            $found++ if grep {$_ == $cid} @pconfigs;
-        }
-
-        push(@$planRuns, $run) if $found == scalar(@{$run->{'config_ids'}});
-    }
-}
-
-push(@$runs,@$planRuns);
-
-if ($opts->{'statuses'}) {
-    @$runs =  $tr->getRunSummary(@$runs);
-    @$runs = grep { defined($_->{'run_status'}) } @$runs; #Filter stuff with no results
-    foreach my $status (@{$opts->{'statuses'}}) {
-        @$runs = grep { $_->{'run_status'}->{$status} } @$runs; #If it's positive, keep it.  Otherwise forget it.
-    }
-}
+my $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 
 @$runs = map {$_->{name}} @$runs;
 print join("\n",@$runs)."\n" if scalar(@$runs);

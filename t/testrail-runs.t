@@ -1,14 +1,29 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 10;
+use Test::More 'tests' => 14;
 
 #check status filters
 my @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock});
 my $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
-like($out,qr/^TestingSuite\nOtherOtherSuite\nFinalRun\nlockRun$/,"Gets run correctly looking for passes");
+like($out,qr/^OtherOtherSuite\nTestingSuite\nFinalRun\nlockRun$/,"Gets run correctly looking for passes");
+
+#check LIFO sort
+@args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --lifo --mock});
+$out = `@args`;
+is($? >> 8, 0, "Exit code OK looking for runs with passes");
+chomp $out;
+like($out,qr/^lockRun\nTestingSuite\nFinalRun\nOtherOtherSuite$/,"LIFO sort works");
+
+#check milesort
+@args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --milesort --mock});
+$out = `@args`;
+is($? >> 8, 0, "Exit code OK looking for runs with passes");
+chomp $out;
+like($out,qr/^TestingSuite\nFinalRun\nlockRun\nOtherOtherSuite$/,"milesort works");
+
 
 #check status filters
 @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock --status passed});
