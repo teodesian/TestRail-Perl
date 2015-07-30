@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
 #Test things we can only mock, because the API doesn't support them.
 
 use Test::More 'tests' => 14;

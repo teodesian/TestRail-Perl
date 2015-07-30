@@ -58,8 +58,6 @@ All options specified thereby are overridden by passing the command-line switche
 
 =over 4
 
---mock : don't do any real HTTP requests.
-
 --help : show this output
 
 =back
@@ -92,7 +90,6 @@ GetOptions(
     'j|project=s'  => \$opts->{'project'},
     'c|config=s@'  => \$opts->{'configs'},
     's|status=s@'  => \$opts->{'statuses'},
-    'mock'         => \$opts->{'mock'},
     'e|encoding=s' => \$opts->{'encoding'},
     'l|lifo'       => \$opts->{'lifo'},
     'm|milesort'   => \$opts->{'milesort'},
@@ -103,15 +100,7 @@ if ($opts->{help}) { TestRail::Utils::help(); }
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project});
 
-if ($opts->{mock}) {
-    use Test::LWP::UserAgent::TestRailMock;
-    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts->{debug} = 1;
-}
-
 my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
-$tr->{'debug'} = 0;
 
 my $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 

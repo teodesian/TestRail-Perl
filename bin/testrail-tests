@@ -69,8 +69,6 @@ All options specified thereby are overridden by passing the command-line switche
 
 =over 4
 
---mock : don't do any real HTTP requests. Used only by tests.
-
 --help : show this output
 
 =back
@@ -83,6 +81,7 @@ use utf8;
 
 use TestRail::API;
 use TestRail::Utils;
+use TestRail::Utils::Find;
 
 use Getopt::Long;
 use File::HomeDir qw{my_home};
@@ -105,7 +104,6 @@ GetOptions(
     'c|config=s@'     => \$opts->{'configs'},
     's|status=s@'     => \$opts->{'statuses'},
     'a|assignedto=s@' => \$opts->{'users'},
-    'mock'            => \$opts->{'mock'},
     'm|match=s'       => \$opts->{'match'},
     'no-match=s'      => \$opts->{'no-match'},
     'n|no-recurse'    => \$opts->{'no-recurse'},
@@ -117,47 +115,13 @@ if ($opts->{help}) { TestRail::Utils::help(); }
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});
 
-if ($opts->{mock}) {
-    use Test::LWP::UserAgent::TestRailMock;
-    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts->{debug} = 1;
-}
-
 my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
-$tr->{'debug'} = 0;
 
-my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
-
-my ($status_ids,$user_ids);
-
-#Process statuses
-if ($opts->{'statuses'}) {
-    eval { @$status_ids = $tr->statusNamesToIds(@{$opts->{'statuses'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 4;
-    }
-}
-
-#Process assignedto ids
-if ($opts->{'users'}) {
-    eval { @$user_ids = $tr->userNamesToIds(@{$opts->{'users'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 5;
-    }
-}
-
-my $cases = $tr->getTests($run->{'id'},$status_ids,$user_ids);
-
-if (!$cases) {
-    print "No cases in TestRail!\n";
-    exit 3;
-}
+my $cases = TestRail::Utils::getTests($opts,$tr);
+die "No cases in TestRail!\n" unless $cases;
 
 $opts->{'names-only'} = 1;
-my @tests = TestRail::Utils::findTests($opts,@$cases);
+my @tests = TestRail::Utils::Find::findTests($opts,@$cases);
 
 print join("\n",@tests)."\n" if scalar(@tests);
 

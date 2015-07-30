@@ -15,6 +15,7 @@ use Type::Params qw( compile );
 
 use TestRail::API;
 use TestRail::Utils;
+use TestRail::Utils::Find;
 
 =head1 DESCRIPTION
 
@@ -85,7 +86,7 @@ sub pickAndLockTest {
     @$cases = sort { $b->{'priority_id'} <=> $a->{'priority_id'} } @$cases; #Sort by priority DESC
 
     # Filter by match options
-    @$cases = TestRail::Utils::findTests($opts,@$cases);
+    @$cases = TestRail::Utils::Find::findTests($opts,@$cases);
 
     my ($title,$test);
     while (@$cases) {

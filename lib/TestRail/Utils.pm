@@ -10,9 +10,6 @@ use Carp qw{confess cluck};
 use Pod::Perldoc 3.10;
 
 use Scalar::Util qw{blessed};
-use File::Find;
-use Cwd qw{abs_path};
-use File::Basename qw{basename};
 
 =head1 SCRIPT HELPER FUNCTIONS
 
@@ -91,7 +88,7 @@ sub parseConfig {
     return $results;
 }
 
-=head2 getFilenameFromTAPLine($line)
+=head2 getFilenameFromTapLine($line)
 
 Analyze TAP output by prove and look for filename boundaries (no other way to figure out what file is run).
 Long story short: don't end 'unknown' TAP lines with any number of dots if you don't want it interpreted as a test name.
@@ -169,66 +166,6 @@ sub getRunInformation {
     }
 
     return ($project, $plan, $run, $milestone);
-}
-
-=head2 findTests(opts,case1,...,caseN)
-
-Given an ARRAY of tests, find tests meeting your criteria (or not) in the specified directory.
-
-=over 4
-
-=item HASHREF C<OPTS> - Options for finding tests:
-
-=over 4
-
-=item STRING C<MATCH> - Only return tests which exist in the path provided.  Mutually exclusive with no-match.
-
-=item STRING C<NO-MATCH> - Only return tests which aren't in the path provided (orphan tests).  Mutually exclusive with match.
-
-=item BOOL C<NO-RECURSE> - Do not do a recursive scan for files.
-
-=item BOOL C<NAMES-ONLY> - Only return the names of the tests rather than the entire test objects.
-
-=back
-
-=item ARRAY C<CASES> - Array of cases to translate to pathnames based on above options.
-
-=back
-
-Returns tests found that meet the criteria laid out in the options.
-Provides absolute path to tests if match is passed; this is the 'full_title' key if names-only is false/undef.
-Dies if mutually exclusive options are passed.
-
-=cut
-
-sub findTests {
-    my ($opts,@cases) = @_;
-
-    confess "Error! match and no-match options are mutually exclusive.\n" if ($opts->{'match'} && $opts->{'no-match'});
-    my @tests = @cases;
-    my (@realtests);
-
-    if ($opts->{'match'} || $opts->{'no-match'}) {
-        my $dir = $opts->{'match'} ? $opts->{'match'} : $opts->{'no-match'};
-        if (!$opts->{'no-recurse'}) {
-            File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $dir );
-            @tests = grep {my $real = $_->{'title'}; grep { $real eq basename($_) } @realtests} @cases; #XXX if you have dups in your tree, be-ware
-        } else {
-            #Handle special windows case -- glob doesn't prepend abspath
-            @realtests = glob("$dir/*");
-            @tests = map {
-                $_->{'title'} = "$dir/".$_->{'title'} if( $^O eq 'MSWin32' );
-                $_
-            } grep {my $fname = $_->{'title'}; grep { basename($_) eq $fname} @realtests } @cases;
-        }
-        @tests = map {{'title' => $_}} grep {my $otest = basename($_); scalar(grep {basename($_->{'title'}) eq $otest} @tests) == 0} @realtests if $opts->{'no-match'}; #invert the list in this case.
-    }
-
-    @tests = map { abs_path($_->{'title'}) } @tests if $opts->{'match'} && $opts->{'names-only'};
-    @tests = map { $_->{'full_title'} = abs_path($_->{'title'}); $_ } @tests if $opts->{'match'} && !$opts->{'names-only'};
-    @tests = map { $_->{'title'} } @tests if !$opts->{'match'} && $opts->{'names-only'};
-
-    return @tests;
 }
 
 1;
