@@ -63,7 +63,7 @@ sub make_parser {
 
     #for Testability of plugin
     if ($ENV{'TESTRAIL_MOCKED'}) {
-        use Test::LWP::UserAgent::TestRailMock;
+        require Test::LWP::UserAgent::TestRailMock;
         $args->{'debug'} = 1;
         $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     }

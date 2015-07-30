@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use Carp qw{confess cluck};
+use Scalar::Util qw{blessed};
 
 use Types::Standard qw( slurpy ClassName Object Str Int Bool HashRef ArrayRef Maybe Optional);
 use Type::Params qw( compile );
@@ -54,16 +55,8 @@ If the test could not be locked, 0 is returned.
 sub pickAndLockTest {
     state $check = compile(HashRef, Optional[Maybe[Object]]);
     my ($opts, $tr) = $check->(@_);
+    confess("TestRail handle must be provided as argument 2") unless blessed($tr) eq 'TestRail::API';
 
-    if ($opts->{mock} && !$tr) {
-        require Test::LWP::UserAgent::TestRailMock; #LazyLoad
-        $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-        $opts->{debug} = 1;
-    }
-
-    $tr //= TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-    $tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
-    $tr->{'debug'} = 0;
 
     my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
 

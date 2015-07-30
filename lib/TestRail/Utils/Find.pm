@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 use Carp qw{confess cluck};
+use Scalar::Util qw{blessed};
 
 use File::Find;
 use Cwd qw{abs_path};
@@ -39,6 +40,8 @@ Returns ARRAYREF of run definition HASHREFs.
 
 sub findRuns {
     my ($opts,$tr) = @_;
+    confess("TestRail handle must be provided as argument 2") unless blessed($tr) eq 'TestRail::API';
+
     my ($status_ids);
 
     #Process statuses
@@ -131,14 +134,15 @@ Get the tests specified by the options passed.
 
 =back
 
-Returns ARRAYREF of tests.
+Returns ARRAYREF of tests, and the run in which they belong.
 
 =cut
 
 sub getTests {
     my ($opts,$tr) = @_;
+    confess("TestRail handle must be provided as argument 2") unless blessed($tr) eq 'TestRail::API';
 
-    my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
+    my (undef,undef,$run) = TestRail::Utils::getRunInformation($tr,$opts);
     my ($status_ids,$user_ids);
 
     #Process statuses
@@ -148,7 +152,7 @@ sub getTests {
     @$user_ids = $tr->userNamesToIds(@{$opts->{'users'}}) if $opts->{'users'};
 
     my $cases = $tr->getTests($run->{'id'},$status_ids,$user_ids);
-    return $cases;
+    return ($cases,$run);
 }
 
 =head2 findTests(opts,case1,...,caseN)
@@ -169,6 +173,8 @@ Given an ARRAY of tests, find tests meeting your criteria (or not) in the specif
 
 =item BOOL C<NAMES-ONLY> - Only return the names of the tests rather than the entire test objects.
 
+=item STRING C<EXTENSION> (optional) - Only return files ending with the provided text (e.g. .t, .test, .pl, .pm)
+
 =back
 
 =item ARRAY C<CASES> - Array of cases to translate to pathnames based on above options.
@@ -187,15 +193,16 @@ sub findTests {
     confess "Error! match and no-match options are mutually exclusive.\n" if ($opts->{'match'} && $opts->{'no-match'});
     my @tests = @cases;
     my (@realtests);
+    my $ext = $opts->{'extension'} // '';
 
     if ($opts->{'match'} || $opts->{'no-match'}) {
         my $dir = $opts->{'match'} ? $opts->{'match'} : $opts->{'no-match'};
         if (!$opts->{'no-recurse'}) {
-            File::Find::find( sub { push(@realtests,$File::Find::name) if -f }, $dir );
+            File::Find::find( sub { push(@realtests,$File::Find::name) if -f && m/\Q$ext\E$/ }, $dir );
             @tests = grep {my $real = $_->{'title'}; grep { $real eq basename($_) } @realtests} @cases; #XXX if you have dups in your tree, be-ware
         } else {
             #Handle special windows case -- glob doesn't prepend abspath
-            @realtests = glob("$dir/*");
+            @realtests = glob("$dir/*$ext");
             @tests = map {
                 $_->{'title'} = "$dir/".$_->{'title'} if( $^O eq 'MSWin32' );
                 $_

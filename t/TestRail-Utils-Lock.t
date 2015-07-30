@@ -28,10 +28,7 @@ my $opts = {
 my ($apiurl,$login,$pw) = ('http://hokum.bogus','bogus','bogus');
 
 my $tr = new TestRail::API($apiurl,$login,$pw,undef,1);
-
-#Mock if necesary
 $tr->{'debug'} = 0;
-
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep0();
 
 my $ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);

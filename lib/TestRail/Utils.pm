@@ -9,6 +9,8 @@ use warnings;
 use Carp qw{confess cluck};
 use Pod::Perldoc 3.10;
 
+use IO::Interactive::Tiny ();
+use Term::ANSIColor 2.01 qw(colorstrip);
 use Scalar::Util qw{blessed};
 
 =head1 SCRIPT HELPER FUNCTIONS
@@ -128,6 +130,46 @@ sub getFilenameFromTapLine {
 
     return $line if ($dotty =~ /^\.+$/ && !($line =~ /^ok|not ok/) && !($line =~ /^# /) && $line);
     return 0;
+}
+
+=head2 TAP2TestFiles(file)
+
+Returns ARRAY of TAP output for the various test files therein.
+file is optional, will read TAP from STDIN if not passed.
+
+=cut
+
+sub TAP2TestFiles {
+    my $file = shift;
+    my ($fh,$fcontents,@files);
+
+    if ($file) {
+        open($fh,'<',$file);
+        while (<$fh>) {
+            $_ = colorstrip($_); #strip prove brain damage
+
+            if (getFilenameFromTapLine($_)) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+            $fcontents .= $_;
+        }
+        close($fh);
+        push(@files,$fcontents) if $fcontents;
+    } else {
+        #Just read STDIN, print help if no file was passed
+        die "ERROR: no file passed, and no data piped in! See --help for usage.\n" if IO::Interactive::Tiny::is_interactive();
+        while (<>) {
+            $_ = colorstrip($_); #strip prove brain damage
+            if (getFilenameFromTapLine($_)) {
+                push(@files,$fcontents) if $fcontents;
+                $fcontents = '';
+            }
+            $fcontents .= $_;
+        }
+        push(@files,$fcontents) if $fcontents;
+    }
+    return @files;
 }
 
 =head2 getRunInformation

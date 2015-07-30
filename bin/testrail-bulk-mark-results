@@ -48,6 +48,8 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -c --config     : configuration name to filter plans in run.  Can be passed multiple times.
 
+-s --status     : only mark tests already marked as [status] in testrail.  Can be passed multiple times.
+
 -a --assignedto : only mark tests assigned to user. Can be passed multiple times.
 
 =back
@@ -61,8 +63,6 @@ All options specified thereby are overridden by passing the command-line switche
 =head1 MISCELLANEOUS OPTIONS:
 
 =over 4
-
---mock : don't do any real HTTP requests.
 
 --help : show this output
 
@@ -95,12 +95,13 @@ GetOptions(
     'apiurl=s'        => \$opts->{'apiurl'},
     'password=s'      => \$opts->{'password'},
     'user=s'          => \$opts->{'user'},
+    'assignedto=s@'   => \$opts->{'users'},
+    'status=s@'       => \$opts->{'statuses'},
     'j|project=s'     => \$opts->{'project'},
     'p|plan=s'        => \$opts->{'plan'},
     'r|run=s'         => \$opts->{'run'},
     'c|config=s@'     => \$opts->{'configs'},
     'a|assignedto=s@' => \$opts->{'users'},
-    'mock'            => \$opts->{'mock'},
     'e|encoding=s'    => \$opts->{'encoding'},
     'h|help'          => \$opts->{'help'}
 );
@@ -113,49 +114,12 @@ my $reason = $ARGV[1];
 die("No status to set provided.") unless $status;
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});
 
-if ($opts->{mock}) {
-    use Test::LWP::UserAgent::TestRailMock;
-    $opts->{browser} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts->{debug} = 1;
-}
-
 my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-$tr->{'browser'} = $opts->{'browser'} if $opts->{'browser'};
-$tr->{'debug'} = 0;
+$opts->{'set_status_to'} = $status;
+$opts->{'reason'} = $reason;
+my $results = TestRail::Utils::Results::bulkMarkResults($opts,$tr);
 
-my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
-
-my $user_ids;
-#Process assignedto ids
-if ($opts->{'users'}) {
-    eval { @$user_ids = $tr->userNamesToIds(@{$opts->{'users'}}); };
-    if ($@) {
-        print "$@\n";
-        exit 5;
-    }
-}
-
-my $cases = $tr->getTests($run->{'id'},undef,$user_ids);
-
-if (!$cases) {
-    print "No cases in TestRail to mark!\n";
-    exit 3;
-}
-
-my ($status_id) = $tr->statusNamesToIds($status);
-
-@$cases = map {
-    {
-        'test_id' => $_->{'id'},
-        'status_id' => $status_id,
-        'comment'   => $reason,
-        'version'   => $opts->{'version'}
-    }
-} @$cases;
-
-my $results = $tr->bulkAddResults($run->{'id'},$cases);
-
-print "Successfully set the status of ".scalar(@$results)." cases to $status.\n";
+print "Successfully set the status of ".scalar(@$results)." cases to $status.\n" if $results;
 
 exit 0;
 

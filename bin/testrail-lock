@@ -77,8 +77,6 @@ All options specified thereby are overridden by passing the command-line switche
 
 =over 4
 
---mock : don't do any real HTTP requests.  Used only by tests.
-
 --help : show this output
 
 =back
@@ -116,7 +114,6 @@ GetOptions(
     'no-match=s'      => \$opts->{'no-match'},
     'n|no-recurse'    => \$opts->{'no-recurse'},
     't|case-type=s@'  => \$opts->{'case-types'},
-    'mock'            => \$opts->{'mock'},
     'e|encoding=s'    => \$opts->{'encoding'},
     'h|help'          => \$opts->{'help'}
 );
@@ -126,7 +123,8 @@ $opts->{'hostname'} = hostname;
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run lockname});
 
-my $ret = TestRail::Utils::pickAndLockTest($opts);
+my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'});
+my $ret = TestRail::Utils::pickAndLockTest($opts,$tr);
 
 exit 255 if !$ret;
 

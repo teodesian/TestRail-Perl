@@ -4,7 +4,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 23;
+use Test::More 'tests' => 25;
 use Test::Fatal;
 
 use TestRail::API;
@@ -56,6 +56,13 @@ while (<$fh>) {
 close($fh);
 push(@files,$fcontents);
 is(scalar(@files),7,"Detects # of filenames correctly in TAP");
+
+#Test the actual TAP parsing
+@files = TestRail::Utils::TAP2TestFiles('t/test_multiple_files.tap');
+is(scalar(@files),2,"TAP correctly parsed into right number of bins");
+
+@files = TestRail::Utils::TAP2TestFiles('t/seq_multiple_files.tap');
+is(scalar(@files),7,"TAP correctly parsed into right number of bins");
 
 #Test getRunInformation
 my ($apiurl,$login,$pw) = ('http://testrail.local','teodesian@cpan.org','fake');
