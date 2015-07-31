@@ -120,7 +120,7 @@ TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});
 
 my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
 
-my ($cases) = TestRail::Utils::getTests($opts,$tr);
+my ($cases) = TestRail::Utils::Find::getTests($opts,$tr);
 die "No cases in TestRail!\n" unless $cases;
 
 $opts->{'names-only'} = 1;
