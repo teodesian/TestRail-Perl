@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 14;
+use Test::More 'tests' => 12;
 
 #check status filters
 my @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock});
@@ -32,14 +32,8 @@ is($? >> 8, 0, "Exit code OK looking for runs with passes, which should fail to 
 chomp $out;
 is($out,'',"Gets no runs correctly looking for passes");
 
-@args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "CRUSH ALL HUMANS" --mock --status passed});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK looking for runs with passes");
-chomp $out;
-like($out,qr/SEND T-1000 INFILTRATION UNITS BACK IN TIME$/,"Gets run correctly looking for passes");
-
 #TODO check configs for real next time
-@args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock --config testConfig});
+@args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --mock --config testConfig --config eee});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;

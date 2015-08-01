@@ -228,8 +228,8 @@ sub getHandle {
     if ($opts->{'mock'}) {
         use lib 't/lib'; #Unit tests will always run from the main dir during make test
         require Test::LWP::UserAgent::TestRailMock;
-        $opts->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-        $opts->{'debug'} = 0;
+        $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+        $tr->{'debug'} = 0;
     }
     return $tr;
 }

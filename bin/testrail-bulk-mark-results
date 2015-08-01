@@ -76,6 +76,7 @@ use utf8;
 
 use TestRail::API;
 use TestRail::Utils;
+use TestRail::Utils::Results;
 
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
