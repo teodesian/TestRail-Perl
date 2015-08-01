@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use Carp qw{confess cluck};
-use Pod::Perldoc 3.10;
+use Pod::Perldoc 3.20; #Make sure we have ToMan on some unices
 
 use IO::Interactive::Tiny ();
 use Term::ANSIColor 2.01 qw(colorstrip);
