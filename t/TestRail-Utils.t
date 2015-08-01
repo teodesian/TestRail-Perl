@@ -65,13 +65,13 @@ is(scalar(@files),2,"TAP correctly parsed into right number of bins");
 is(scalar(@files),7,"TAP correctly parsed into right number of bins");
 
 #Test getRunInformation
-my ($apiurl,$login,$pw) = ('http://testrail.local','teodesian@cpan.org','fake');
-my $debug = 1;
-my $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
-
-my $tr = TestRail::API->new($apiurl,$login,$pw,undef,1);
-$tr->{'browser'} = $browser;
-$tr->{'debug'} = 0;
+my $login_opts = {
+    'apiurl'   => 'http://testrail.local',
+    'user'     => 'teodesian@cpan.org',
+    'password' => 'fake',
+    'mock'     => 1
+};
+my $tr = TestRail::Utils::getHandle($login_opts);
 
 #Plan mode, no milestone
 my $opts = {
