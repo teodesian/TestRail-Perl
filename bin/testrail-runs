@@ -93,14 +93,15 @@ GetOptions(
     'e|encoding=s' => \$opts->{'encoding'},
     'l|lifo'       => \$opts->{'lifo'},
     'm|milesort'   => \$opts->{'milesort'},
-    'h|help'       => \$opts->{'help'}
+    'h|help'       => \$opts->{'help'},
+    'mock'         => \$opts->{'mock'}
 );
 
 if ($opts->{help}) { TestRail::Utils::help(); }
 
 TestRail::Utils::interrogateUser($opts,qw{apiurl user password project});
 
-my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
+my $tr = TestRail::Utils::getHandle($opts);
 
 my $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 

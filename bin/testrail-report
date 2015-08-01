@@ -131,7 +131,8 @@ GetOptions(
     'section=s@'     => \$opts{sections},
     'autoclose'      => \$opts{autoclose},
     'e|encoding=s'   => \$opts{encoding},
-    'help'           => \$opts{help}
+    'help'           => \$opts{help},
+    'mock'           => \$opts{mock}
 );
 
 if ($opts{help}) { TestRail::Utils::help(); }
@@ -153,6 +154,12 @@ my @files = TestRail::Utils::TAP2TestFiles($file);
 TestRail::Utils::interrogateUser(\%opts,qw{apiurl user password project run});
 
 $opts{result_options} = {'version' => $opts{version}} if $opts{version};
+
+if ($opts{'mock'}) {
+    require Test::LWP::UserAgent::TestRailMock;
+    $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts{'debug'} = 0;
+}
 
 my $tap;
 foreach my $phil (@files) {
@@ -177,7 +184,6 @@ foreach my $phil (@files) {
         'merge'          => 1
     });
     $tap->run();
-
 }
 
 print "Done.\n";

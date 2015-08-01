@@ -210,6 +210,30 @@ sub getRunInformation {
     return ($project, $plan, $run, $milestone);
 }
 
+=head2 getHandle(opts)
+
+Convenience method for binaries and testing.
+Returns a new TestRail::API when passed an options hash such as is built by most of the binaries,
+or returned by parseConfig.
+
+Has a special 'mock' hash key that can only be used by those testing this distribution.
+
+=cut
+
+sub getHandle {
+    my $opts = shift;
+
+    $opts->{'debug'} = 1 if ($opts->{'mock'});
+    my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
+    if ($opts->{'mock'}) {
+        use lib 't/lib'; #Unit tests will always run from the main dir during make test
+        require Test::LWP::UserAgent::TestRailMock;
+        $opts->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+        $opts->{'debug'} = 0;
+    }
+    return $tr;
+}
+
 1;
 
 __END__
