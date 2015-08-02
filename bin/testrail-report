@@ -31,7 +31,8 @@ GetOptions(
     'section=s@'     => \$opts{sections},
     'autoclose'      => \$opts{autoclose},
     'e|encoding=s'   => \$opts{encoding},
-    'help'           => \$opts{help}
+    'help'           => \$opts{help},
+    'mock'           => \$opts{mock}
 );
 
 if ( $opts{help} ) { TestRail::Utils::help(); }
@@ -64,6 +65,12 @@ TestRail::Utils::interrogateUser( \%opts,
 
 $opts{result_options} = { 'version' => $opts{version} } if $opts{version};
 
+if ( $opts{'mock'} ) {
+    require Test::LWP::UserAgent::TestRailMock;
+    $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    $opts{'debug'}   = 1;
+}
+
 my $tap;
 foreach my $phil (@files) {
     $tap = Test::Rail::Parser->new(
@@ -89,7 +96,6 @@ foreach my $phil (@files) {
         }
     );
     $tap->run();
-
 }
 
 print "Done.\n";
@@ -109,7 +115,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 SYNOPSIS
 

@@ -8,6 +8,7 @@ use utf8;
 
 use TestRail::API;
 use TestRail::Utils;
+use TestRail::Utils::Results;
 
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
@@ -35,7 +36,8 @@ GetOptions(
     'c|config=s@'     => \$opts->{'configs'},
     'a|assignedto=s@' => \$opts->{'users'},
     'e|encoding=s'    => \$opts->{'encoding'},
-    'h|help'          => \$opts->{'help'}
+    'h|help'          => \$opts->{'help'},
+    'mock'            => \$opts->{'mock'}
 );
 
 if ( $opts->{help} ) { TestRail::Utils::help(); }
@@ -46,10 +48,8 @@ my $reason = $ARGV[1];
 die("No status to set provided.") unless $status;
 TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project run} );
 
-my $tr = TestRail::API->new(
-    $opts->{apiurl},     $opts->{user}, $opts->{password},
-    $opts->{'encoding'}, $opts->{'debug'}
-);
+my $tr = TestRail::Utils::getHandle($opts);
+
 $opts->{'set_status_to'} = $status;
 $opts->{'reason'}        = $reason;
 my $results = TestRail::Utils::Results::bulkMarkResults( $opts, $tr );
@@ -71,7 +71,7 @@ testrail-bulk-mark-results - Bulk mark entire runs/plans (or groups of tests the
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 DESCRIPTION
 

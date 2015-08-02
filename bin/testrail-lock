@@ -34,7 +34,8 @@ GetOptions(
     'n|no-recurse'   => \$opts->{'no-recurse'},
     't|case-type=s@' => \$opts->{'case-types'},
     'e|encoding=s'   => \$opts->{'encoding'},
-    'h|help'         => \$opts->{'help'}
+    'h|help'         => \$opts->{'help'},
+    'mock'           => \$opts->{'mock'}
 );
 
 if ( $opts->{help} ) { TestRail::Utils::help(); }
@@ -43,8 +44,8 @@ $opts->{'hostname'} = hostname;
 TestRail::Utils::interrogateUser( $opts,
     qw{apiurl user password project run lockname} );
 
-my $tr = TestRail::API->new( $opts->{apiurl}, $opts->{user}, $opts->{password},
-    $opts->{'encoding'} );
+my $tr = TestRail::Utils::getHandle($opts);
+
 my $ret = TestRail::Utils::pickAndLockTest( $opts, $tr );
 
 exit 255 if !$ret;
@@ -62,7 +63,7 @@ testrail-lock - Lock a test in a TestRail, and return the test name if successfu
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 SYNOPSIS
 

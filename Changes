@@ -1,5 +1,12 @@
 Revision history for Perl module TestRail::API
 
+0.030 2015-07-31 TEODESIAN
+    - Fix testrail-tests, was calling function in incorrect namespace
+    - Fix testrail-bulk-mark-results, was not including library
+    - Re-instate integration tests for binaries that were removed in 0.029
+    - Require more up-to-date Pod::Perldoc for help that works on old unices/perls
+    - Fix windows issue with TestRail::Find
+
 0.029 2015-07-30 TEODESIAN
     - Add bulkAddResults function to TestRail::API
     - Add new script testrail-bulk-mark-results and it's backend TestRail::Utils::Results

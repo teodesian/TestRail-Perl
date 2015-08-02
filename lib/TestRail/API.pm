@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.029';
+$TestRail::API::VERSION = '0.030';
 
 use 5.010;
 
@@ -1208,7 +1208,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 SYNOPSIS
 
@@ -2325,11 +2325,21 @@ Thanks to cPanel Inc, for graciously funding the creation of this module.
 
 George S. Baugh <teodesian@cpan.org>
 
-=head1 CONTRIBUTOR
+=head1 CONTRIBUTORS
 
-=for stopwords Neil Bowers
+=for stopwords George Baugh Neil Bowers
+
+=over 4
+
+=item *
+
+George Baugh <george.baugh@cpanel.net>
+
+=item *
 
 Neil Bowers <neil@bowers.com>
+
+=back
 
 =head1 SOURCE
 

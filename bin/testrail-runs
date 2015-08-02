@@ -31,17 +31,15 @@ GetOptions(
     'e|encoding=s' => \$opts->{'encoding'},
     'l|lifo'       => \$opts->{'lifo'},
     'm|milesort'   => \$opts->{'milesort'},
-    'h|help'       => \$opts->{'help'}
+    'h|help'       => \$opts->{'help'},
+    'mock'         => \$opts->{'mock'}
 );
 
 if ( $opts->{help} ) { TestRail::Utils::help(); }
 
 TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project} );
 
-my $tr = TestRail::API->new(
-    $opts->{apiurl},     $opts->{user}, $opts->{password},
-    $opts->{'encoding'}, $opts->{'debug'}
-);
+my $tr = TestRail::Utils::getHandle($opts);
 
 my $runs = TestRail::Utils::Find::findRuns( $opts, $tr );
 
@@ -59,7 +57,7 @@ testrail-runs - List runs in a TestRail project matching the provided filters
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 SYNOPSIS
 

@@ -2,12 +2,12 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.029';
+$TestRail::Utils::VERSION = '0.030';
 use strict;
 use warnings;
 
 use Carp qw{confess cluck};
-use Pod::Perldoc 3.10;
+use Pod::Perldoc 3.20;    #Make sure we have ToMan on some unices
 
 use IO::Interactive::Tiny ();
 use Term::ANSIColor 2.01 qw(colorstrip);
@@ -165,6 +165,24 @@ sub getRunInformation {
     return ( $project, $plan, $run, $milestone );
 }
 
+sub getHandle {
+    my $opts = shift;
+
+    $opts->{'debug'} = 1 if ( $opts->{'mock'} );
+    my $tr = TestRail::API->new(
+        $opts->{apiurl},     $opts->{user}, $opts->{password},
+        $opts->{'encoding'}, $opts->{'debug'}
+    );
+    if ( $opts->{'mock'} ) {
+        use lib 't/lib'
+          ;    #Unit tests will always run from the main dir during make test
+        require Test::LWP::UserAgent::TestRailMock;
+        $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+        $tr->{'debug'}   = 0;
+    }
+    return $tr;
+}
+
 1;
 
 __END__
@@ -179,7 +197,7 @@ TestRail::Utils - Utilities for the testrail command line functions, and their m
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 SCRIPT HELPER FUNCTIONS
 
@@ -229,6 +247,14 @@ file is optional, will read TAP from STDIN if not passed.
 Return the relevant project definition, plan, run and milestone definition HASHREFs for the provided options.
 
 Dies in the event the project/plan/run could not be found.
+
+=head2 getHandle(opts)
+
+Convenience method for binaries and testing.
+Returns a new TestRail::API when passed an options hash such as is built by most of the binaries,
+or returned by parseConfig.
+
+Has a special 'mock' hash key that can only be used by those testing this distribution.
 
 =head1 SPECIAL THANKS
 

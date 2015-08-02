@@ -2,7 +2,7 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.029';
+$TestRail::Utils::Find::VERSION = '0.030';
 use strict;
 use warnings;
 
@@ -128,6 +128,7 @@ sub findTests {
     my $ext = $opts->{'extension'} // '';
 
     if ( $opts->{'match'} || $opts->{'no-match'} ) {
+        my @tmpArr = ();
         my $dir = $opts->{'match'} ? $opts->{'match'} : $opts->{'no-match'};
         if ( !$opts->{'no-recurse'} ) {
             File::Find::find(
@@ -137,35 +138,29 @@ sub findTests {
                 },
                 $dir
             );
-            @tests = grep {
-                my $real = $_->{'title'};
-                grep { $real eq basename($_) } @realtests
-            } @cases;    #XXX if you have dups in your tree, be-ware
         }
         else {
-            #Handle special windows case -- glob doesn't prepend abspath
             @realtests = glob("$dir/*$ext");
-            @tests     = map {
-                $_->{'title'} = "$dir/" . $_->{'title'}
-                  if ( $^O eq 'MSWin32' );
-                $_
-              } grep {
-                my $fname = $_->{'title'};
-                grep { basename($_) eq $fname } @realtests
-              } @cases;
         }
+        foreach my $case (@cases) {
+            foreach my $path (@realtests) {
+                next unless $case->{'title'} eq basename($path);
+                $case->{'path'} = $path;
+                push( @tmpArr, $case );
+                last;
+            }
+        }
+        @tests = @tmpArr;    #XXX if you have dups in your tree, be-ware
         @tests = map { { 'title' => $_ } } grep {
             my $otest = basename($_);
             scalar( grep { basename( $_->{'title'} ) eq $otest } @tests ) == 0
         } @realtests if $opts->{'no-match'};    #invert the list in this case.
     }
 
-    @tests = map { abs_path( $opts->{'match'} . '/' . $_->{'title'} ) } @tests
+    @tests = map { abs_path( $_->{'path'} ) } @tests
       if $opts->{'match'} && $opts->{'names-only'};
-    @tests = map {
-        $_->{'full_title'} = abs_path( $opts->{'match'} . '/' . $_->{'title'} );
-        $_
-    } @tests if $opts->{'match'} && !$opts->{'names-only'};
+    @tests = map { $_->{'full_title'} = abs_path( $_->{'path'} ); $_ } @tests
+      if $opts->{'match'} && !$opts->{'names-only'};
     @tests = map { $_->{'title'} } @tests
       if !$opts->{'match'} && $opts->{'names-only'};
 
@@ -186,7 +181,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 DESCRIPTION
 

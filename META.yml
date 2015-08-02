@@ -15,11 +15,10 @@ build_requires:
   Test::Fatal: 0
   Test::LWP::UserAgent: 0
   Test::More: 0
-  lib: 0
 configure_requires:
   ExtUtils::MakeMaker: 0
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 5.025, CPAN::Meta::Converter version 2.142690'
+generated_by: 'Dist::Zilla version 5.032, CPAN::Meta::Converter version 2.143240'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -28,28 +27,28 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.029
+    version: 0.030
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.029
+    version: 0.030
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.029
+    version: 0.030
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.029
+    version: 0.030
   TestRail::Utils:
     file: lib/TestRail/Utils.pm
-    version: 0.029
+    version: 0.030
   TestRail::Utils::Find:
     file: lib/TestRail/Utils/Find.pm
-    version: 0.029
+    version: 0.030
   TestRail::Utils::Lock:
     file: lib/TestRail/Utils/Lock.pm
-    version: 0.029
+    version: 0.030
   TestRail::Utils::Results:
     file: lib/TestRail/Utils/Results.pm
-    version: 0.029
+    version: 0.030
 requires:
   Carp: 0
   Clone: 0
@@ -66,7 +65,7 @@ requires:
   LWP::UserAgent: 0
   List::Util: 1.33
   POSIX: 0
-  Pod::Perldoc: 3.10
+  Pod::Perldoc: 3.20
   Scalar::Util: 0
   Sys::Hostname: 0
   TAP::Harness: 0
@@ -76,6 +75,7 @@ requires:
   Try::Tiny: 0
   Type::Params: 0
   Types::Standard: 0
+  lib: 0
   parent: 0
   perl: 5.010
   strict: 0
@@ -85,6 +85,7 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.029
+version: 0.030
 x_contributors:
+  - 'George Baugh <george.baugh@cpanel.net>'
   - 'Neil Bowers <neil@bowers.com>'

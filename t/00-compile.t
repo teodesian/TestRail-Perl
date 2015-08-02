@@ -2,7 +2,7 @@ use 5.006;
 use strict;
 use warnings;
 
-# this test was generated with Dist::Zilla::Plugin::Test::Compile 2.051
+# this test was generated with Dist::Zilla::Plugin::Test::Compile 2.053
 
 use Test::More;
 
@@ -49,6 +49,9 @@ for my $lib (@module_files)
     waitpid($pid, 0);
     is($?, 0, "$lib loaded ok");
 
+    shift @_warnings if @_warnings and $_warnings[0] =~ /^Using .*\bblib/
+        and not eval { blib->VERSION('1.01') };
+
     if (@_warnings)
     {
         warn @_warnings;
@@ -72,7 +75,10 @@ foreach my $file (@scripts)
     waitpid($pid, 0);
     is($?, 0, "$file compiled ok");
 
-   # in older perls, -c output is simply the file portion of the path being tested
+    shift @_warnings if @_warnings and $_warnings[0] =~ /^Using .*\bblib/
+        and not eval { blib->VERSION('1.01') };
+
+    # in older perls, -c output is simply the file portion of the path being tested
     if (@_warnings = grep { !/\bsyntax OK$/ }
         grep { chomp; $_ ne (File::Spec->splitpath($file))[2] } @_warnings)
     {

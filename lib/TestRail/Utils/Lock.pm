@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils::Lock
 
 package TestRail::Utils::Lock;
-$TestRail::Utils::Lock::VERSION = '0.029';
+$TestRail::Utils::Lock::VERSION = '0.030';
 use 5.010;
 
 use strict;
@@ -143,7 +143,7 @@ TestRail::Utils::Lock - Pick high priority cases for execution and lock them via
 
 =head1 VERSION
 
-version 0.029
+version 0.030
 
 =head1 DESCRIPTION
 
