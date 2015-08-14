@@ -921,7 +921,7 @@ sub deleteCase {
     return $result;
 }
 
-=head2 B<getCases (project_id,suite_id,section_id)>
+=head2 B<getCases (project_id,suite_id,filters)>
 
 Gets cases for provided section.
 
@@ -931,26 +931,45 @@ Gets cases for provided section.
 
 =item INTEGER C<SUITE ID> - ID of parent suite.
 
-=item INTEGER C<SECTION ID> - ID of parent section
+=item HASHREF C<FILTERS> (optional) - HASHREF describing parameters to filter cases by.
 
 =back
 
+See:
+
+    L<http://docs.gurock.com/testrail-api2/reference-cases#get_cases>
+
+for details as to the allowable filter keys.
+
+If the section ID is omitted, all cases for the suite will be returned.
 Returns ARRAYREF of test case definition HASHREFs.
 
-    $tr->getCases(1,2,3);
+    $tr->getCases(1,2, {'section_id' => 3} );
 
 =cut
 
 sub getCases {
-    state $check = compile(Object, Int, Int, Int);
-    my ($self,$project_id,$suite_id,$section_id) = $check->(@_);
+    state $check = compile(Object, Int, Int, Optional[Maybe[HashRef]]);
+    my ($self,$project_id,$suite_id,$filters) = $check->(@_);
 
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
-    $url .= "&section_id=$section_id" if $section_id;
+
+    my @valid_keys = qw{section_id created_after created_before created_by milestone_id priority_id type_id updated_after updated_before updated_by};
+
+    # Add in filters
+    foreach my $filter (keys(%$filters)) {
+        confess("Invalid filter key '$filter' passed") unless grep {$_ eq $filter} @valid_keys;
+        if (ref $filters->{$filter} eq 'ARRAY') {
+            $url .= "&$filter=".join(',',$filters->{$filter});
+        } else {
+            $url .= "&$filter=".$filters->{$filter} if defined($filters->{$filter});
+        }
+    }
+
     return $self->_doRequest($url);
 }
 
-=head2 B<getCaseByName (project_id,suite_id,section_id,name)>
+=head2 B<getCaseByName (project_id,suite_id,name,filters)>
 
 Gets case by name.
 
@@ -960,23 +979,23 @@ Gets case by name.
 
 =item INTEGER C<SUITE ID> - ID of parent suite.
 
-=item INTEGER C<SECTION ID> - ID of parent section.
+=item STRING C<NAME> - Name of desired test case.
 
-=item STRING <NAME> - Name of desired test case.
+=item HASHREF C<FILTERS> - Filter dictionary acceptable to getCases.
 
 =back
 
 Returns test case definition HASHREF.
 
-    $tr->getCaseByName(1,2,3,'nugs');
+    $tr->getCaseByName(1,2,'nugs', {'section_id' => 3});
 
 =cut
 
 sub getCaseByName {
-    state $check = compile(Object, Int, Int, Int, Str);
-    my ($self,$project_id,$suite_id,$section_id,$name) = $check->(@_);
+    state $check = compile(Object, Int, Int, Str, Optional[Maybe[HashRef]]);
+    my ($self,$project_id,$suite_id,$name,$filters) = $check->(@_);
 
-    my $cases = $self->getCases($project_id,$suite_id,$section_id);
+    my $cases = $self->getCases($project_id,$suite_id,$filters);
     return -500 if !$cases || (reftype($cases) || 'undef') ne 'ARRAY';
     foreach my $case (@$cases) {
         return $case if $case->{'title'} eq $name;

@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 75;
+use Test::More tests => 76;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -101,9 +101,17 @@ my $case_name = 'STROGGIFY POPULATION CENTERS';
 my $new_case = $tr->createCase($new_section->{'id'},$case_name);
 is($new_case->{'title'},$case_name,"Can create new test case");
 
-ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},$new_section->{'id'}),"Can get case listing");
-is($tr->getCaseByName($new_project->{'id'}, $new_suite->{'id'}, $new_section->{'id'}, $case_name)->{'title'},$case_name,"Can get case by name");
+my $case_filters = {
+    'section_id' => $new_section->{'id'}
+};
+
+ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters),"Can get case listing");
+is($tr->getCaseByName($new_project->{'id'}, $new_suite->{'id'},  $case_name, $case_filters)->{'title'},$case_name,"Can get case by name");
 is($tr->getCaseByID($new_case->{'id'})->{'id'},$new_case->{'id'},"Can get case by ID");
+
+#Negative case
+$case_filters->{'hokum'} = 'bogus';
+isnt(exception {$tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters)},undef,"Passing bogus filter croaks");
 
 #Test RUN methods
 my $run_name = 'SEND T-1000 INFILTRATION UNITS BACK IN TIME';

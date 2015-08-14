@@ -1,5 +1,9 @@
 Revision history for Perl module TestRail::API
 
+0.031 2015-08-14 TEODESIAN
+    - Update getCases to use testRail 4.0 filters, change filter args to HASHREF
+    - Update TestRail::API::getCaseByName to take filter hashref too
+
 0.030 2015-07-31 TEODESIAN
     - Fix testrail-tests, was calling function in incorrect namespace
     - Fix testrail-bulk-mark-results, was not including library

@@ -231,7 +231,7 @@ sub new {
             confess("Sections passed to spawn must be ARRAYREF") unless (reftype($tropts->{'sections'}) || 'undef') eq 'ARRAY';
             @{$tropts->{'sections'}} = $tr->sectionNamesToIds($tropts->{'project_id'},$tropts->{'spawn'},@{$tropts->{'sections'}});
             foreach my $section (@{$tropts->{'sections'}}) {
-                my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'spawn'},$section);
+                my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'spawn'},{ 'section_id' => $section });
                 push(@$cases,@$section_cases) if (reftype($section_cases) || 'undef') eq 'ARRAY';
             }
         }

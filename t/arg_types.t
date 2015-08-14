@@ -149,11 +149,11 @@ is(exception {$tr->createCase(1,'whee')}, undef,'createCase with 2 args returns 
 is(exception {$tr->getChildRunByName({},'whee')},undef,'getChildRunByName returns no error when 2 arguments passed');
 is(exception {$tr->translateConfigNamesToIds(1,[1,2,3])}, undef,'translateConfigNamesToIds returns no error when 2 arguments passed');
 is(exception {$tr->bulkAddResults(1,[])}, undef,'bulkAddResults returns no error when 2 arguments passed');
+is(exception {$tr->getCases(1,2)}, undef,'getCases with 2 args returns error');
 
 isnt(exception {$tr->createRun(1,1)}, undef,'createRun with 2 args returns error');
 isnt(exception {$tr->createSection(1,1)}, undef,'createSection with 2 args returns error');
 isnt(exception {$tr->getCaseByName(1,1)}, undef,'getCaseByName with 2 args returns error');
-isnt(exception {$tr->getCases(1,2)}, undef,'getCases with 2 args returns error');
 isnt(exception {$tr->getSectionByName(1,1)}, undef,'getSectionByName with 2 args returns error');
 isnt(exception {$tr->sectionNamesToIds(1,1) },undef,'sectionNamesToIds returns error when 2 arguments are passed');
 isnt( exception {$tr->createRunInPlan(1,1) },undef,'createRunInPlan returns error when 2 arguments passed');
@@ -161,11 +161,10 @@ isnt( exception {$tr->createRunInPlan(1,1) },undef,'createRunInPlan returns erro
 #3 arg functions
 is(exception {$tr->createRun(1,1,'whee')}, undef,'createRun with 3 args returns no error');
 is(exception {$tr->createSection(1,1,'whee')}, undef,'createSection with 3 args returns no error');
-is(exception {$tr->getCases(1,2,3)}, undef,'getCases with 3 args returns no error');
+is(exception {$tr->getCases(1,2,{})}, undef,'getCases with 3 args returns no error');
 is(exception {$tr->getSectionByName(1,1,'zip')}, undef,'getSectionByName with 3 args returns no error');
-is( exception {$tr->createRunInPlan(1,1,'nugs') },undef,'createRunInPlan with 3 args returns no error');
-
-isnt(exception {$tr->getCaseByName(1,1,1)}, undef,'getCaseByName with 3 args returns error');
+is(exception {$tr->createRunInPlan(1,1,'nugs') },undef,'createRunInPlan with 3 args returns no error');
+is(exception {$tr->getCaseByName(1,1,'whee')}, undef,'getCaseByName with 3 args returns no error');
 
 #4 arg functions
-is(exception {$tr->getCaseByName(1,1,1,'hug')}, undef,'getCaseByName with 4 args returns no error');
+is(exception {$tr->getCaseByName(1,1,'hug', {})}, undef,'getCaseByName with 4 args returns no error');
