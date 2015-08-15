@@ -25,8 +25,8 @@ is(scalar(@$runs),4,"getChildRuns with multi-configs in the same group returns c
 
 my $summary = $tr->getPlanSummary($plan->{'id'});
 is($summary->{'plan'},1094,"Plan ID makes it through in summary method");
-is($summary->{'totals'}->{'untested'},4,"Gets total number of tests correctly");
-is($summary->{'percentages'}->{'untested'},'100.00%',"Gets total percentages correctly");
+is($summary->{'totals'}->{'Untested'},4,"Gets total number of tests correctly");
+is($summary->{'percentages'}->{'Untested'},'100.00%',"Gets total percentages correctly");
 
 #Also have to mock anything requiring test result fields (all are custom)
 my $projResType = $tr->getTestResultFieldByName('step_results');

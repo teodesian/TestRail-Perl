@@ -1268,6 +1268,7 @@ sub getRunSummary {
     my %shash;
     #XXX so, they do these tricks with the status names, see...so map the counts to their relevant status ids.
     @shash{map { ( $_->{'id'} < 6 ) ? $_->{'name'}."_count" : "custom_status".($_->{'id'} - 5)."_count" } @$statuses } = map { $_->{'id'} } @$statuses;
+
     my @sname;
     #Create listing of keys/values
     @$runs = map {
@@ -1276,7 +1277,7 @@ sub getRunSummary {
         foreach my $status (keys(%{$run->{'statuses'}})) {
             next if !exists($shash{$status});
             @sname = grep {exists($shash{$status}) && $_->{'id'} == $shash{$status}} @$statuses;
-            $run->{'statuses_clean'}->{$sname[0]->{'name'}} = $run->{$status};
+            $run->{'statuses_clean'}->{$sname[0]->{'label'}} = $run->{$status};
         }
         $run;
     } @$runs;
@@ -1990,8 +1991,36 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 =cut
 
 sub statusNamesToIds {
-    state $check = compile(Object, slurpy ArrayRef[Str]);
-    my ($self,$names) = $check->(@_);
+    my ($self,@names) = @_;
+    return _statusNamesToX($self,'id',@names);
+};
+
+=head2 statusNamesToLabels(names)
+
+Convenience method to translate a list of statuses to TestRail status labels (the 'nice' form of status names).
+This is useful when interacting with getRunSummary or getPlanSummary, which uses these labels as hash keys.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of status labels in the same order as the status names passed.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
+
+=cut
+
+sub statusNamesToLabels {
+    my ($self,@names) = @_;
+    return _statusNamesToX($self,'label',@names);
+};
+
+#Reduce code duplication
+sub _statusNamesToX {
+    state $check = compile(Object, Str, slurpy ArrayRef[Str]);
+    my ($self,$key,$names) = $check->(@_);
     confess("No status names passed!") unless scalar(@$names);
 
     my $statuses = $self->getPossibleTestStatuses();
@@ -1999,7 +2028,7 @@ sub statusNamesToIds {
     foreach my $name (@$names) {
         foreach my $status (@$statuses) {
             if ($status->{'name'} eq $name) {
-                push @ret, $status->{'id'};
+                push @ret, $status->{$key};
                 last;
             }
         }

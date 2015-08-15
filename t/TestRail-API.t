@@ -199,8 +199,8 @@ is(scalar(@$filteredTests),0,"Test Filtering works: status id undef, user id neg
 my $runs = $tr->getRuns($new_project->{'id'});
 my ($summary) = $tr->getRunSummary(@$runs); #I only care about the first one
 isnt($summary->{'run_status'},undef,"Can get run statuses correctly");
-is($summary->{'run_status'}->{'passed'},int(!$is_mock),"Gets # of passed cases correctly");
-is($summary->{'run_status'}->{'untested'},int($is_mock),"Gets # of untested cases correctly");
+is($summary->{'run_status'}->{'Passed'},int(!$is_mock),"Gets # of passed cases correctly");
+is($summary->{'run_status'}->{'Untested'},int($is_mock),"Gets # of untested cases correctly");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});

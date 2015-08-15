@@ -557,14 +557,14 @@ sub _test_closure {
     if ($is_plan) {
         my $plan_summary = $self->{'tr_opts'}->{'testrail'}->getPlanSummary($id);
 
-        return if ( $plan_summary->{'totals'}->{'untested'} + $plan_summary->{'totals'}->{'retest'} );
+        return if ( $plan_summary->{'totals'}->{'Untested'} + $plan_summary->{'totals'}->{'Retest'} );
         print "# No more outstanding cases detected.  Closing Plan.\n";
         $self->{'plan_closed'} = 1;
         return $self->{'tr_opts'}->{'testrail'}->closePlan($id);
     }
 
     my ($run_summary) = $self->{'tr_opts'}->{'testrail'}->getRunSummary($id);
-    return if ( $run_summary->{'run_status'}->{'untested'} + $run_summary->{'run_status'}->{'retest'} );
+    return if ( $run_summary->{'run_status'}->{'Untested'} + $run_summary->{'run_status'}->{'Retest'} );
     print "# No more outstanding cases detected.  Closing Run.\n";
     $self->{'run_closed'} = 1;
     return $self->{'tr_opts'}->{'testrail'}->closeRun($self->{'tr_opts'}->{'run_id'});
