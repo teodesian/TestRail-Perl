@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 76;
+use Test::More tests => 78;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -170,9 +170,13 @@ ok($statusTypes,"Can get possible test statuses");
 
 my @status_names = map {$_->{'name'}} @$statusTypes;
 my @status_ids = map {$_->{'id'}} @$statusTypes;
+my @status_labels = map {$_->{'label'}} @$statusTypes;
 my @computed_ids = $tr->statusNamesToIds(@status_names);
+my @computed_labels = $tr->statusNamesToLabels(@status_names);
 cmp_deeply(\@computed_ids,\@status_ids,"statusNamesToIds functions correctly");
-isnt(exception {$tr->statusNamesToIds(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception");
+cmp_deeply(\@computed_labels,\@status_labels,"statusNamesToLabels functions correctly");
+isnt(exception {$tr->statusNamesToIds(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception in statusNamesToIds");
+isnt(exception {$tr->statusNamesToLabels(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception in statusNamesToLabels");
 
 #TODO make more thorough tests for options, custom options
 my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'},"REAPER FORCES INBOUND");
