@@ -5,6 +5,8 @@ Revision history for Perl module TestRail::API
     - Update TestRail::API::getCaseByName to take filter hashref too
     - Update getRunSummary and getPlanSummary to use 'labels' rather than system names
     - Add TestRail::API::statusNamesToLabels to ease interaction with above method updates
+    - Change TestRail::API::translateConfigNamesToIds to accept ARRAY arguments
+    - make above function and TestRail::API::sectionNamesToIds return values in correct order
 
 0.030 2015-07-31 TEODESIAN
     - Fix testrail-tests, was calling function in incorrect namespace

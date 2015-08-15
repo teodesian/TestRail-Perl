@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use TestRail::API;
-use Test::More 'tests' => 144;
+use Test::More 'tests' => 143;
 use Test::Fatal;
 use Class::Inspector;
 use Test::LWP::UserAgent;
@@ -147,7 +147,6 @@ is(exception {$tr->getTestByName(1,'poo')}, undef,'getTestByName with 2 args ret
 is(exception {$tr->getTestSuiteByName(1,'zap')}, undef,'getTestSuiteByName with 2 args returns no error');
 is(exception {$tr->createCase(1,'whee')}, undef,'createCase with 2 args returns no error');
 is(exception {$tr->getChildRunByName({},'whee')},undef,'getChildRunByName returns no error when 2 arguments passed');
-is(exception {$tr->translateConfigNamesToIds(1,[1,2,3])}, undef,'translateConfigNamesToIds returns no error when 2 arguments passed');
 is(exception {$tr->bulkAddResults(1,[])}, undef,'bulkAddResults returns no error when 2 arguments passed');
 is(exception {$tr->getCases(1,2)}, undef,'getCases with 2 args returns error');
 

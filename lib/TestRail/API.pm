@@ -767,16 +767,9 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 =cut
 
 sub sectionNamesToIds {
-    state $check = compile(Object, Int, Int, slurpy ArrayRef[Str]);
-    my ($self,$project_id,$suite_id,$names) = $check->(@_);
-
-    confess("At least one section name must be provided") if !scalar(@$names);
-
-    my $sections = $self->getSections($project_id,$suite_id);
-    confess("Invalid project/suite ($project_id,$suite_id) provided.") unless (reftype($sections) || 'undef') eq 'ARRAY';
-    my @ret = grep {defined $_} map {my $section = $_; my @list = grep {$section->{'name'} eq $_} @$names; scalar(@list) ? $section->{'id'} : undef} @$sections;
-    confess("One or more user names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
-    return @ret;
+    my ($self,$project_id,$suite_id,@names) = @_;
+    my $sections = $self->getSections($project_id,$suite_id) or confess("Could not find sections in provided project/suite.");
+    return _X_in_my_Y($self,$sections,'id',@names);
 }
 
 =head1 CASE METHODS
@@ -1992,7 +1985,7 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 
 sub statusNamesToIds {
     my ($self,@names) = @_;
-    return _statusNamesToX($self,'id',@names);
+    return _X_in_my_Y($self,$self->getPossibleTestStatuses(),'id',@names);
 };
 
 =head2 statusNamesToLabels(names)
@@ -2014,28 +2007,28 @@ Throws an exception in the case of one (or more) of the names not corresponding 
 
 sub statusNamesToLabels {
     my ($self,@names) = @_;
-    return _statusNamesToX($self,'label',@names);
+    return _X_in_my_Y($self,$self->getPossibleTestStatuses(),'label',@names);
 };
 
-#Reduce code duplication
-sub _statusNamesToX {
-    state $check = compile(Object, Str, slurpy ArrayRef[Str]);
-    my ($self,$key,$names) = $check->(@_);
-    confess("No status names passed!") unless scalar(@$names);
+# Reduce code duplication with internal methods?
+# It's more likely than you think
+# Free PC check @ cpan.org
+sub _X_in_my_Y {
+    state $check = compile(Object, ArrayRef, Str, slurpy ArrayRef[Str]);
+    my ($self,$search_arr,$key,$names) = $check->(@_);
 
-    my $statuses = $self->getPossibleTestStatuses();
     my @ret;
     foreach my $name (@$names) {
-        foreach my $status (@$statuses) {
-            if ($status->{'name'} eq $name) {
-                push @ret, $status->{$key};
+        foreach my $member (@$search_arr) {
+            if ($member->{'name'} eq $name) {
+                push @ret, $member->{$key};
                 last;
             }
         }
     }
-    confess("One or more status names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
+    confess("One or more names provided does not exist in TestRail.") unless scalar(@$names) == scalar(@ret);
     return @ret;
-};
+}
 
 =head2 B<createTestResults(test_id,status_id,comment,options,custom_options)>
 
@@ -2226,23 +2219,18 @@ Transforms a list of configuration names into a list of config IDs.
 
 =item INTEGER C<PROJECT_ID> - Relevant project ID for configs.
 
-=item ARRAYREF C<CONFIGS> - Array ref of config names
+=item ARRAY C<CONFIGS> - Array of config names
 
 =back
 
-Returns ARRAYREF of configuration names, with undef values for unknown configuration names.
+Returns ARRAY of configuration names, with undef values for unknown configuration names.
 
 =cut
 
 sub translateConfigNamesToIds {
-    state $check = compile(Object, Int, ArrayRef[Str]);
-    my ($self,$project_id,$configs) = $check->(@_);
-
-    return [] if !scalar(@$configs);
-    my $existing_configs = $self->getConfigurations($project_id);
-    return map {undef} @$configs if (reftype($existing_configs) || 'undef') ne 'ARRAY';
-    my @ret = map {my $name = $_; my @candidates = grep { $name eq $_->{'name'} } @$existing_configs; scalar(@candidates) ? $candidates[0]->{'id'} : undef } @$configs;
-    return \@ret;
+    my ($self,$project_id,@names) = @_;
+    my $configs = $self->getConfigurations($project_id) or confess("Could not determine configurations in provided project.");
+    return _X_in_my_Y($self,$configs,'id',@names);
 }
 
 =head1 STATIC METHODS

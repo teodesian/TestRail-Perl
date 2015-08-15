@@ -214,10 +214,8 @@ if ($is_arr) {
     @config_names = map {$_->{'name'}} @$configs;
     @config_ids = map {$_->{'id'}} @$configs;
 }
-my $t_config_ids = $tr->translateConfigNamesToIds($new_project->{'id'},\@config_names);
-@config_ids = sort(@config_ids);
-@$t_config_ids = sort(@$t_config_ids);
-is_deeply(\@config_ids,$t_config_ids, "Can correctly translate Project names to IDs");
+my @t_config_ids = $tr->translateConfigNamesToIds($new_project->{'id'},@config_names);
+is_deeply(\@config_ids,\@t_config_ids, "Can correctly translate Project names to IDs, and they are correctly sorted");
 
 ############################################################
 # TestRail arbitrarily limits many calls to 250 result sets.

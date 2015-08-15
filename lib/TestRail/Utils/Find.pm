@@ -42,18 +42,18 @@ sub findRuns {
     my ($opts,$tr) = @_;
     confess("TestRail handle must be provided as argument 2") unless blessed($tr) eq 'TestRail::API';
 
-    my ($status_ids);
+    my ($status_labels);
 
     #Process statuses
     if ($opts->{'statuses'}) {
-        @$status_ids = $tr->statusNamesToIds(@{$opts->{'statuses'}});
+        @$status_labels = $tr->statusNamesToLabels(@{$opts->{'statuses'}});
     }
 
     my $project = $tr->getProjectByName($opts->{'project'});
     confess("No such project '$opts->{project}'.\n") if !$project;
 
     my $pconfigs = [];
-    $pconfigs = $tr->translateConfigNamesToIds($project->{'id'},$opts->{configs}) if $opts->{'configs'};
+    @$pconfigs = $tr->translateConfigNamesToIds($project->{'id'},@{$opts->{configs}}) if $opts->{'configs'};
 
     my ($runs,$plans,$planRuns,$cruns,$found) = ([],[],[],[],0);
     $runs = $tr->getRuns($project->{'id'}) if (!$opts->{'configs'}); # If configs are passed, global runs are not in consideration.
@@ -81,7 +81,7 @@ sub findRuns {
     if ($opts->{'statuses'}) {
         @$runs =  $tr->getRunSummary(@$runs);
         @$runs = grep { defined($_->{'run_status'}) } @$runs; #Filter stuff with no results
-        foreach my $status (@{$opts->{'statuses'}}) {
+        foreach my $status (@$status_labels) {
             @$runs = grep { $_->{'run_status'}->{$status} } @$runs; #If it's positive, keep it.  Otherwise forget it.
         }
     }

@@ -188,7 +188,7 @@ sub new {
     my ($run,$plan,$config_ids);
 
     #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
-    $config_ids = $tr->translateConfigNamesToIds($tropts->{'project_id'},$tropts->{'configs'});
+    @$config_ids = $tr->translateConfigNamesToIds($tropts->{'project_id'},@{$tropts->{'configs'}});
     confess("Could not retrieve list of valid configurations for your project.") unless (reftype($config_ids) || 'undef') eq 'ARRAY';
     my @bogus_configs = grep {!defined($_)} @$config_ids;
     my $num_bogus = scalar(@bogus_configs);
