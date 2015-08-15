@@ -51,7 +51,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<debug> - BOOLEAN: Print a bunch of extra messages
 
-=item B<browser> - OBJECT: Something like an LWP::UserAgent.  Useful for mocking with L<Test::LWP::UserAgent::TestRailMock>.
+=item B<browser> - OBJECT: Something like an LWP::UserAgent.  Useful for mocking.
 
 =item B<run> - STRING (semi-optional): name of desired run. Required if run_id not passed.
 

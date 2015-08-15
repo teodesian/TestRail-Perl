@@ -216,7 +216,7 @@ Convenience method for binaries and testing.
 Returns a new TestRail::API when passed an options hash such as is built by most of the binaries,
 or returned by parseConfig.
 
-Has a special 'mock' hash key that can only be used by those testing this distribution.
+Has a special 'mock' hash key that can only be used by those testing this distribution during 'make test'.
 
 =cut
 
@@ -227,7 +227,7 @@ sub getHandle {
     my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
     if ($opts->{'mock'}) {
         use lib 't/lib'; #Unit tests will always run from the main dir during make test
-        require Test::LWP::UserAgent::TestRailMock;
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm'; ## no critic
         $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
         $tr->{'debug'} = 0;
     }
