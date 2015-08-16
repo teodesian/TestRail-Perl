@@ -297,7 +297,7 @@ $res = exception {
         'plan'                => 'mah dubz plan',
         'configs'             => ['testPlatform1'],
         'project'             => 'TestProject',
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'merge'               => 1
     });
 };
@@ -322,7 +322,7 @@ $res = exception {
         'browser'             => $browser,
         'run'                 => 'TestingSuite2',
         'project'             => 'TestProject',
-        'spawn'               => 9,
+        'testsuite'           => 'HAMBURGER-IZE HUMANITY',
         'merge'               => 1
     });
 };
@@ -347,7 +347,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'plan'                => 'BogoPlan',
         'project'             => 'TestProject',
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'merge'               => 1
     });
 };
@@ -372,7 +372,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'plan'                => 'BogoPlan',
         'project'             => 'TestProject',
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'merge'               => 1,
         'case_per_ok'         => 1,
         'step_results'        => 'sr_step_results'
@@ -393,7 +393,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'sections'            => ['fake.test'],
         'case_per_ok'         => 1
     });
@@ -420,7 +420,7 @@ $res = exception {
         'plan'                => 'BogoPlan',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'sections'            => ['fake.test'],
         'case_per_ok'         => 1
     });
@@ -445,7 +445,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'sections'            => ['potzrebie'],
         'case_per_ok'         => 1
     });
@@ -464,7 +464,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
     });
 };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -488,7 +488,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
     });
 };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -512,7 +512,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'project'             => 'TestProject',
         'merge'               => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
     });
 };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -538,7 +538,7 @@ $res = exception {
         'project'             => 'TestProject',
         'merge'               => 1,
         'autoclose'           => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
     });
 };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -564,7 +564,7 @@ $res = exception {
         'project'             => 'TestProject',
         'merge'               => 1,
         'autoclose'           => 1,
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
     });
 };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -617,7 +617,7 @@ $res = exception {
         'run'                 => 'BogoRun',
         'plan'                => 'BogoPlan',
         'project'             => 'TestProject',
-        'spawn'               => 9,
+        'testsuite_id'        => 9,
         'merge'               => 1,
         'autoclose'           => 1,
         'case_per_ok'         => 1

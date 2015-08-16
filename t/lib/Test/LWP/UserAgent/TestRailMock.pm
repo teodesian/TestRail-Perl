@@ -229,6 +229,34 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 }
 
+#OK, this one is pretty bogus, but ehhhh
+{
+
+$VAR1 = 'index.php?/api/v2/get_suites/10';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '256',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":9,"name":"HAMBURGER-IZE HUMANITY","description":"Robo-Signed Patriotic People\'s TestSuite","project_id":9,"is_master":false,"is_baseline":false,"is_completed":false,"completed_on":null,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/suites\\/view\\/9"}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
 {
 
 $VAR1 = 'index.php?/api/v2/get_suite/9';

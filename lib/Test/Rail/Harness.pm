@@ -55,7 +55,8 @@ sub make_parser {
     $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
-    $args->{'spawn'}          = $ENV{'TESTRAIL_SPAWN'};
+    $args->{'testsuite_id'}   = $ENV{'TESTRAIL_SPAWN'};
+    $args->{'testsuite'}      = $ENV{'TESTRAIL_TESTSUITE'};
 
     @sections = split(/:/,$ENV{'TESTRAIL_SECTIONS'}) if $ENV{'TESTRAIL_SECTIONS'};
     $args->{'sections'}  = \@sections if scalar(@sections);

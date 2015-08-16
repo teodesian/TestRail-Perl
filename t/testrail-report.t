@@ -30,18 +30,18 @@ $matches = () = $out =~ m/Reporting result of case.*OK/ig;
 is($matches,2,"Attempts to to plans work");
 
 #Test that spawn works
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --spawn 9 --case-ok --mock t/test_subtest.tap});
+@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --testsuite_id 9 --case-ok --mock t/test_subtest.tap});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK reported with spawn");
 $matches = () = $out =~ m/Reporting result of case.*OK/ig;
-is($matches,2,"Attempts to spawn work");
+is($matches,2,"Attempts to spawn work: testsuite_id");
 
 #Test that spawn works w/sections
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --spawn 9 --case-ok --section "CARBON LIQUEFACTION" --mock t/test_subtest.tap});
+@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --testsuite "HAMBURGER-IZE HUMANITY" --case-ok --section "CARBON LIQUEFACTION" --mock t/test_subtest.tap});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK reported with spawn");
 $matches = () = $out =~ m/with specified sections/ig;
-is($matches,1,"Attempts to spawn work");
+is($matches,1,"Attempts to spawn work: testsuite name");
 
 #Test that the autoclose option works
 @args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "FinalRun" --plan "FinalPlan" --config "testConfig" --case-ok --autoclose --mock t/fake.tap});

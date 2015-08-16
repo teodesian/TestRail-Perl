@@ -73,7 +73,9 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<custom_options> - HASHREF (optional): Custom options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.  step_results will be set here, if the option is passed.
 
-=item B<spawn> - INTEGER (optional): Attempt to create a run based on the provided testsuite identified by the ID passed here.  If plan/configs is passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard the provided testsuite ID.  If the plan does not exist, create it too.
+=item B<testsuite> - STRING (optional): Attempt to create a run based on the testsuite identified by the name passed here.  If plan/configs are passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard this option.  If the containing plan does not exist, create it too.  Mutually exclusive with 'testsuite_id'.
+
+=item B<testsuite_id> - INTEGER (optional): Attempt to create a run based on the testsuite identified by the ID passed here.  If plan/configs are passed, create it as a child of said plan with the listed configs.  If the run exists, use it and disregard this option.  If the plan does not exist, create it too.  Mutually exclusive with 'testsuite'.
 
 =item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
@@ -131,7 +133,8 @@ sub new {
         'case_per_ok'  => delete $opts->{'case_per_ok'},
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
-        'spawn'        => delete $opts->{'spawn'},
+        'testsuite_id' => delete $opts->{'testsuite_id'},
+        'testsuite'    => delete $opts->{'testsuite'},
         'encoding'     => delete $opts->{'encoding'},
         'sections'     => delete $opts->{'sections'},
         'autoclose'    => delete $opts->{'autoclose'},
@@ -183,6 +186,14 @@ sub new {
     $tropts->{'todo_pass'} = $todop[0];
     $tropts->{'retest'}    = $retest[0];
 
+    confess "testsuite and testsuite_id are mutually exclusive" if ( $tropts->{'testsuite_id'} && $tropts->{'testsuite'});
+    #Grab testsuite by name if needed
+    if ($tropts->{'testsuite'}) {
+        my $ts = $tr->getTestSuiteByName($tropts->{'project_id'},$tropts->{'testsuite'});
+        confess("No such testsuite '".$tropts->{'testsuite'}."' found!") unless $ts;
+        $tropts->{'testsuite_id'} = $ts->{'id'};
+    }
+
     #Grab run
     my $run_id = $tropts->{'run_id'};
     my ($run,$plan,$config_ids);
@@ -207,8 +218,8 @@ sub new {
                 }
             } else {
                 #Try to make it if spawn is passed
-                $tropts->{'plan'} = $tr->createPlan($tropts->{'project_id'},$tropts->{'plan'},"Test plan created by TestRail::API");
-                confess("Could not find plan ".$tropts->{'plan'}." in provided project, and spawning failed!") if !$tropts->{'plan'};
+                $tropts->{'plan'} = $tr->createPlan($tropts->{'project_id'},$tropts->{'plan'},"Test plan created by TestRail::API") if $tropts->{'testsuite_id'};
+                confess("Could not find plan ".$tropts->{'plan'}." in provided project, and spawning failed (or was not indicated)!") if !$tropts->{'plan'};
             }
         } else {
             $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
@@ -222,16 +233,16 @@ sub new {
     }
 
     #If spawn was passed and we don't have a Run ID yet, go ahead and make it
-    if ($tropts->{'spawn'} && !$tropts->{'run_id'}) {
+    if ($tropts->{'testsuite_id'} && !$tropts->{'run_id'}) {
         print "# Spawning run\n";
         my $cases = [];
         if ($tropts->{'sections'}) {
             print "# with specified sections\n";
             #Then translate the sections into an array of case IDs.
             confess("Sections passed to spawn must be ARRAYREF") unless (reftype($tropts->{'sections'}) || 'undef') eq 'ARRAY';
-            @{$tropts->{'sections'}} = $tr->sectionNamesToIds($tropts->{'project_id'},$tropts->{'spawn'},@{$tropts->{'sections'}});
+            @{$tropts->{'sections'}} = $tr->sectionNamesToIds($tropts->{'project_id'},$tropts->{'testsuite_id'},@{$tropts->{'sections'}});
             foreach my $section (@{$tropts->{'sections'}}) {
-                my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'spawn'},{ 'section_id' => $section });
+                my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'testsuite_id'},{ 'section_id' => $section });
                 push(@$cases,@$section_cases) if (reftype($section_cases) || 'undef') eq 'ARRAY';
             }
         }
@@ -244,14 +255,14 @@ sub new {
 
         if ($tropts->{'plan'}) {
             print "# inside of plan\n";
-            $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'}, $tropts->{'spawn'}, $tropts->{'run'}, undef, $config_ids, $cases );
+            $plan = $tr->createRunInPlan( $tropts->{'plan'}->{'id'}, $tropts->{'testsuite_id'}, $tropts->{'run'}, undef, $config_ids, $cases );
             $run = $plan->{'runs'}->[0] if exists($plan->{'runs'}) && (reftype($plan->{'runs'}) || 'undef') eq 'ARRAY' && scalar(@{$plan->{'runs'}});
             if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
                 $tropts->{'run'} = $run;
                 $tropts->{'run_id'} = $run->{'id'};
             }
         } else {
-            $run = $tr->createRun( $tropts->{'project_id'}, $tropts->{'spawn'}, $tropts->{'run'}, "Automatically created Run from TestRail::API", undef, undef, $cases );
+            $run = $tr->createRun( $tropts->{'project_id'}, $tropts->{'testsuite_id'}, $tropts->{'run'}, "Automatically created Run from TestRail::API", undef, undef, $cases );
             if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
                 $tropts->{'run'} = $run;
                 $tropts->{'run_id'} = $run->{'id'};

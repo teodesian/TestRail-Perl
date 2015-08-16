@@ -95,7 +95,8 @@ sub load {
     $ENV{'TESTRAIL_VERSION'}   = $params->{version};
     $ENV{'TESTRAIL_CASEOK'}    = $params->{case_per_ok};
     $ENV{'TESTRAIL_STEPS'}     = $params->{step_results};
-    $ENV{'TESTRAIL_SPAWN'}     = $params->{spawn};
+    $ENV{'TESTRAIL_SPAWN'}     = $params->{testsuite_id};
+    $ENV{'TESTRAIL_TESTSUITE'} = $params->{testsuite};
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
