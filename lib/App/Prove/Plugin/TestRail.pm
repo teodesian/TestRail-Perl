@@ -36,7 +36,8 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     case_per_ok=0
     step_results=sr_sys_name
     lockname=internal_lock_name
-    spawn=123
+    testsuite_id=123
+    testsuite=blahblah #don't do this it's mutually exclusive with testuite_id
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
     encoding=UTF-8
