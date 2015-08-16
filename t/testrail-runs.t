@@ -8,21 +8,21 @@ my @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test
 my $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
-like($out,qr/^OtherOtherSuite\nTestingSuite\nFinalRun\nlockRun$/,"Gets run correctly looking for passes");
+like($out,qr/^OtherOtherSuite\nTestingSuite\nFinalRun\nlockRun\nClosedRun$/,"Gets run correctly looking for passes");
 
 #check LIFO sort
 @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --lifo --mock});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
-like($out,qr/^lockRun\nTestingSuite\nFinalRun\nOtherOtherSuite$/,"LIFO sort works");
+like($out,qr/^lockRun\nClosedRun\nTestingSuite\nFinalRun\nOtherOtherSuite$/,"LIFO sort works");
 
 #check milesort
 @args = ($^X,qw{bin/testrail-runs --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j "TestProject" --milesort --mock});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK looking for runs with passes");
 chomp $out;
-like($out,qr/^TestingSuite\nFinalRun\nlockRun\nOtherOtherSuite$/,"milesort works");
+like($out,qr/^TestingSuite\nFinalRun\nlockRun\nClosedRun\nOtherOtherSuite$/,"milesort works");
 
 
 #check status filters

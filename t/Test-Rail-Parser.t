@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 78;
+use Test::More 'tests' => 83;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -31,7 +31,6 @@ if ($is_mock) {
 #TODO
 
 #case_per_ok mode
-
 my $fcontents = "
 fake.test ..
 1..2
@@ -40,20 +39,21 @@ ok 1 - STORAGE TANKS SEARED
 not ok 2 - NOT SO SEARED AFTER ARR
 ";
 my $tap;
-my $res = exception {
-    $tap = Test::Rail::Parser->new({
-        'tap'                 => $fcontents,
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'case_per_ok'         => 1
-    });
+
+my $opts = {
+    'tap'                 => $fcontents,
+    'apiurl'              => $apiurl,
+    'user'                => $login,
+    'pass'                => $pw,
+    'debug'               => $debug,
+    'browser'             => $browser,
+    'run'                 => 'TestingSuite',
+    'project'             => 'TestProject',
+    'merge'               => 1,
+    'case_per_ok'         => 1
 };
+
+my $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -63,20 +63,9 @@ if (!$res) {
 }
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'case_per_ok'         => 1
-    });
-};
+delete $opts->{'tap'};
+$opts->{'source'} = 't/fake.test';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -111,20 +100,12 @@ is(Test::Rail::Parser::_compute_elapsed(0,86461),'24h 1m 1s',"Elapsed computatio
 
 #Time for non case_per_ok mode
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/faker.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'OtherOtherSuite',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'step_results'        => 'step_results'
-    });
-};
+$opts->{'source'} = 't/faker.test';
+$opts->{'run'} = 'OtherOtherSuite';
+delete $opts->{'case_per_ok'};
+$opts->{'step_results'} = 'step_results';
+
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -136,19 +117,8 @@ if (!$res) {
 
 #Default mode
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/faker.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'OtherOtherSuite',
-        'project'             => 'TestProject',
-        'merge'               => 1
-    });
-};
+delete $opts->{'step_results'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -169,21 +139,12 @@ ok 1 - STORAGE TANKS SEARED
 #goo
 not ok 2 - NOT SO SEARED AFTER ARR
 ";
-
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'tap'         => $fcontents,
-        'apiurl'      => $apiurl,
-        'user'        => $login,
-        'pass'        => $pw,
-        'debug'       => $debug,
-        'browser'     => $browser,
-        'run'         => 'TestingSuite',
-        'project'     => 'TestProject',
-        'case_per_ok' => 1,
-        'merge'       => 1
-    });
-};
+$opts->{'tap'} = $fcontents;
+delete $opts->{'source'};
+delete $opts->{'step_results'};
+$opts->{'run'} = 'TestingSuite';
+$opts->{'case_per_ok'} = 1;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -194,20 +155,9 @@ if (!$res) {
 
 #skip/todo in case_per_ok
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skip.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite',
-        'project'             => 'TestProject',
-        'case_per_ok'         => 1,
-        'merge'               => 1
-    });
-};
+delete $opts->{'tap'};
+$opts->{'source'} = 't/skip.test';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -218,19 +168,9 @@ if (!$res) {
 
 #Default mode skip (skip_all)
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite',
-        'project'             => 'TestProject',
-        'merge'               => 1
-    });
-};
+$opts->{'source'} = 't/skipall.test';
+delete $opts->{'case_per_ok'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -242,39 +182,16 @@ if (!$res) {
 
 #Ok, let's test the plan, config, and spawn bits.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'hoo hoo I do not exist',
-        'plan'                => 'mah dubz plan',
-        'configs'             => ['testPlatform1'],
-        'project'             => 'TestProject',
-        'merge'               => 1
-    });
-};
+$opts->{'run'} = 'hoo hoo I do not exist';
+$opts->{'plan'} = 'mah dubz plan';
+$opts->{'configs'} = ['testPlatform1'];
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 isnt($res,undef,"TR Parser explodes on instantiation when asking for run not in plan");
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite',
-        'plan'                => 'mah dubz plan',
-        'configs'             => ['testConfig'],
-        'project'             => 'TestProject',
-        'merge'               => 1
-    });
-};
+$opts->{'run'} = 'TestingSuite';
+$opts->{'configs'} = ['testConfig'];
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation looking for existing run in plan");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -285,22 +202,10 @@ if (!$res) {
 
 #Now, test spawning.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite2',
-        'plan'                => 'mah dubz plan',
-        'configs'             => ['testPlatform1'],
-        'project'             => 'TestProject',
-        'testsuite_id'        => 9,
-        'merge'               => 1
-    });
-};
+$opts->{'run'} = 'TestingSuite2';
+$opts->{'configs'} = ['testPlatform1'];
+$opts->{'testsuite_id'} = 9;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation when spawning run in plan");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -312,20 +217,11 @@ if (!$res) {
 #Test spawning of builds not in plans.
 #Now, test spawning.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'TestingSuite2',
-        'project'             => 'TestProject',
-        'testsuite'           => 'HAMBURGER-IZE HUMANITY',
-        'merge'               => 1
-    });
-};
+delete $opts->{'testsuite_id'};
+delete $opts->{'plan'};
+delete $opts->{'configs'};
+$opts->{'testsuite'} = 'HAMBURGER-IZE HUMANITY';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation when spawning run in plan");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -336,21 +232,11 @@ if (!$res) {
 
 #Test spawning of plans and runs.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'plan'                => 'BogoPlan',
-        'project'             => 'TestProject',
-        'testsuite_id'        => 9,
-        'merge'               => 1
-    });
-};
+$opts->{'run'} = 'BogoRun';
+$opts->{'plan'} = 'BogoPlan';
+$opts->{'testsuite_id'} = 9;
+delete $opts->{'testsuite'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation when spawning run in plan");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -361,43 +247,18 @@ if (!$res) {
 
 #Verify that case_per_ok and step_results are mutually exclusive, and die.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skipall.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'plan'                => 'BogoPlan',
-        'project'             => 'TestProject',
-        'testsuite_id'        => 9,
-        'merge'               => 1,
-        'case_per_ok'         => 1,
-        'step_results'        => 'sr_step_results'
-    });
-};
+$opts->{'case_per_ok'} = 1;
+$opts->{'step_results'} = 'sr_step_results';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 isnt($res,undef,"TR Parser explodes on instantiation when mutually exclusive options are passed");
 
 #Check that per-section spawn works
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-        'sections'            => ['fake.test'],
-        'case_per_ok'         => 1
-    });
-};
+$opts->{'source'} = 't/fake.test';
+delete $opts->{'plan'};
+$opts->{'sections'} = ['fake.test'];
+delete $opts->{'step_results'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -408,23 +269,8 @@ if (!$res) {
 
 #Check that per-section spawn works
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'plan'                => 'BogoPlan',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-        'sections'            => ['fake.test'],
-        'case_per_ok'         => 1
-    });
-};
+$opts->{'plan'} = 'BogoPlan';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -434,39 +280,16 @@ if (!$res) {
 }
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-        'sections'            => ['potzrebie'],
-        'case_per_ok'         => 1
-    });
-};
+$opts->{'sections'} = ['potzrebie'];
+delete $opts->{'plan'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 isnt($res,undef,"TR Parser explodes on instantiation with invalid section");
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/notests.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-    });
-};
+$opts->{'source'} = 't/notests.test';
+delete $opts->{'sections'};
+delete $opts->{'case_per_ok'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -477,20 +300,8 @@ if (!$res) {
 }
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/pass.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-    });
-};
+$opts->{'source'} = 't/pass.test';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -501,20 +312,8 @@ if (!$res) {
 }
 
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/todo_pass.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'testsuite_id'        => 9,
-    });
-};
+$opts->{'source'} = 't/todo_pass.test';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -526,21 +325,10 @@ if (!$res) {
 
 #Check autoclose functionality against Run with all tests in run status.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/skip.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'FinalRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'autoclose'           => 1,
-        'testsuite_id'        => 9,
-    });
-};
+$opts->{'source'} = 't/skip.test';
+$opts->{'run'} = 'FinalRun';
+$opts->{'autoclose'} = 1;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -552,21 +340,9 @@ if (!$res) {
 
 #Check autoclose functionality against Run with not all tests in run status.
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/todo_pass.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'project'             => 'TestProject',
-        'merge'               => 1,
-        'autoclose'           => 1,
-        'testsuite_id'        => 9,
-    });
-};
+$opts->{'source'} = 't/todo_pass.test';
+$opts->{'run'} = 'BogoRun';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -578,23 +354,12 @@ if (!$res) {
 
 #Check that autoclose works against plan wiht all tests in run status
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'FinalRun',
-        'plan'                => 'FinalPlan',
-        'project'             => 'TestProject',
-        'configs'             => ['testConfig'],
-        'merge'               => 1,
-        'autoclose'           => 1,
-        'case_per_ok'         => 1
-    });
-};
+$opts->{'source'} = 't/fake.test';
+$opts->{'run'} = 'FinalRun';
+$opts->{'plan'} = 'FinalPlan';
+$opts->{'configs'} = ['testConfig'];
+$opts->{'case_per_ok'} = 1;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -604,25 +369,11 @@ if (!$res) {
     is($tap->{'plan_closed'},1, "Plan closed by parser when all tests done");
 }
 
-#Check that autoclose works against plan wiht all tests not in run status
+#Check that autoclose works against plan with all tests not in run status
 undef $tap;
-$res = exception {
-    $tap = Test::Rail::Parser->new({
-        'source'              => 't/fake.test',
-        'apiurl'              => $apiurl,
-        'user'                => $login,
-        'pass'                => $pw,
-        'debug'               => $debug,
-        'browser'             => $browser,
-        'run'                 => 'BogoRun',
-        'plan'                => 'BogoPlan',
-        'project'             => 'TestProject',
-        'testsuite_id'        => 9,
-        'merge'               => 1,
-        'autoclose'           => 1,
-        'case_per_ok'         => 1
-    });
-};
+$opts->{'run'} = 'BogoRun';
+$opts->{'plan'} = 'BogoPlan';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
@@ -631,4 +382,39 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'plan_closed'},undef, "Plan not closed by parser when results are outstanding");
 }
+
+#Plan but no run 'splodes
+undef $tap;
+$opts->{'plan'} = 'CompletePlan';
+delete $opts->{'run'};
+delete $opts->{'configs'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+like($res,qr/but no run passed/i,"TR Parser explodes on instantiation due to passing plan with no run");
+
+#Check that trying without spawn opts, using completed plan fails
+undef $tap;
+$opts->{'plan'} = 'ClosedPlan';
+$opts->{'run'} = 'BogoRun';
+delete $opts->{'testsuite_id'};
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+like($res,qr/plan provided is completed/i,"TR Parser explodes on instantiation due to passing closed plan");
+
+#Check that the above two will just spawn a new plan in these cases
+$opts->{'testsuite_id'} = 9;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser runs all the way through on completed run when spawning");
+
+#Check that trying without spawn opts, using completed run fails
+undef $tap;
+delete $opts->{'testsuite_id'};
+delete $opts->{'plan'};
+$opts->{'run'} = 'ClosedRun';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+like($res,qr/run provided is completed/i,"TR Parser explodes on instantiation due to passing closed run");
+
+#Check that the above two will just spawn a new run in these cases
+$opts->{'testsuite_id'} = 9;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser runs all the way through on completed run when spawning");
+
 

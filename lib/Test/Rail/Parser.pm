@@ -10,6 +10,7 @@ use utf8;
 use parent qw/TAP::Parser/;
 use Carp qw{cluck confess};
 use POSIX qw{floor};
+use Clone qw{clone};
 
 use TestRail::API;
 use TestRail::Utils;
@@ -53,11 +54,9 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<browser> - OBJECT: Something like an LWP::UserAgent.  Useful for mocking.
 
-=item B<run> - STRING (semi-optional): name of desired run. Required if run_id not passed.
+=item B<run> - STRING: name of desired run.
 
-=item B<run_id> - INTEGER (semi-optional): ID of desired run. Required if run not passed.
-
-=item B<plan> - STRING (semi-optional): Name of test plan to use, if your run provided is a child of said plan.  Only relevant when run_id not passed.
+=item B<plan> - STRING (semi-optional): Name of test plan to use, if your run provided is a child of said plan.
 
 =item B<configs> - ARRAYREF (optional): Configurations to filter runs in plan by.  Runs can have the same name, yet with differing configurations in a plan; this handles that odd case.
 
@@ -110,6 +109,7 @@ Step results will always be whatever status is relevant to the particular step.
 sub new {
     my ($class,$opts) = @_;
     our $self;
+    $opts = clone $opts; #Convenience, if we are passing over and over again...
 
     #Load our callbacks
     $opts->{'callbacks'} = {
@@ -126,7 +126,6 @@ sub new {
         'debug'        => delete $opts->{'debug'},
         'browser'      => delete $opts->{'browser'},
         'run'          => delete $opts->{'run'},
-        'run_id'       => delete $opts->{'run_id'},
         'project'      => delete $opts->{'project'},
         'project_id'   => delete $opts->{'project_id'},
         'step_results' => delete $opts->{'step_results'},
@@ -143,6 +142,7 @@ sub new {
         'result_custom_options' => delete $opts->{'result_custom_options'}
     };
 
+    confess("plan passed, but no run passed!") if !$tropts->{'run'} && $tropts->{'plan'};
     confess("case_per_ok and step_results options are mutually exclusive") if ($tropts->{'case_per_ok'} && $tropts->{'step_results'});
 
     #Allow natural confessing from constructor
@@ -195,7 +195,6 @@ sub new {
     }
 
     #Grab run
-    my $run_id = $tropts->{'run_id'};
     my ($run,$plan,$config_ids);
 
     #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
@@ -205,31 +204,30 @@ sub new {
     my $num_bogus = scalar(@bogus_configs);
     confess("Detected $num_bogus bad config names passed.  Check available configurations for your project.") if $num_bogus;
 
-    if ($tropts->{'run'}) {
-        if ($tropts->{'plan'}) {
-            #Attempt to find run, filtered by configurations
-            $plan = $tr->getPlanByName($tropts->{'project_id'},$tropts->{'plan'});
-            if ($plan) {
-                $tropts->{'plan'} = $plan;
-                $run = $tr->getChildRunByName($plan,$tropts->{'run'},$tropts->{'configs'}); #Find plan filtered by configs
-                if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
-                    $tropts->{'run'} = $run;
-                    $tropts->{'run_id'} = $run->{'id'};
-                }
-            } else {
-                #Try to make it if spawn is passed
-                $tropts->{'plan'} = $tr->createPlan($tropts->{'project_id'},$tropts->{'plan'},"Test plan created by TestRail::API") if $tropts->{'testsuite_id'};
-                confess("Could not find plan ".$tropts->{'plan'}." in provided project, and spawning failed (or was not indicated)!") if !$tropts->{'plan'};
-            }
-        } else {
-            $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
+    if ($tropts->{'plan'}) {
+        #Attempt to find run, filtered by configurations
+        $plan = $tr->getPlanByName($tropts->{'project_id'},$tropts->{'plan'});
+        confess("Test plan provided is completed, and spawning was not indicated") if (ref $plan eq 'HASH') && $plan->{'is_completed'} && (!$tropts->{'testsuite_id'});
+        if ($plan && !$plan->{'is_completed'}) {
+            $tropts->{'plan'} = $plan;
+            $run = $tr->getChildRunByName($plan,$tropts->{'run'},$tropts->{'configs'}); #Find plan filtered by configs
+
             if (defined($run) && (reftype($run) || 'undef') eq 'HASH') {
                 $tropts->{'run'} = $run;
                 $tropts->{'run_id'} = $run->{'id'};
             }
+        } else {
+            #Try to make it if spawn is passed
+            $tropts->{'plan'} = $tr->createPlan($tropts->{'project_id'},$tropts->{'plan'},"Test plan created by TestRail::API") if $tropts->{'testsuite_id'};
+            confess("Could not find plan ".$tropts->{'plan'}." in provided project, and spawning failed (or was not indicated)!") if !$tropts->{'plan'};
         }
     } else {
-        $tropts->{'run'} = $tr->getRunByID($run_id);
+        $run = $tr->getRunByName($tropts->{'project_id'},$tropts->{'run'});
+        confess("Test run provided is completed, and spawning was not indicated") if (ref $run eq 'HASH') && $run->{'is_completed'} && (!$tropts->{'testsuite_id'});
+        if (defined($run) && (reftype($run) || 'undef') eq 'HASH' && !$run->{'is_completed'}) {
+            $tropts->{'run'} = $run;
+            $tropts->{'run_id'} = $run->{'id'};
+        }
     }
 
     #If spawn was passed and we don't have a Run ID yet, go ahead and make it

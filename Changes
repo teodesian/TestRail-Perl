@@ -9,6 +9,8 @@ Revision history for Perl module TestRail::API
     - Make above function and TestRail::API::sectionNamesToIds return values in correct order
     - Change the 'spawn' option in Test::Rail::Parser (and it's callers) to be --testsuite_id
     - Add a --testsuite (name) option to Test::Rail::Parser
+    - Spawning runs will now take run/plan completion status into account, spawning new runs/plans when completion is detected.
+    - Removed the run_id option from Test::Rail::Parser and it's callers.  It isn't really useful in practice, and was not tested.
 
 0.030 2015-07-31 TEODESIAN
     - Fix testrail-tests, was calling function in incorrect namespace
