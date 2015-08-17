@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 78;
+use Test::More tests => 80;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -62,6 +62,11 @@ isnt(exception {$tr->userNamesToIds(@user_names,'potzrebie'); }, undef, "Passing
 #Test CASE TYPE method
 my $caseTypes = $tr->getCaseTypes();
 is(ref($caseTypes),'ARRAY',"getCaseTypes returns ARRAY of case types");
+my @type_names = map {$_->{'name'}} @$caseTypes;
+my @type_ids = map {$_->{'id'}} @$caseTypes;
+is($tr->getCaseTypeByName($type_names[0])->{'id'},$type_ids[0],"Can get case type by name correctly");
+my @computed_type_ids = $tr->typeNamesToIds(@type_names);
+cmp_deeply(\@computed_type_ids,\@type_ids,"typeNamesToIds returns the correct type IDs in the correct order");
 
 #Test PROJECT methods
 my $project_name = 'CRUSH ALL HUMANS';

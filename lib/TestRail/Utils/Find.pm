@@ -165,9 +165,11 @@ Given an ARRAY of tests, find tests meeting your criteria (or not) in the specif
 
 =over 4
 
-=item STRING C<MATCH> - Only return tests which exist in the path provided.  Mutually exclusive with no-match.
+=item STRING C<MATCH> - Only return tests which exist in the path provided, and in TestRail.  Mutually exclusive with no-match, orphans.
 
-=item STRING C<NO-MATCH> - Only return tests which aren't in the path provided (orphan tests).  Mutually exclusive with match.
+=item STRING C<NO-MATCH> - Only return tests which are in the path provided, but not in TestRail.  Mutually exclusive with match, orphans.
+
+=item STRING C<ORPHANS> - Only return tests which are in TestRail, and not in the path provided.  Mutually exclusive with match, no-match
 
 =item BOOL C<NO-RECURSE> - Do not do a recursive scan for files.
 
@@ -191,13 +193,15 @@ sub findTests {
     my ($opts,@cases) = @_;
 
     confess "Error! match and no-match options are mutually exclusive.\n" if ($opts->{'match'} && $opts->{'no-match'});
+    confess "Error! match and orphans options are mutually exclusive.\n" if ($opts->{'match'} && $opts->{'orphans'});
+    confess "Error! no-match and orphans options are mutually exclusive.\n" if ($opts->{'orphans'} && $opts->{'no-match'});
     my @tests = @cases;
     my (@realtests);
     my $ext = $opts->{'extension'} // '';
 
-    if ($opts->{'match'} || $opts->{'no-match'}) {
+    if ($opts->{'match'} || $opts->{'no-match'} || $opts->{'orphans'}) {
         my @tmpArr = ();
-        my $dir = $opts->{'match'} ? $opts->{'match'} : $opts->{'no-match'};
+        my $dir = ($opts->{'match'} || $opts->{'orphans'}) ? ($opts->{'match'} || $opts->{'orphans'}) : $opts->{'no-match'};
         if (!$opts->{'no-recurse'}) {
             File::Find::find( sub { push(@realtests,$File::Find::name) if -f && m/\Q$ext\E$/ }, $dir );
         } else {
@@ -211,7 +215,8 @@ sub findTests {
                 last;
             }
         }
-        @tests = @tmpArr; #XXX if you have dups in your tree, be-ware
+        @tmpArr = grep {my $otest = $_; !(grep {$otest->{'title'} eq $_->{'title'}} @tmpArr) } @tests if $opts->{'orphans'};
+        @tests = @tmpArr;
         @tests = map {{'title' => $_}} grep {my $otest = basename($_); scalar(grep {basename($_->{'title'}) eq $otest} @tests) == 0} @realtests if $opts->{'no-match'}; #invert the list in this case.
     }
 
@@ -224,16 +229,71 @@ sub findTests {
 
 =head2 getCases
 
-Get cases in a 
+Get cases in a testsuite matching your parameters passed
 
 =cut
 
 sub getCases {
+    my ($opts,$tr) = @_;
+    confess("First argument must be instance of TestRail::API") unless blessed($tr) eq 'TestRail::API';
 
+    my $project = $tr->getProjectByName($opts->{'project'});
+    confess "No such project '$opts->{project}'.\n" if !$project;
+
+    my $suite = $tr->getTestSuiteByName($project->{'id'},$opts->{'testsuite'});
+    confess "No such testsuite '$opts->{testsuite}'.\n" if !$suite;
+    $opts->{'testsuite_id'} = $suite->{'id'};
+
+    my $section;
+    $section = $tr->getSectionByName($project->{'id'},$suite->{'id'},$opts->{'section'}) if $opts->{'section'};
+    confess "No such section '$opts->{section}.\n" if $opts->{'section'} && !$section;
+
+    my $section_id;
+    $section_id = $section->{'id'} if ref $section eq "HASH";
+
+    my $type_ids;
+    @$type_ids = $tr->typeNamesToIds(@{$opts->{'types'}}) if ref $opts->{'types'} eq 'ARRAY';
+    #Above will confess if anything's the matter
+
+    #TODO Translate opts into filters
+    my $filters = {
+        'section_id' => $section_id,
+        'type_id'    => $type_ids
+    };
+
+    return $tr->getCases($project->{'id'},$suite->{'id'},$filters);
 }
 
 sub findCases {
+    my ($opts,@cases) = @_;
 
+    my $ret = {'testsuite_id' => $opts->{'testsuite_id'}};
+    if (!$opts->{'no-missing'}) {
+        my $mopts = {
+            'no-match'   => $opts->{'directory'},
+            'names-only' => 1,
+            'extension'  => $opts->{'extension'}
+        };
+        my @missing = findTests($mopts,@cases);
+        $ret->{'missing'} = \@missing;
+    }
+    if ($opts->{'orphans'}) {
+        my $oopts = {
+            'orphans'    => $opts->{'directory'},
+            'extension'  => $opts->{'extension'}
+        };
+        my @orphans = findTests($oopts,@cases);
+        $ret->{'orphans'} = \@orphans;
+    }
+    if ($opts->{'update'}) {
+        my $uopts = {
+            'match'     => $opts->{'directory'},
+            'extension' => $opts->{'extension'}
+        };
+        my @updates = findTests($uopts,@cases);
+        $ret->{'update'} = \@updates;
+    }
+    return $ret;
 }
 
 =head2 synchronize($instructions,$tr)
@@ -243,9 +303,9 @@ Add, update and remove cases from a testsuite based on the provided instructions
 Expects hash to have the following keys:
 
     testuite_id => int
-    missing => array of tests to add
-    update  => array of tests to update
-    orphans => array of tests to remove
+    missing => array of tests to add to TestRail
+    update  => array of tests to update in TestRail
+    orphans => array of tests to remove from TestRail
 
 Second argument is a testRail handle.
 

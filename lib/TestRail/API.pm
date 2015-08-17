@@ -825,6 +825,28 @@ sub getCaseTypeByName {
     confess("No such case type '$name'!");
 }
 
+=head2 typeNamesToIds(names)
+
+Convenience method to translate a list of case type names to TestRail case type IDs.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of type IDs in the same order as the type names passed.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid case type.
+
+=cut
+
+sub typeNamesToIds {
+    my ($self,@names) = @_;
+    return _X_in_my_Y($self,$self->getCaseTypes(),'id',@names);
+};
+
+
 =head2 B<createCase(section_id,title,type_id,options,extra_options)>
 
 Creates a test case.
@@ -949,10 +971,12 @@ sub getCases {
 
     my @valid_keys = qw{section_id created_after created_before created_by milestone_id priority_id type_id updated_after updated_before updated_by};
 
+
     # Add in filters
     foreach my $filter (keys(%$filters)) {
         confess("Invalid filter key '$filter' passed") unless grep {$_ eq $filter} @valid_keys;
         if (ref $filters->{$filter} eq 'ARRAY') {
+            confess "$filter cannot be an ARRAYREF" if grep {$_ eq $filter} qw{created_after created_before updated_after updated_before};
             $url .= "&$filter=".join(',',$filters->{$filter});
         } else {
             $url .= "&$filter=".$filters->{$filter} if defined($filters->{$filter});

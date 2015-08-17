@@ -67,7 +67,9 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 =over 4
 
---type      : Filter cases to make syncing judgements against by type.
+--type      : Filter cases to make syncing judgements against type(s).  May be passed multiple times.
+
+--section   : Filter cases to make syncing judgements against a specific section.
 
 --extension : only list files ending in the provided string (e.g. .pl, .pm, .t, .test)
 
@@ -118,11 +120,12 @@ GetOptions(
     't|testsuite=s'   => \$opts->{'testsuite'},
     'd|directory=s'   => \$opts->{'directory'},
     'a|no-add'        => \$opts->{'no-missing'},
-    'u|update'        => \$opts->{'no-updated'},
-    'p|prune-orphans' => \$opts->{'no-orphans'},
+    'u|update'        => \$opts->{'update'},
+    'p|prune-orphans' => \$opts->{'orphans'},
     'n|no-recurse'    => \$opts->{'no-recurse'},
     'e|encoding=s'    => \$opts->{'encoding'},
-    'type=s'          => \$opts->{'type'},
+    'section=s'       => \$opts->{'section'},
+    'type=s@'         => \$opts->{'types'},
     'extension=s'     => \$opts->{'extension'},
     'h|help'          => \$opts->{'help'},
     'test'            => \$opts->{'test'},
@@ -135,10 +138,9 @@ TestRail::Utils::interrogateUser($opts,qw{apiurl user password project testsuite
 
 my $tr = TestRail::Utils::getHandle($opts);
 
-my ($cases) = TestRail::Utils::Find::getCases($opts,$tr);
+my $cases = TestRail::Utils::Find::getCases($opts,$tr);
 die "No cases in TestRail!\n" unless $cases;
 
-$opts->{'names-only'} = 1;
 my $tests = TestRail::Utils::Find::findCases($opts,@$cases);
 
 use Data::Dumper;
