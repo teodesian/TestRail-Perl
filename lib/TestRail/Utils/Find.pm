@@ -202,6 +202,7 @@ sub findTests {
     if ($opts->{'match'} || $opts->{'no-match'} || $opts->{'orphans'}) {
         my @tmpArr = ();
         my $dir = ($opts->{'match'} || $opts->{'orphans'}) ? ($opts->{'match'} || $opts->{'orphans'}) : $opts->{'no-match'};
+        confess "No such directory '$dir'" if ! -d $dir;
         if (!$opts->{'no-recurse'}) {
             File::Find::find( sub { push(@realtests,$File::Find::name) if -f && m/\Q$ext\E$/ }, $dir );
         } else {
