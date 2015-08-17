@@ -222,6 +222,39 @@ sub findTests {
     return @tests;
 }
 
+=head2 getCases
+
+Get cases in a 
+
+=cut
+
+sub getCases {
+
+}
+
+sub findCases {
+
+}
+
+=head2 synchronize($instructions,$tr)
+
+Add, update and remove cases from a testsuite based on the provided instructions hash.
+
+Expects hash to have the following keys:
+
+    testuite_id => int
+    missing => array of tests to add
+    update  => array of tests to update
+    orphans => array of tests to remove
+
+Second argument is a testRail handle.
+
+=cut
+
+sub synchronize {
+    my ($instructions,$tr) = @_;
+}
+
 1;
 
 __END__

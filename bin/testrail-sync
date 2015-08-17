@@ -1,0 +1,161 @@
+#!/usr/bin/env perl
+# ABSTRACT: sync a testsuite against an existing automated test repository.
+# PODNAME: testrail-sync
+
+=head1 SYNOPSIS
+
+  testrail-sync [OPTIONS]
+
+=head1 DESCRIPTION
+
+testrail-sync - sync a testsuite against an existing automated test repository.
+A good way to keep your 'automated' type tests up to date with what is actually available to run.
+
+It is recommended that you use testsuite 'baselines' with this tool;
+if you make a mistake it is quite costly to recover from otherwise.
+
+With no optional parameters passed, this will simply add the tests which are:
+
+    1. In the directory passed
+    2. Not in the testsuite passed.
+
+New tests will have their description/steps filled by the test analyzer class passed;
+if no class is passed, L<Test::Analyzer> will be used.
+Analyzer classes should be subclasses of Test::Analyzer.
+
+Flags can be passed to update existing cases, and to prune tests from the testsuite that no longer are in the test directory.
+
+=head1 PARAMETERS:
+
+=head2 MANDATORY PARAMETERS
+
+=over 4
+
+--apiurl     : full URL to get to TestRail index document
+
+--password   : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
+
+--user       : Your TestRail User Name.
+
+-j --project : desired project name.
+
+-t --testsuite  : desired testsuite name to synchronize tests with
+
+-d --directory : directory to search for tests to synchronize against
+
+=back
+
+All mandatory options not passed with the above switches, or in your ~/.testrailrc will be prompted for.
+
+=head2 SEMI-OPTIONAL PARAMETERS
+
+=over 4
+
+-a --no-add : Don't add tests we find in the directory that aren't in testrail.
+
+-u --update : Update cases that exist in both the test directory and the testsuite passed.
+
+-p --prune-orphans : remove tests from TestRail which don't have a test existing in our test directory
+
+-n --no-recurse : do not recurse subdirectories when considering what tests need adding/updating/pruning.
+
+-e --encoding   : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+
+=back
+
+=head2 OPTIONAL PARAMETERS
+
+=over 4
+
+--type      : Filter cases to make syncing judgements against by type.
+
+--extension : only list files ending in the provided string (e.g. .pl, .pm, .t, .test)
+
+=back
+
+=head1 CONFIGURATION FILE
+
+In your \$HOME, (or the current directory, if your system has no concept of a home directory) put a file called .testrailrc with key=value syntax separated by newlines.
+Valid Keys are the same as documented by L<App::Prove::Plugin::TestRail>.
+All options specified thereby are overridden by passing the command-line switches above.
+
+=head1 MISCELLANEOUS OPTIONS:
+
+=over 4
+
+--help : show this output
+
+--test : print which tests would be added/updated/removed, but don't actually do anything
+
+=back
+
+=cut
+
+use strict;
+use warnings;
+use utf8;
+
+use TestRail::API;
+use TestRail::Utils;
+use TestRail::Utils::Find;
+
+use Getopt::Long;
+use File::HomeDir qw{my_home};
+
+my $opts ={};
+
+#Parse config file if we are missing api url/key or user
+my $homedir = my_home() || '.';
+if (-e $homedir . '/.testrailrc') {
+    $opts = TestRail::Utils::parseConfig($homedir);
+}
+
+GetOptions(
+    'apiurl=s'        => \$opts->{'apiurl'},
+    'password=s'      => \$opts->{'password'},
+    'user=s'          => \$opts->{'user'},
+    'j|project=s'     => \$opts->{'project'},
+    't|testsuite=s'   => \$opts->{'testsuite'},
+    'd|directory=s'   => \$opts->{'directory'},
+    'a|no-add'        => \$opts->{'no-missing'},
+    'u|update'        => \$opts->{'no-updated'},
+    'p|prune-orphans' => \$opts->{'no-orphans'},
+    'n|no-recurse'    => \$opts->{'no-recurse'},
+    'e|encoding=s'    => \$opts->{'encoding'},
+    'type=s'          => \$opts->{'type'},
+    'extension=s'     => \$opts->{'extension'},
+    'h|help'          => \$opts->{'help'},
+    'test'            => \$opts->{'test'},
+    'mock'            => \$opts->{'mock'} #actually do something, but bogusly
+);
+
+if ($opts->{help}) { TestRail::Utils::help(); }
+
+TestRail::Utils::interrogateUser($opts,qw{apiurl user password project testsuite directory});
+
+my $tr = TestRail::Utils::getHandle($opts);
+
+my ($cases) = TestRail::Utils::Find::getCases($opts,$tr);
+die "No cases in TestRail!\n" unless $cases;
+
+$opts->{'names-only'} = 1;
+my $tests = TestRail::Utils::Find::findCases($opts,@$cases);
+
+use Data::Dumper;
+print Dumper($tests)."\n";
+
+exit 0 if $opts->{'test'};
+
+TestRail::Utils::Find::synchronize($tests,$tr);
+
+exit 0;
+
+__END__
+
+L<TestRail::API>
+
+L<File::HomeDir> for the finding of .testrailrc
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this distribution.
