@@ -30,27 +30,27 @@ $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
 
 my $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 is(ref $runs, 'ARRAY', "FindRuns returns ARRAYREF");
-is(scalar(@$runs),4,"All runs for project found when no other options are passed");
+is(scalar(@$runs),5,"All runs for project found when no other options are passed");
 @$runs = map {$_->{'name'}} @$runs;
-my @expected = qw{OtherOtherSuite TestingSuite FinalRun lockRun};
+my @expected = qw{OtherOtherSuite TestingSuite FinalRun lockRun ClosedRun};
 cmp_deeply($runs,\@expected,"Tests ordered FIFO by creation date correctly");
 
 $opts->{'lifo'} = 1;
 $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 @$runs = map {$_->{'name'}} @$runs;
-@expected = qw{lockRun TestingSuite FinalRun OtherOtherSuite};
+@expected = qw{lockRun ClosedRun TestingSuite FinalRun OtherOtherSuite};
 cmp_deeply($runs,\@expected,"Tests ordered LIFO by creation date correctly");
 
 $opts->{'milesort'} = 1;
 $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 @$runs = map {$_->{'name'}} @$runs;
-@expected = qw{OtherOtherSuite TestingSuite FinalRun lockRun};
+@expected = qw{OtherOtherSuite TestingSuite FinalRun lockRun ClosedRun};
 cmp_deeply($runs,\@expected,"Tests ordered LIFO by milestone date correctly");
 
 delete $opts->{'lifo'};
 $runs = TestRail::Utils::Find::findRuns($opts,$tr);
 @$runs = map {$_->{'name'}} @$runs;
-@expected = qw{TestingSuite FinalRun lockRun OtherOtherSuite};
+@expected = qw{TestingSuite FinalRun lockRun ClosedRun OtherOtherSuite};
 cmp_deeply($runs,\@expected,"Tests ordered LIFO by milestone date correctly");
 
 delete $opts->{'milesort'};
@@ -72,7 +72,7 @@ is(scalar(@$runs),0,"No passing runs can be found in projects without them");
 
 $opts->{'statuses'} = ['retest'];
 $runs = TestRail::Utils::Find::findRuns($opts,$tr);
-is(scalar(@$runs),1,"Failed runs can be found in projects with them");
+is(scalar(@$runs),2,"Failed runs can be found in projects with them");
 
 #Test testrail-tests
 

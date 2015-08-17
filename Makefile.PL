@@ -45,7 +45,6 @@ my %WriteMakefileArgs = (
     "TAP::Harness" => 0,
     "TAP::Parser" => 0,
     "Term::ANSIColor" => "2.01",
-    "Test::LWP::UserAgent::TestRailMock" => 0,
     "Try::Tiny" => 0,
     "Type::Params" => 0,
     "Types::Standard" => 0,
@@ -69,7 +68,7 @@ my %WriteMakefileArgs = (
     "Test::LWP::UserAgent" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.030",
+  "VERSION" => "0.031",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -110,7 +109,6 @@ my %FallbackPrereqs = (
   "Test::Deep" => 0,
   "Test::Fatal" => 0,
   "Test::LWP::UserAgent" => 0,
-  "Test::LWP::UserAgent::TestRailMock" => 0,
   "Test::More" => 0,
   "Try::Tiny" => 0,
   "Type::Params" => 0,

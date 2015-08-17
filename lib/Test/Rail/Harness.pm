@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.030';
+$Test::Rail::Harness::VERSION = '0.031';
 use strict;
 use warnings;
 
@@ -37,7 +37,8 @@ sub make_parser {
       if $ENV{'TESTRAIL_VERSION'};
     $args->{'case_per_ok'}  = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'} = $ENV{'TESTRAIL_STEPS'};
-    $args->{'spawn'}        = $ENV{'TESTRAIL_SPAWN'};
+    $args->{'testsuite_id'} = $ENV{'TESTRAIL_SPAWN'};
+    $args->{'testsuite'}    = $ENV{'TESTRAIL_TESTSUITE'};
 
     @sections = split( /:/, $ENV{'TESTRAIL_SECTIONS'} )
       if $ENV{'TESTRAIL_SECTIONS'};
@@ -46,7 +47,7 @@ sub make_parser {
 
     #for Testability of plugin
     if ( $ENV{'TESTRAIL_MOCKED'} ) {
-        require Test::LWP::UserAgent::TestRailMock;
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
         $args->{'debug'}   = 1;
         $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     }
@@ -75,7 +76,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 DESCRIPTION
 

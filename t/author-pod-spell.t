@@ -100,10 +100,11 @@ findRuns
 findTests
 assignee
 parseConfig
+getPlanSummary
+getRunSummary
 George
 Baugh
 teodesian
-george
 Neil
 Bowers
 neil

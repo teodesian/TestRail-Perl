@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.030';
+$TestRail::API::VERSION = '0.031';
 
 use 5.010;
 
@@ -446,22 +446,10 @@ sub getSectionByName {
 }
 
 sub sectionNamesToIds {
-    state $check = compile( Object, Int, Int, slurpy ArrayRef [Str] );
-    my ( $self, $project_id, $suite_id, $names ) = $check->(@_);
-
-    confess("At least one section name must be provided") if !scalar(@$names);
-
-    my $sections = $self->getSections( $project_id, $suite_id );
-    confess("Invalid project/suite ($project_id,$suite_id) provided.")
-      unless ( reftype($sections) || 'undef' ) eq 'ARRAY';
-    my @ret = grep { defined $_ } map {
-        my $section = $_;
-        my @list = grep { $section->{'name'} eq $_ } @$names;
-        scalar(@list) ? $section->{'id'} : undef
-    } @$sections;
-    confess("One or more user names provided does not exist in TestRail.")
-      unless scalar(@$names) == scalar(@ret);
-    return @ret;
+    my ( $self, $project_id, $suite_id, @names ) = @_;
+    my $sections = $self->getSections( $project_id, $suite_id )
+      or confess("Could not find sections in provided project/suite.");
+    return _X_in_my_Y( $self, $sections, 'id', @names );
 }
 
 sub getCaseTypes {
@@ -535,19 +523,36 @@ sub deleteCase {
 }
 
 sub getCases {
-    state $check = compile( Object, Int, Int, Int );
-    my ( $self, $project_id, $suite_id, $section_id ) = $check->(@_);
+    state $check = compile( Object, Int, Int, Optional [ Maybe [HashRef] ] );
+    my ( $self, $project_id, $suite_id, $filters ) = $check->(@_);
 
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
-    $url .= "&section_id=$section_id" if $section_id;
+
+    my @valid_keys =
+      qw{section_id created_after created_before created_by milestone_id priority_id type_id updated_after updated_before updated_by};
+
+    # Add in filters
+    foreach my $filter ( keys(%$filters) ) {
+        confess("Invalid filter key '$filter' passed")
+          unless grep { $_ eq $filter } @valid_keys;
+        if ( ref $filters->{$filter} eq 'ARRAY' ) {
+            $url .= "&$filter=" . join( ',', $filters->{$filter} );
+        }
+        else {
+            $url .= "&$filter=" . $filters->{$filter}
+              if defined( $filters->{$filter} );
+        }
+    }
+
     return $self->_doRequest($url);
 }
 
 sub getCaseByName {
-    state $check = compile( Object, Int, Int, Int, Str );
-    my ( $self, $project_id, $suite_id, $section_id, $name ) = $check->(@_);
+    state $check =
+      compile( Object, Int, Int, Str, Optional [ Maybe [HashRef] ] );
+    my ( $self, $project_id, $suite_id, $name, $filters ) = $check->(@_);
 
-    my $cases = $self->getCases( $project_id, $suite_id, $section_id );
+    my $cases = $self->getCases( $project_id, $suite_id, $filters );
     return -500 if !$cases || ( reftype($cases) || 'undef' ) ne 'ARRAY';
     foreach my $case (@$cases) {
         return $case if $case->{'title'} eq $name;
@@ -680,6 +685,7 @@ sub getRunSummary {
               . "_count"
         } @$statuses
     } = map { $_->{'id'} } @$statuses;
+
     my @sname;
 
     #Create listing of keys/values
@@ -693,7 +699,8 @@ sub getRunSummary {
                 exists( $shash{$status} )
                   && $_->{'id'} == $shash{$status}
             } @$statuses;
-            $run->{'statuses_clean'}->{ $sname[0]->{'name'} } = $run->{$status};
+            $run->{'statuses_clean'}->{ $sname[0]->{'label'} } =
+              $run->{$status};
         }
         $run;
     } @$runs;
@@ -1061,21 +1068,33 @@ sub getPossibleTestStatuses {
 }
 
 sub statusNamesToIds {
-    state $check = compile( Object, slurpy ArrayRef [Str] );
-    my ( $self, $names ) = $check->(@_);
-    confess("No status names passed!") unless scalar(@$names);
+    my ( $self, @names ) = @_;
+    return _X_in_my_Y( $self, $self->getPossibleTestStatuses(), 'id', @names );
+}
 
-    my $statuses = $self->getPossibleTestStatuses();
+sub statusNamesToLabels {
+    my ( $self, @names ) = @_;
+    return _X_in_my_Y( $self, $self->getPossibleTestStatuses(), 'label',
+        @names );
+}
+
+# Reduce code duplication with internal methods?
+# It's more likely than you think
+# Free PC check @ cpan.org
+sub _X_in_my_Y {
+    state $check = compile( Object, ArrayRef, Str, slurpy ArrayRef [Str] );
+    my ( $self, $search_arr, $key, $names ) = $check->(@_);
+
     my @ret;
     foreach my $name (@$names) {
-        foreach my $status (@$statuses) {
-            if ( $status->{'name'} eq $name ) {
-                push @ret, $status->{'id'};
+        foreach my $member (@$search_arr) {
+            if ( $member->{'name'} eq $name ) {
+                push @ret, $member->{$key};
                 last;
             }
         }
     }
-    confess("One or more status names provided does not exist in TestRail.")
+    confess("One or more names provided does not exist in TestRail.")
       unless scalar(@$names) == scalar(@ret);
     return @ret;
 }
@@ -1166,19 +1185,10 @@ sub getConfigurations {
 }
 
 sub translateConfigNamesToIds {
-    state $check = compile( Object, Int, ArrayRef [Str] );
-    my ( $self, $project_id, $configs ) = $check->(@_);
-
-    return [] if !scalar(@$configs);
-    my $existing_configs = $self->getConfigurations($project_id);
-    return map { undef } @$configs
-      if ( reftype($existing_configs) || 'undef' ) ne 'ARRAY';
-    my @ret = map {
-        my $name = $_;
-        my @candidates = grep { $name eq $_->{'name'} } @$existing_configs;
-        scalar(@candidates) ? $candidates[0]->{'id'} : undef
-    } @$configs;
-    return \@ret;
+    my ( $self, $project_id, @names ) = @_;
+    my $configs = $self->getConfigurations($project_id)
+      or confess("Could not determine configurations in provided project.");
+    return _X_in_my_Y( $self, $configs, 'id', @names );
 }
 
 #Convenience method for building stepResults
@@ -1208,7 +1218,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 SYNOPSIS
 
@@ -1622,7 +1632,7 @@ Returns BOOLEAN.
 
     $tr->deleteCase(1324);
 
-=head2 B<getCases (project_id,suite_id,section_id)>
+=head2 B<getCases (project_id,suite_id,filters)>
 
 Gets cases for provided section.
 
@@ -1632,15 +1642,22 @@ Gets cases for provided section.
 
 =item INTEGER C<SUITE ID> - ID of parent suite.
 
-=item INTEGER C<SECTION ID> - ID of parent section
+=item HASHREF C<FILTERS> (optional) - HASHREF describing parameters to filter cases by.
 
 =back
 
+See:
+
+    L<http://docs.gurock.com/testrail-api2/reference-cases#get_cases>
+
+for details as to the allowable filter keys.
+
+If the section ID is omitted, all cases for the suite will be returned.
 Returns ARRAYREF of test case definition HASHREFs.
 
-    $tr->getCases(1,2,3);
+    $tr->getCases(1,2, {'section_id' => 3} );
 
-=head2 B<getCaseByName (project_id,suite_id,section_id,name)>
+=head2 B<getCaseByName (project_id,suite_id,name,filters)>
 
 Gets case by name.
 
@@ -1650,15 +1667,15 @@ Gets case by name.
 
 =item INTEGER C<SUITE ID> - ID of parent suite.
 
-=item INTEGER C<SECTION ID> - ID of parent section.
+=item STRING C<NAME> - Name of desired test case.
 
-=item STRING <NAME> - Name of desired test case.
+=item HASHREF C<FILTERS> - Filter dictionary acceptable to getCases.
 
 =back
 
 Returns test case definition HASHREF.
 
-    $tr->getCaseByName(1,2,3,'nugs');
+    $tr->getCaseByName(1,2,'nugs', {'section_id' => 3});
 
 =head2 B<getCaseByID (case_id)>
 
@@ -2171,6 +2188,21 @@ Returns ARRAY of status IDs in the same order as the status names passed.
 
 Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
 
+=head2 statusNamesToLabels(names)
+
+Convenience method to translate a list of statuses to TestRail status labels (the 'nice' form of status names).
+This is useful when interacting with getRunSummary or getPlanSummary, which uses these labels as hash keys.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of status labels in the same order as the status names passed.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid test status.
+
 =head2 B<createTestResults(test_id,status_id,comment,options,custom_options)>
 
 Creates a result entry for a test.
@@ -2283,11 +2315,11 @@ Transforms a list of configuration names into a list of config IDs.
 
 =item INTEGER C<PROJECT_ID> - Relevant project ID for configs.
 
-=item ARRAYREF C<CONFIGS> - Array ref of config names
+=item ARRAY C<CONFIGS> - Array of config names
 
 =back
 
-Returns ARRAYREF of configuration names, with undef values for unknown configuration names.
+Returns ARRAY of configuration names, with undef values for unknown configuration names.
 
 =head1 STATIC METHODS
 
@@ -2325,21 +2357,11 @@ Thanks to cPanel Inc, for graciously funding the creation of this module.
 
 George S. Baugh <teodesian@cpan.org>
 
-=head1 CONTRIBUTORS
+=head1 CONTRIBUTOR
 
-=for stopwords George Baugh Neil Bowers
-
-=over 4
-
-=item *
-
-George Baugh <george.baugh@cpanel.net>
-
-=item *
+=for stopwords Neil Bowers
 
 Neil Bowers <neil@bowers.com>
-
-=back
 
 =head1 SOURCE
 

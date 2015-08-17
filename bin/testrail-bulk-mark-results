@@ -71,7 +71,7 @@ testrail-bulk-mark-results - Bulk mark entire runs/plans (or groups of tests the
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 DESCRIPTION
 

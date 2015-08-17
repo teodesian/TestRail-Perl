@@ -1,5 +1,17 @@
 Revision history for Perl module TestRail::API
 
+0.031 2015-08-14 TEODESIAN
+    - Update getCases to use testRail 4.0 filters, change filter args to HASHREF
+    - Update TestRail::API::getCaseByName to take filter hashref too
+    - Update getRunSummary and getPlanSummary to use 'labels' rather than system names
+    - Add TestRail::API::statusNamesToLabels to ease interaction with above method updates
+    - Change TestRail::API::translateConfigNamesToIds to accept ARRAY arguments
+    - Make above function and TestRail::API::sectionNamesToIds return values in correct order
+    - Change the 'spawn' option in Test::Rail::Parser (and it's callers) to be --testsuite_id
+    - Add a --testsuite (name) option to Test::Rail::Parser
+    - Spawning runs will now take run/plan completion status into account, spawning new runs/plans when completion is detected.
+    - Removed the run_id option from Test::Rail::Parser and it's callers.  It isn't really useful in practice, and was not tested.
+
 0.030 2015-07-31 TEODESIAN
     - Fix testrail-tests, was calling function in incorrect namespace
     - Fix testrail-bulk-mark-results, was not including library

@@ -27,28 +27,28 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.030
+    version: 0.031
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.030
+    version: 0.031
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.030
+    version: 0.031
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.030
+    version: 0.031
   TestRail::Utils:
     file: lib/TestRail/Utils.pm
-    version: 0.030
+    version: 0.031
   TestRail::Utils::Find:
     file: lib/TestRail/Utils/Find.pm
-    version: 0.030
+    version: 0.031
   TestRail::Utils::Lock:
     file: lib/TestRail/Utils/Lock.pm
-    version: 0.030
+    version: 0.031
   TestRail::Utils::Results:
     file: lib/TestRail/Utils/Results.pm
-    version: 0.030
+    version: 0.031
 requires:
   Carp: 0
   Clone: 0
@@ -71,7 +71,6 @@ requires:
   TAP::Harness: 0
   TAP::Parser: 0
   Term::ANSIColor: 2.01
-  Test::LWP::UserAgent::TestRailMock: 0
   Try::Tiny: 0
   Type::Params: 0
   Types::Standard: 0
@@ -85,7 +84,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.030
+version: 0.031
 x_contributors:
-  - 'George Baugh <george.baugh@cpanel.net>'
   - 'Neil Bowers <neil@bowers.com>'

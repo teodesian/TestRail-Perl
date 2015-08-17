@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 75;
+use Test::More tests => 78;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -101,9 +101,17 @@ my $case_name = 'STROGGIFY POPULATION CENTERS';
 my $new_case = $tr->createCase($new_section->{'id'},$case_name);
 is($new_case->{'title'},$case_name,"Can create new test case");
 
-ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},$new_section->{'id'}),"Can get case listing");
-is($tr->getCaseByName($new_project->{'id'}, $new_suite->{'id'}, $new_section->{'id'}, $case_name)->{'title'},$case_name,"Can get case by name");
+my $case_filters = {
+    'section_id' => $new_section->{'id'}
+};
+
+ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters),"Can get case listing");
+is($tr->getCaseByName($new_project->{'id'}, $new_suite->{'id'},  $case_name, $case_filters)->{'title'},$case_name,"Can get case by name");
 is($tr->getCaseByID($new_case->{'id'})->{'id'},$new_case->{'id'},"Can get case by ID");
+
+#Negative case
+$case_filters->{'hokum'} = 'bogus';
+isnt(exception {$tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters)},undef,"Passing bogus filter croaks");
 
 #Test RUN methods
 my $run_name = 'SEND T-1000 INFILTRATION UNITS BACK IN TIME';
@@ -162,9 +170,13 @@ ok($statusTypes,"Can get possible test statuses");
 
 my @status_names = map {$_->{'name'}} @$statusTypes;
 my @status_ids = map {$_->{'id'}} @$statusTypes;
+my @status_labels = map {$_->{'label'}} @$statusTypes;
 my @computed_ids = $tr->statusNamesToIds(@status_names);
+my @computed_labels = $tr->statusNamesToLabels(@status_names);
 cmp_deeply(\@computed_ids,\@status_ids,"statusNamesToIds functions correctly");
-isnt(exception {$tr->statusNamesToIds(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception");
+cmp_deeply(\@computed_labels,\@status_labels,"statusNamesToLabels functions correctly");
+isnt(exception {$tr->statusNamesToIds(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception in statusNamesToIds");
+isnt(exception {$tr->statusNamesToLabels(@status_names,'potzrebie'); }, undef, "Passing invalid status name throws exception in statusNamesToLabels");
 
 #TODO make more thorough tests for options, custom options
 my $result = $tr->createTestResults($tests->[0]->{'id'},$statusTypes->[0]->{'id'},"REAPER FORCES INBOUND");
@@ -191,8 +203,8 @@ is(scalar(@$filteredTests),0,"Test Filtering works: status id undef, user id neg
 my $runs = $tr->getRuns($new_project->{'id'});
 my ($summary) = $tr->getRunSummary(@$runs); #I only care about the first one
 isnt($summary->{'run_status'},undef,"Can get run statuses correctly");
-is($summary->{'run_status'}->{'passed'},int(!$is_mock),"Gets # of passed cases correctly");
-is($summary->{'run_status'}->{'untested'},int($is_mock),"Gets # of untested cases correctly");
+is($summary->{'run_status'}->{'Passed'},int(!$is_mock),"Gets # of passed cases correctly");
+is($summary->{'run_status'}->{'Untested'},int($is_mock),"Gets # of untested cases correctly");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});
@@ -202,10 +214,8 @@ if ($is_arr) {
     @config_names = map {$_->{'name'}} @$configs;
     @config_ids = map {$_->{'id'}} @$configs;
 }
-my $t_config_ids = $tr->translateConfigNamesToIds($new_project->{'id'},\@config_names);
-@config_ids = sort(@config_ids);
-@$t_config_ids = sort(@$t_config_ids);
-is_deeply(\@config_ids,$t_config_ids, "Can correctly translate Project names to IDs");
+my @t_config_ids = $tr->translateConfigNamesToIds($new_project->{'id'},@config_names);
+is_deeply(\@config_ids,\@t_config_ids, "Can correctly translate Project names to IDs, and they are correctly sorted");
 
 ############################################################
 # TestRail arbitrarily limits many calls to 250 result sets.

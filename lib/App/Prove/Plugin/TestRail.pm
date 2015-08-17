@@ -2,7 +2,7 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.030';
+$App::Prove::Plugin::TestRail::VERSION = '0.031';
 use strict;
 use warnings;
 use utf8;
@@ -51,7 +51,8 @@ sub load {
     $ENV{'TESTRAIL_VERSION'}   = $params->{version};
     $ENV{'TESTRAIL_CASEOK'}    = $params->{case_per_ok};
     $ENV{'TESTRAIL_STEPS'}     = $params->{step_results};
-    $ENV{'TESTRAIL_SPAWN'}     = $params->{spawn};
+    $ENV{'TESTRAIL_SPAWN'}     = $params->{testsuite_id};
+    $ENV{'TESTRAIL_TESTSUITE'} = $params->{testsuite};
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
@@ -72,7 +73,7 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 SYNOPSIS
 
@@ -98,7 +99,8 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     case_per_ok=0
     step_results=sr_sys_name
     lockname=internal_lock_name
-    spawn=123
+    testsuite_id=123
+    testsuite=blahblah #don't do this it's mutually exclusive with testuite_id
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
     encoding=UTF-8

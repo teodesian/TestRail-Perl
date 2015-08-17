@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.030';
+$TestRail::Utils::VERSION = '0.031';
 use strict;
 use warnings;
 
@@ -176,7 +176,7 @@ sub getHandle {
     if ( $opts->{'mock'} ) {
         use lib 't/lib'
           ;    #Unit tests will always run from the main dir during make test
-        require Test::LWP::UserAgent::TestRailMock;
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
         $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
         $tr->{'debug'}   = 0;
     }
@@ -197,7 +197,7 @@ TestRail::Utils - Utilities for the testrail command line functions, and their m
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 SCRIPT HELPER FUNCTIONS
 
@@ -254,7 +254,7 @@ Convenience method for binaries and testing.
 Returns a new TestRail::API when passed an options hash such as is built by most of the binaries,
 or returned by parseConfig.
 
-Has a special 'mock' hash key that can only be used by those testing this distribution.
+Has a special 'mock' hash key that can only be used by those testing this distribution during 'make test'.
 
 =head1 SPECIAL THANKS
 

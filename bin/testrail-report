@@ -27,7 +27,8 @@ GetOptions(
     'config=s@'      => \$opts{configs},
     'plan=s'         => \$opts{plan},
     'version=s'      => \$opts{version},
-    'spawn=i'        => \$opts{spawn},
+    'testsuite_id=i' => \$opts{testsuite_id},
+    'testsuite=s'    => \$opts{testsuite},
     'section=s@'     => \$opts{sections},
     'autoclose'      => \$opts{autoclose},
     'e|encoding=s'   => \$opts{encoding},
@@ -66,7 +67,7 @@ TestRail::Utils::interrogateUser( \%opts,
 $opts{result_options} = { 'version' => $opts{version} } if $opts{version};
 
 if ( $opts{'mock'} ) {
-    require Test::LWP::UserAgent::TestRailMock;
+    require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
     $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     $opts{'debug'}   = 1;
 }
@@ -88,7 +89,8 @@ foreach my $phil (@files) {
             'plan'           => $opts{plan},
             'configs'        => $opts{configs},
             'result_options' => $opts{result_options},
-            'spawn'          => $opts{spawn},
+            'testsuite_id'   => $opts{testsuite_id},
+            'testsuite'      => $opts{testsuite},
             'sections'       => $opts{sections},
             'autoclose'      => $opts{autoclose},
             'encoding'       => $opts{encoding},
@@ -115,7 +117,7 @@ testrail-report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 SYNOPSIS
 
@@ -161,10 +163,12 @@ This should provide sufficient uniqueness to get any run using names.
 
 =head3 OPTIONAL PARAMETERS
 
-    --spawn [testsuite_id] : Attempt to create a run based on the provided testsuite ID.  Uses the name provided with --run.
+    --testsuite_id [testsuite_id] : Attempt to create a run based on the provided testsuite ID.  Uses the name provided with --run.
       If plans/configurations are supplied, it will attempt to create it as a child of the provided plan, and with the supplied configurations.
       If the specified run already exists, the program will simply use the existing run, and disregard the supplied testsuite_id.
       If the specified plan does not exist, it too will be created for you.
+
+    --testsuite [testsuite name] : Pretty much the same as the testsuite_id, but a name instead.  Mutually exclusive with testsuite_id.
 
     --section [section_name] : When spawning, restrict the cases used in the provided testsuite ID to these sections.
       Option may be passed multiple times to specify multiple sections.

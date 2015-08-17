@@ -2,7 +2,7 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.030';
+$TestRail::Utils::Find::VERSION = '0.031';
 use strict;
 use warnings;
 
@@ -20,19 +20,19 @@ sub findRuns {
     confess("TestRail handle must be provided as argument 2")
       unless blessed($tr) eq 'TestRail::API';
 
-    my ($status_ids);
+    my ($status_labels);
 
     #Process statuses
     if ( $opts->{'statuses'} ) {
-        @$status_ids = $tr->statusNamesToIds( @{ $opts->{'statuses'} } );
+        @$status_labels = $tr->statusNamesToLabels( @{ $opts->{'statuses'} } );
     }
 
     my $project = $tr->getProjectByName( $opts->{'project'} );
     confess("No such project '$opts->{project}'.\n") if !$project;
 
     my $pconfigs = [];
-    $pconfigs =
-      $tr->translateConfigNamesToIds( $project->{'id'}, $opts->{configs} )
+    @$pconfigs =
+      $tr->translateConfigNamesToIds( $project->{'id'}, @{ $opts->{configs} } )
       if $opts->{'configs'};
 
     my ( $runs, $plans, $planRuns, $cruns, $found ) = ( [], [], [], [], 0 );
@@ -65,7 +65,7 @@ sub findRuns {
         @$runs = $tr->getRunSummary(@$runs);
         @$runs = grep { defined( $_->{'run_status'} ) }
           @$runs;    #Filter stuff with no results
-        foreach my $status ( @{ $opts->{'statuses'} } ) {
+        foreach my $status (@$status_labels) {
             @$runs = grep { $_->{'run_status'}->{$status} }
               @$runs;    #If it's positive, keep it.  Otherwise forget it.
         }
@@ -181,7 +181,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.030
+version 0.031
 
 =head1 DESCRIPTION
 
