@@ -20,10 +20,20 @@ With no optional parameters passed, this will simply add the tests which are:
     2. Not in the testsuite passed.
 
 New tests will have their description/steps filled by the test analyzer class passed;
-if no class is passed, L<Test::Analyzer> will be used.
-Analyzer classes should be subclasses of Test::Analyzer.
+if no class is passed, L<TestRail::Analyzer> will be used.
+Analyzer classes should be subclasses of TestRail::Analyzer.
 
 Flags can be passed to update existing cases, and to prune tests from the testsuite that no longer are in the test directory.
+
+=head1 ADIVICE FOR SPECIFIC SITUATIONS
+
+If you have multiple testsuites which are intended to hold the cases, be sure to pass the testsuite parameter multiple times.
+
+If you have multiple directories which are intended to hold the cases, be sure to pass the directory parameter multiple times.
+
+Complications occur when needing to add new cases.  Which section and testsuite should I upload the case to?
+This is where L<TestRail::Analyzer> comes in; you can specify various data in your test file to control this behavior.
+If no such data is found, you will be prompted as to what to do.
 
 =head1 PARAMETERS:
 
@@ -39,9 +49,9 @@ Flags can be passed to update existing cases, and to prune tests from the testsu
 
 -j --project : desired project name.
 
--t --testsuite  : desired testsuite name to synchronize tests with
+-t --testsuite  : desired testsuite name to synchronize tests with.  May be passed multiple times.
 
--d --directory : directory to search for tests to synchronize against
+-d --directory : directory to search for tests to synchronize against.  May be passed multiple times.
 
 =back
 
