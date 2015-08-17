@@ -990,7 +990,7 @@ sub getCases {
         confess("Invalid filter key '$filter' passed") unless grep {$_ eq $filter} @valid_keys;
         if (ref $filters->{$filter} eq 'ARRAY') {
             confess "$filter cannot be an ARRAYREF" if grep {$_ eq $filter} qw{created_after created_before updated_after updated_before};
-            $url .= "&$filter=".join(',',$filters->{$filter});
+            $url .= "&$filter=".join(',',@{$filters->{$filter}});
         } else {
             $url .= "&$filter=".$filters->{$filter} if defined($filters->{$filter});
         }

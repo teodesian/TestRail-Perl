@@ -1,6 +1,7 @@
 Revision history for Perl module TestRail::API
 
 0.032 2015-08-17 TEODESIAN
+    - Fix issue in getCases where arrayref filters were not handled properly
     - Add TestRail::API::typeNamesToIds
     - Add orphans option to testrail-tests, TestRail::Utils::Find::getTests
     - Add TestRail::API::updateCase
