@@ -306,6 +306,7 @@ Expects hash to have the following keys:
     missing => array of tests to add to TestRail
     update  => array of tests to update in TestRail
     orphans => array of tests to remove from TestRail
+    test    => don't actually do anything, just print what would have happened
 
 Second argument is a testRail handle.
 
@@ -313,6 +314,37 @@ Second argument is a testRail handle.
 
 sub synchronize {
     my ($instructions,$tr) = @_;
+
+    if (ref $instructions->{'missing'} eq "ARRAY" && scalar(@{$instructions->{'missing'}})) {
+        foreach my $test (@{$instructions->{'missing'}}) {
+            print "Adding test $test...\n";
+            next if $instructions->{'test'};
+            #TODO get or create relevant section, mapping directory -> section
+            my $relevantSection = {};
+            #TODO pass other relevant data
+            $tr->createCase($relevantSection->{'id'},basename($test));
+        }
+    }
+
+    if (ref $instructions->{'orphans'} eq "ARRAY" && scalar(@{$instructions->{'orphans'}})) {
+        foreach my $test (@{$instructions->{'orphans'}}) {
+            print "Deleting test $test->{title}...\n";
+            next if $instructions->{'test'};
+            $tr->deleteCase($test->{'id'});
+        }
+    }
+
+    if (ref $instructions->{'update'} eq "ARRAY" && scalar(@{$instructions->{'update'}})) {
+        foreach my $test (@{$instructions->{'update'}}) {
+            print "Updating test $test->{title}...\n";
+            next if $instructions->{'test'};
+            #TODO use special updater class
+            my $caseOpts = {'description' => "Automated test found in ".$test->{'full_title'}."\n"};
+            $tr->updateCase($test->{'id'},$caseOpts);
+        }
+    }
+
+    return 1;
 }
 
 1;

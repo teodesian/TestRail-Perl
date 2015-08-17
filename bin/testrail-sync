@@ -143,10 +143,7 @@ die "No cases in TestRail!\n" unless $cases;
 
 my $tests = TestRail::Utils::Find::findCases($opts,@$cases);
 
-use Data::Dumper;
-print Dumper($tests)."\n";
-
-exit 0 if $opts->{'test'};
+$tests->{'test'} = 1 if $opts->{'test'};
 
 TestRail::Utils::Find::synchronize($tests,$tr);
 
