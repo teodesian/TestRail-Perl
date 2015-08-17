@@ -112,6 +112,7 @@ GetOptions(
     'a|assignedto=s@' => \$opts->{'users'},
     'm|match=s'       => \$opts->{'match'},
     'no-match=s'      => \$opts->{'no-match'},
+    'orphans=s'       => \$opts->{'orphans'},
     'n|no-recurse'    => \$opts->{'no-recurse'},
     'e|encoding=s'    => \$opts->{'encoding'},
     'extension=s'     => \$opts->{'extension'},
