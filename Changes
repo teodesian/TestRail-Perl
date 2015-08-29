@@ -7,6 +7,7 @@ Revision history for Perl module TestRail::API
     - Add TestRail::API::updateCase
     - Add new TestRail::Utils::Find functions; getCases, findCases, synchronizeCases
     - Add new script bin/testrail-sync
+    - Add new script bin/testrail-cases
 
 0.031 2015-08-14 TEODESIAN
     - Update getCases to use testRail 4.0 filters, change filter args to HASHREF
