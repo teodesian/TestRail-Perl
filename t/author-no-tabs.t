@@ -9,13 +9,14 @@ BEGIN {
 use strict;
 use warnings;
 
-# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.15
+# this test was generated with Dist::Zilla::Plugin::Test::NoTabs 0.09
 
 use Test::More 0.88;
 use Test::NoTabs;
 
 my @files = (
     'bin/testrail-bulk-mark-results',
+    'bin/testrail-cases',
     'bin/testrail-lock',
     'bin/testrail-report',
     'bin/testrail-runs',
@@ -69,6 +70,7 @@ my @files = (
     't/test_multiple_files.tap',
     't/test_subtest.tap',
     't/testrail-bulk-mark-results.t',
+    't/testrail-cases.t',
     't/testrail-lock.t',
     't/testrail-report.t',
     't/testrail-runs.t',

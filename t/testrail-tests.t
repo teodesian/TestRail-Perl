@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 30;
+use Test::More "tests" => 32;
 
 #check plan mode
 my @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -p "GosPlan" -r "Executing the great plan" -m t --config testConfig --mock --no-recurse});
@@ -80,9 +80,16 @@ is($out,"","Gets no tests correctly when filtering by wrong status");
 #Verify no-match returns non path
 @args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --mock});
 $out = `@args`;
+is($? >> 8, 0, "Exit code OK running no plan mode, no-match");
+chomp $out;
+like($out,qr/\nskipall\.test$/,"Gets test correctly in no plan mode, no-match");
+
+#Verify no-match returns non path
+@args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --orphans t/ --mock});
+$out = `@args`;
 is($? >> 8, 0, "Exit code OK running no plan mode, no recurse");
 chomp $out;
-like($out,qr/\nskipall\.test$/,"Gets test correctly in no plan mode, no recurse");
+like($out,qr/NOT SO SEARED AFTER ARR/,"Gets test correctly in orphan mode");
 
 #Verify no-match returns non path
 @args = ($^X,qw{bin/testrail-tests --help});

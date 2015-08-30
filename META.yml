@@ -18,7 +18,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 0
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 5.032, CPAN::Meta::Converter version 2.143240'
+generated_by: 'Dist::Zilla version 5.025, CPAN::Meta::Converter version 2.142690'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -27,28 +27,28 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.031
+    version: 0.032
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.031
+    version: 0.032
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.031
+    version: 0.032
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.031
+    version: 0.032
   TestRail::Utils:
     file: lib/TestRail/Utils.pm
-    version: 0.031
+    version: 0.032
   TestRail::Utils::Find:
     file: lib/TestRail/Utils/Find.pm
-    version: 0.031
+    version: 0.032
   TestRail::Utils::Lock:
     file: lib/TestRail/Utils/Lock.pm
-    version: 0.031
+    version: 0.032
   TestRail::Utils::Results:
     file: lib/TestRail/Utils/Results.pm
-    version: 0.031
+    version: 0.032
 requires:
   Carp: 0
   Clone: 0
@@ -84,6 +84,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.031
+version: 0.032
 x_contributors:
   - 'Neil Bowers <neil@bowers.com>'

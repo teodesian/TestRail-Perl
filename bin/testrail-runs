@@ -57,7 +57,7 @@ testrail-runs - List runs in a TestRail project matching the provided filters
 
 =head1 VERSION
 
-version 0.031
+version 0.032
 
 =head1 SYNOPSIS
 
