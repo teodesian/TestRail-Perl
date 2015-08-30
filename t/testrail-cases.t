@@ -4,18 +4,18 @@ use warnings;
 use Test::More "tests" => 6;
 
 #check plan mode
-my @args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock --test --extension .test});
+my @args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock --test --extension ".test"});
 my $out = `@args`;
 is($? >> 8, 0, "Exit code OK running add, update, orphans");
 chomp $out;
 like($out,qr/fake\.test/,"Shows existing tests by default");
 
-@args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock  -o --extension .test});
+@args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock  -o --extension ".test"});
 $out = `@args`;
 chomp $out;
 like($out,qr/nothere\.test/,"Shows orphan tests");
 
-@args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock  -m --extension .test});
+@args = ($^X,qw{bin/testrail-cases -j "TestProject" -t "HAMBURGER-IZE HUMANITY" -d t --mock  -m --extension ".test"});
 $out = `@args`;
 chomp $out;
 like($out,qr/t\/skipall\.test/,"Shows missing tests");
