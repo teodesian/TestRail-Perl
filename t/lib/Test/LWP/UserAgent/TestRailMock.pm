@@ -3108,4 +3108,20 @@ return $cloned;
 
 }
 
+{
+
+$VAR1 = 'index.php?/api/v2/update_case/8';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-date' => 'Sun, 30 Aug 2015 18:25:10 GMT',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":8,"title":"STROGGIFY POPULATION CENTERS","section_id":9,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1419364929,"updated_by":1,"updated_on":1419364929,"estimate":null,"estimate_forecast":null,"suite_id":9,"custom_preconds":"do some stuff","custom_steps":null,"custom_expected":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
 1;

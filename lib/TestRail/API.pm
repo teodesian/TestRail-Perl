@@ -922,9 +922,8 @@ sub updateCase {
     state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
     my ($self,$case_id,$options) = $check->(@_);
 
-    return $self->_doRequest("index.php?/api/v2/add_case/$case_id",'POST',$options);
+    return $self->_doRequest("index.php?/api/v2/update_case/$case_id",'POST',$options);
 }
-
 
 =head2 B<deleteCase (case_id)>
 

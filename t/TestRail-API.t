@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 80;
+use Test::More tests => 81;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -105,6 +105,9 @@ isnt(exception {$tr->sectionNamesToIds($new_project->{'id'},$new_suite->{'id'},"
 my $case_name = 'STROGGIFY POPULATION CENTERS';
 my $new_case = $tr->createCase($new_section->{'id'},$case_name);
 is($new_case->{'title'},$case_name,"Can create new test case");
+
+my $updated_case = $tr->updateCase($new_case->{'id'}, {'custom_preconds' => 'do some stuff'});
+is($updated_case->{'custom_preconds'},'do some stuff',"updateCase works");
 
 my $case_filters = {
     'section_id' => $new_section->{'id'}
