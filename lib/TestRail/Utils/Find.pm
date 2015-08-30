@@ -265,8 +265,24 @@ sub getCases {
     return $tr->getCases($project->{'id'},$suite->{'id'},$filters);
 }
 
+=head2 findCases(opts,@cases)
+
+Find orphan, missing and needing-update cases.
+They are returned as the hash keys 'orphans', 'missing', and 'updates' respectively.
+The testsuite_id is also returned in the output hashref.
+
+Option hash keys for input are 'no-missing', 'orphans', and 'update'.
+
+Returns HASHREF.
+
+=cut
+
 sub findCases {
     my ($opts,@cases) = @_;
+
+    confess('testsuite_id parameter mandatory in options HASHREF') unless defined $opts->{'testsuite_id'};
+    confess('Directory parameter mandatory in options HASHREF.') unless defined $opts->{'directory'};
+    confess('No such directory "'.$opts->{'directory'}."\"\n") unless -d $opts->{'directory'};
 
     my $ret = {'testsuite_id' => $opts->{'testsuite_id'}};
     if (!$opts->{'no-missing'}) {
