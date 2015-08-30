@@ -85,7 +85,7 @@ chomp $out;
 like($out,qr/\nskipall\.test$/,"Gets test correctly in no plan mode, no-match");
 
 #Verify no-match returns non path
-@args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --orphans t/ --mock});
+@args = ($^X,qw{bin/testrail-tests --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --orphans t --mock});
 $out = `@args`;
 is($? >> 8, 0, "Exit code OK running no plan mode, no recurse");
 chomp $out;
@@ -98,6 +98,6 @@ is($? >> 8, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
 
 #Verify no-match and match are mutually exclusive
-@args = ($^X,qw{bin/testrail-tests --no-match t/ --match t/qa --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --mock});
+@args = ($^X,qw{bin/testrail-tests --no-match t --match t/qa --apiurl http://testrail.local --user "test@fake.fake" --password "fake" -j TestProject -r "TestingSuite" --mock});
 $out = `@args`;
 isnt($? >> 8, 0, "Exit code not OK asking for mutually exclusive match options");
