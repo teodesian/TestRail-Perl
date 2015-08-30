@@ -338,8 +338,7 @@ sub createProject {
         show_announcement => $announce
     };
 
-    my $result = $self->_doRequest('index.php?/api/v2/add_project','POST',$input);
-    return $result;
+    return $self->_doRequest('index.php?/api/v2/add_project','POST',$input);
 }
 
 =head2 B<deleteProject (id)>
@@ -363,8 +362,7 @@ sub deleteProject {
     state $check = compile(Object, Int);
     my ($self,$proj) = $check->(@_);
 
-    my $result = $self->_doRequest('index.php?/api/v2/delete_project/'.$proj,'POST');
-    return $result;
+    return $self->_doRequest('index.php?/api/v2/delete_project/'.$proj,'POST');
 }
 
 =head2 B<getProjects ()>
@@ -494,9 +492,7 @@ sub createTestSuite {
         description => $details
     };
 
-    my $result = $self->_doRequest('index.php?/api/v2/add_suite/'.$project_id,'POST',$input);
-    return $result;
-
+    return $self->_doRequest('index.php?/api/v2/add_suite/'.$project_id,'POST',$input);
 }
 
 =head2 B<deleteTestSuite (suite_id)>
@@ -519,9 +515,7 @@ sub deleteTestSuite {
     state $check = compile(Object, Int);
     my ($self,$suite_id) = $check->(@_);
 
-    my $result = $self->_doRequest('index.php?/api/v2/delete_suite/'.$suite_id,'POST');
-    return $result;
-
+    return $self->_doRequest('index.php?/api/v2/delete_suite/'.$suite_id,'POST');
 }
 
 =head2 B<getTestSuites (project_id)>
@@ -598,8 +592,7 @@ sub getTestSuiteByID {
     state $check = compile(Object, Int);
     my ($self,$testsuite_id) = $check->(@_);
 
-    my $result = $self->_doRequest('index.php?/api/v2/get_suite/'.$testsuite_id);
-    return $result;
+    return $self->_doRequest('index.php?/api/v2/get_suite/'.$testsuite_id);
 }
 
 =head1 SECTION METHODS
@@ -636,8 +629,7 @@ sub createSection {
     };
     $input->{'parent_id'} = $parent_id if $parent_id;
 
-    my $result = $self->_doRequest('index.php?/api/v2/add_section/'.$project_id,'POST',$input);
-    return $result;
+    return $self->_doRequest('index.php?/api/v2/add_section/'.$project_id,'POST',$input);
 }
 
 =head2 B<deleteSection (section_id)>
@@ -660,8 +652,7 @@ sub deleteSection {
     state $check = compile(Object, Int);
     my ($self,$section_id) = $check->(@_);
 
-    my $result = $self->_doRequest('index.php?/api/v2/delete_section/'.$section_id,'POST');
-    return $result;
+    return $self->_doRequest('index.php?/api/v2/delete_section/'.$section_id,'POST');
 }
 
 =head2 B<getSections (project_id,suite_id)>
@@ -825,6 +816,28 @@ sub getCaseTypeByName {
     confess("No such case type '$name'!");
 }
 
+=head2 typeNamesToIds(names)
+
+Convenience method to translate a list of case type names to TestRail case type IDs.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of status names to translate to IDs.
+
+=back
+
+Returns ARRAY of type IDs in the same order as the type names passed.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid case type.
+
+=cut
+
+sub typeNamesToIds {
+    my ($self,@names) = @_;
+    return _X_in_my_Y($self,$self->getCaseTypes(),'id',@names);
+};
+
+
 =head2 B<createCase(section_id,title,type_id,options,extra_options)>
 
 Creates a test case.
@@ -886,13 +899,35 @@ sub createCase {
         }
     }
 
-    my $result = $self->_doRequest("index.php?/api/v2/add_case/$section_id",'POST',$stuff);
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/add_case/$section_id",'POST',$stuff);
+}
+
+=head2 B<updateCase(case_id,options)>
+
+Updates a test case.
+
+=over 4
+
+=item INTEGER C<CASE ID> - Case ID.
+
+=item HASHREF C<OPTIONS> - Various things about a case to set.  Everything except section_id in the output of getCaseBy* methods is a valid input here.
+
+=back
+
+Returns new case definition HASHREF, false otherwise.
+
+=cut
+
+sub updateCase {
+    state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
+    my ($self,$case_id,$options) = $check->(@_);
+
+    return $self->_doRequest("index.php?/api/v2/update_case/$case_id",'POST',$options);
 }
 
 =head2 B<deleteCase (case_id)>
 
-Deletes specified section.
+Deletes specified test case.
 
 =over 4
 
@@ -910,8 +945,7 @@ sub deleteCase {
     state $check = compile(Object, Int);
     my ($self,$case_id) = $check->(@_);
 
-    my $result = $self->_doRequest("index.php?/api/v2/delete_case/$case_id",'POST');
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/delete_case/$case_id",'POST');
 }
 
 =head2 B<getCases (project_id,suite_id,filters)>
@@ -949,11 +983,13 @@ sub getCases {
 
     my @valid_keys = qw{section_id created_after created_before created_by milestone_id priority_id type_id updated_after updated_before updated_by};
 
+
     # Add in filters
     foreach my $filter (keys(%$filters)) {
         confess("Invalid filter key '$filter' passed") unless grep {$_ eq $filter} @valid_keys;
         if (ref $filters->{$filter} eq 'ARRAY') {
-            $url .= "&$filter=".join(',',$filters->{$filter});
+            confess "$filter cannot be an ARRAYREF" if grep {$_ eq $filter} qw{created_after created_before updated_after updated_before};
+            $url .= "&$filter=".join(',',@{$filters->{$filter}});
         } else {
             $url .= "&$filter=".$filters->{$filter} if defined($filters->{$filter});
         }
@@ -1064,8 +1100,7 @@ sub createRun {
         case_ids      => $case_ids
     };
 
-    my $result = $self->_doRequest("index.php?/api/v2/add_run/$project_id",'POST',$stuff);
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/add_run/$project_id",'POST',$stuff);
 }
 
 =head2 B<deleteRun (run_id)>
@@ -1088,8 +1123,7 @@ sub deleteRun {
     state $check = compile(Object, Int);
     my ($self,$run_id) = $check->(@_);
 
-    my $result = $self->_doRequest("index.php?/api/v2/delete_run/$run_id",'POST');
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/delete_run/$run_id",'POST');
 }
 
 =head2 B<getRuns (project_id)>
@@ -1403,8 +1437,7 @@ sub createPlan {
         entries       => $entries
     };
 
-    my $result = $self->_doRequest("index.php?/api/v2/add_plan/$project_id",'POST',$stuff);
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/add_plan/$project_id",'POST',$stuff);
 }
 
 =head2 B<deletePlan (plan_id)>
@@ -1427,8 +1460,7 @@ sub deletePlan {
     state $check = compile(Object, Int);
     my ($self,$plan_id) = $check->(@_);
 
-    my $result = $self->_doRequest("index.php?/api/v2/delete_plan/$plan_id",'POST');
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/delete_plan/$plan_id",'POST');
 }
 
 =head2 B<getPlans (project_id)>
@@ -1647,8 +1679,7 @@ sub createRunInPlan {
         config_ids    => $config_ids,
         runs          => $runs
     };
-    my $result = $self->_doRequest("index.php?/api/v2/add_plan_entry/$plan_id",'POST',$stuff);
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/add_plan_entry/$plan_id",'POST',$stuff);
 }
 
 =head2 B<closePlan (plan_id)>
@@ -1708,8 +1739,7 @@ sub createMilestone {
         due_on      => $due_on # unix timestamp
     };
 
-    my $result = $self->_doRequest("index.php?/api/v2/add_milestone/$project_id",'POST',$stuff);
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/add_milestone/$project_id",'POST',$stuff);
 }
 
 =head2 B<deleteMilestone (milestone_id)>
@@ -1732,8 +1762,7 @@ sub deleteMilestone {
     state $check = compile(Object, Int);
     my ($self,$milestone_id) = $check->(@_);
 
-    my $result = $self->_doRequest("index.php?/api/v2/delete_milestone/$milestone_id",'POST');
-    return $result;
+    return $self->_doRequest("index.php?/api/v2/delete_milestone/$milestone_id",'POST');
 }
 
 =head2 B<getMilestones (project_id)>

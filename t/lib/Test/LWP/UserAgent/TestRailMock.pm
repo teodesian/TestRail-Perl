@@ -422,6 +422,34 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
+$VAR1 = 'index.php?/api/v2/get_cases/10&suite_id=9';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:09 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '322',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:09 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":8,"title":"fake.test","section_id":9,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1419364929,"updated_by":1,"updated_on":1419364929,"estimate":null,"estimate_forecast":null,"suite_id":9,"custom_preconds":null,"custom_steps":null,"custom_expected":null},
+{"id":9,"title":"nothere.test","section_id":9,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1419364929,"updated_by":1,"updated_on":1419364929,"estimate":null,"estimate_forecast":null,"suite_id":9,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
 $VAR1 = 'index.php?/api/v2/get_cases/9&suite_id=9&section_id=9';
 $VAR2 = '200';
 $VAR3 = 'OK';
@@ -3077,6 +3105,22 @@ $VAR5 = '[{"id":587,"case_id":14,"status_id":9,"assignedto_id":null,"run_id":109
 my $cloned = clone $mockObject;
 $cloned->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 return $cloned;
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/update_case/8';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-date' => 'Sun, 30 Aug 2015 18:25:10 GMT',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":8,"title":"STROGGIFY POPULATION CENTERS","section_id":9,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1419364929,"updated_by":1,"updated_on":1419364929,"estimate":null,"estimate_forecast":null,"suite_id":9,"custom_preconds":"do some stuff","custom_steps":null,"custom_expected":null}';
+$mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
 

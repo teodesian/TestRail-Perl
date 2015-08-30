@@ -5,6 +5,7 @@ Perl interface to TestRail's REST API
 
 <img alt="TravisCI Build Status" src="https://travis-ci.org/teodesian/TestRail-Perl.svg"></img>
 <a href='https://coveralls.io/r/teodesian/TestRail-Perl?branch=build%2Fmaster'><img src='https://coveralls.io/repos/teodesian/TestRail-Perl/badge.svg?branch=build%2Fmaster' alt='Coverage Status' /></a>
+<a href="http://cpants.cpanauthors.org/dist/TestRail-API"><img alt="kwalitee" src="http://cpants.cpanauthors.org/dist/TestRail-API.png"></img></a>
 
 Implements most available TestRail API methods:
 

@@ -41,6 +41,10 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 --no-match      : attempt to find filenames that do not match test names in the provided directory.
 
+--orphans       : attempt to find tests in TestRail which aren't in the provided directory.
+
+The three above options are mutually exclusive.
+
 -n --no-recurse : if match (or no-match) passed, do not recurse subdirectories.
 
 -e --encoding   : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
@@ -108,6 +112,7 @@ GetOptions(
     'a|assignedto=s@' => \$opts->{'users'},
     'm|match=s'       => \$opts->{'match'},
     'no-match=s'      => \$opts->{'no-match'},
+    'orphans=s'       => \$opts->{'orphans'},
     'n|no-recurse'    => \$opts->{'no-recurse'},
     'e|encoding=s'    => \$opts->{'encoding'},
     'extension=s'     => \$opts->{'extension'},

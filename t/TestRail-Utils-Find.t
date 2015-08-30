@@ -4,7 +4,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 28;
+use Test::More 'tests' => 52;
 use Test::Fatal;
 use Test::Deep;
 use File::Basename qw{dirname};
@@ -127,7 +127,19 @@ is(scalar(@tests),10,"Correct number of non-existant cases shown (no-match, name
 $opts->{'match'} = $FindBin::Bin;
 ($cases) = TestRail::Utils::Find::getTests($opts,$tr);
 isnt(exception {TestRail::Utils::Find::findTests($opts,@$cases)},undef,"match and no-match are mutually exclusive");
+
 delete $opts->{'no-match'};
+$opts->{'orphans'} = $FindBin::Bin;
+($cases) = TestRail::Utils::Find::getTests($opts,$tr);
+isnt(exception {TestRail::Utils::Find::findTests($opts,@$cases)},undef,"match and orphans are mutually exclusive");
+
+delete $opts->{'match'};
+$opts->{'no-match'} = $FindBin::Bin;
+($cases) = TestRail::Utils::Find::getTests($opts,$tr);
+isnt(exception {TestRail::Utils::Find::findTests($opts,@$cases)},undef,"orphans and no-match are mutually exclusive");
+delete $opts->{'orphans'};
+delete $opts->{'no-match'};
+$opts->{'match'} = $FindBin::Bin;
 
 delete $opts->{'plan'};
 $opts->{'run'} = 'TestingSuite';
@@ -161,3 +173,62 @@ delete $opts->{'match'};
 ($cases) = TestRail::Utils::Find::getTests($opts,$tr);
 @tests = TestRail::Utils::Find::findTests($opts,@$cases);
 is(scalar(@tests),0,"Correct number of cases shown (match, plan run, failed)");
+
+$opts = {
+    'project' => 'TestProject',
+    'testsuite' => 'HAMBURGER-IZE HUMANITY',
+    'directory' => $FindBin::Bin,
+    'extension' => '.test'
+};
+
+#Test getCases
+$cases = TestRail::Utils::Find::getCases($opts,$tr);
+is(scalar(@$cases),2,'Case search returns correct number of cases');
+
+#Test findCases
+$opts->{'no-missing'} = 1;
+my $output = TestRail::Utils::Find::findCases($opts,@$cases);
+is($output->{'testsuite_id'},9,'Correct testsuite_id returned by findCases');
+is($output->{'missing'},undef,'No missing cases returned');
+is($output->{'orphans'},undef,'No orphan cases returned');
+is($output->{'update'},undef,'No update cases returned');
+
+delete $opts->{'no-missing'};
+$output = TestRail::Utils::Find::findCases($opts,@$cases);
+is(scalar(@{$output->{'missing'}}),10,'Correct number of missing cases returned');
+is($output->{'orphans'},undef,'No orphan cases returned');
+is($output->{'update'},undef,'No update cases returned');
+
+$opts->{'no-missing'} = 1;
+$opts->{'orphans'} = 1;
+$output = TestRail::Utils::Find::findCases($opts,@$cases);
+is($output->{'missing'},undef,'No missing cases returned');
+is(scalar(@{$output->{'orphans'}}),1,'1 orphan case returned');
+is($output->{'orphans'}->[0]->{'title'},'nothere.test',"Correct orphan case return");
+is($output->{'update'},undef,'No update cases returned');
+
+delete $opts->{'orphans'};
+$opts->{'update'} = 1;
+$output = TestRail::Utils::Find::findCases($opts,@$cases);
+is($output->{'missing'},undef,'No missing cases returned');
+is($output->{'orphans'},undef,'No orphan cases returned');
+is(scalar(@{$output->{'update'}}),1,'1 update case returned');
+is($output->{'update'}->[0]->{'title'},'fake.test',"Correct update case return");
+
+delete $opts->{'no-missing'};
+$opts->{'orphans'} = 1;
+$output = TestRail::Utils::Find::findCases($opts,@$cases);
+is(scalar(@{$output->{'missing'}}),10,'Correct number of missing cases returned');
+is(scalar(@{$output->{'orphans'}}),1,'1 orphan case returned');
+is(scalar(@{$output->{'update'}}),1,'1 update case returned');
+
+delete $opts->{'testsuite_id'};
+like(exception {TestRail::Utils::Find::findCases($opts,@$cases)},qr/testsuite_id parameter mandatory/i,"No testsuite_id being passed results in error");
+$opts->{'testsuite_id'} = 9;
+
+delete $opts->{'directory'};
+like(exception {TestRail::Utils::Find::findCases($opts,@$cases)},qr/Directory parameter mandatory/i,"No directory being passed results in error");
+$opts->{'directory'} = 'bogoDir/';
+like(exception {TestRail::Utils::Find::findCases($opts,@$cases)},qr/No such directory/i,"Bad directory being passed results in error");
+
+#Test synchronize

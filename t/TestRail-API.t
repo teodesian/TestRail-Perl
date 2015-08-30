@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 78;
+use Test::More tests => 81;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -62,6 +62,11 @@ isnt(exception {$tr->userNamesToIds(@user_names,'potzrebie'); }, undef, "Passing
 #Test CASE TYPE method
 my $caseTypes = $tr->getCaseTypes();
 is(ref($caseTypes),'ARRAY',"getCaseTypes returns ARRAY of case types");
+my @type_names = map {$_->{'name'}} @$caseTypes;
+my @type_ids = map {$_->{'id'}} @$caseTypes;
+is($tr->getCaseTypeByName($type_names[0])->{'id'},$type_ids[0],"Can get case type by name correctly");
+my @computed_type_ids = $tr->typeNamesToIds(@type_names);
+cmp_deeply(\@computed_type_ids,\@type_ids,"typeNamesToIds returns the correct type IDs in the correct order");
 
 #Test PROJECT methods
 my $project_name = 'CRUSH ALL HUMANS';
@@ -100,6 +105,9 @@ isnt(exception {$tr->sectionNamesToIds($new_project->{'id'},$new_suite->{'id'},"
 my $case_name = 'STROGGIFY POPULATION CENTERS';
 my $new_case = $tr->createCase($new_section->{'id'},$case_name);
 is($new_case->{'title'},$case_name,"Can create new test case");
+
+my $updated_case = $tr->updateCase($new_case->{'id'}, {'custom_preconds' => 'do some stuff'});
+is($updated_case->{'custom_preconds'},'do some stuff',"updateCase works");
 
 my $case_filters = {
     'section_id' => $new_section->{'id'}
