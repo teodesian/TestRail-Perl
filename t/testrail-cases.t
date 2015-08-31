@@ -19,14 +19,4 @@ is($code, 0, "Exit code OK running add, update, orphans");
 chomp $out;
 like($out,qr/fake\.test/,"Shows existing tests by default");
 
-@args = (qw{-j TestProject -t}, 'HAMBURGER-IZE HUMANITY', qw{-d t -o --extension .test});
-($out,$code) = TestRail::Bin::Cases::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
-chomp $out;
-like($out,qr/nothere\.test/,"Shows orphan tests");
-
-@args = (qw{-j TestProject -t}, 'HAMBURGER-IZE HUMANITY', qw{-d t -m --extension .test});
-($out,$code) = TestRail::Bin::Cases::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
-chomp $out;
-like($out,qr/t\/skipall\.test/,"Shows missing tests");
-
 
