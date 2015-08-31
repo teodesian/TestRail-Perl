@@ -16,14 +16,14 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
 if ( !caller() ) {
-    my ( $out, $code ) = run(@ARGV);
+    my ( $out, $code ) = run( 'args' => \@ARGV );
     print $out;
     exit $code;
 }
 
 sub run {
-    my $args = \@_;
-    my $opts = {};
+    my %params = @_;
+    my $opts   = {};
 
     #Parse config file if we are missing api url/key or user
     my $homedir = my_home() || '.';
@@ -32,7 +32,7 @@ sub run {
     }
 
     GetOptionsFromArray(
-        $args,
+        $params{'args'},
         'apiurl=s'        => \$opts->{'apiurl'},
         'password=s'      => \$opts->{'password'},
         'user=s'          => \$opts->{'user'},
@@ -49,10 +49,11 @@ sub run {
         'e|encoding=s'    => \$opts->{'encoding'},
         'extension=s'     => \$opts->{'extension'},
         'h|help'          => \$opts->{'help'},
-        'mock'            => \$opts->{'mock'}
     );
 
     if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
+
+    $opts->{'browser'} = $params{'browser'};
 
     TestRail::Utils::interrogateUser( $opts,
         qw{apiurl user password project run} );
@@ -88,13 +89,14 @@ version 0.032
   testrail-tests [OPTIONS] | xargs prove -PTestrail=...
 
   require `which testrail-tests`;
-  TestRail::Bin::Test::run(@args);
+  TestRail::Bin::Test::run('args' => \@args);
 
 =head1 DESCRIPTION
 
 testrail-tests - list tests in a run matching the provided filters.
 
 Can be used as the modulino TestRail::Bin::Tests.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 
 =head1 PARAMETERS:
 
