@@ -7,7 +7,7 @@
   testrail-bulk-mark-results [OPTIONS] status [reason]
 
   require `which testrail-bulk-mark-results`;
-  TestRail::Bin::BulkMarkResults::run(@args);
+  TestRail::Bin::BulkMarkResults::run('args' => \@args);
 
 =head1 DESCRIPTION
 
@@ -16,6 +16,7 @@ For example, if a binary produced for test fails to run at all, more detailed te
 it would save time to just mark everything as blocked.
 
 Can be used as the modulino TestRail::Bin::BulkMarkResults.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 
 =head1 PARAMETERS:
 
@@ -91,13 +92,13 @@ Getopt::Long::Configure('pass_through');
 use File::HomeDir qw{my_home};
 
 if (!caller()) {
-    my ($out,$code) = run(@ARGV);
+    my ($out,$code) = run('args' => \@ARGV);
     print $out;
     exit $code;
 }
 
 sub run {
-    my $args = \@_;
+    my %params = @_;
     my $opts = {};
 
     # Parse config file
@@ -107,7 +108,7 @@ sub run {
     }
 
     # Override configuration with switches
-    GetOptionsFromArray($args,
+    GetOptionsFromArray($params{'args'},
         'apiurl=s'        => \$opts->{'apiurl'},
         'password=s'      => \$opts->{'password'},
         'user=s'          => \$opts->{'user'},
@@ -120,13 +121,14 @@ sub run {
         'a|assignedto=s@' => \$opts->{'users'},
         'e|encoding=s'    => \$opts->{'encoding'},
         'h|help'          => \$opts->{'help'},
-        'mock'            => \$opts->{'mock'}
     );
 
     if ($opts->{help}) { return ('',TestRail::Utils::help()); }
 
-    my $status = $args->[0];
-    my $reason = $args->[1];
+    $opts->{'browser'} = $params{'browser'};
+
+    my $status = $params{'args'}->[0];
+    my $reason = $params{'args'}->[1];
 
     die("No status to set provided.") unless $status;
     TestRail::Utils::interrogateUser($opts,qw{apiurl user password project run});

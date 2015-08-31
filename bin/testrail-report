@@ -12,13 +12,14 @@
   prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t
 
   require `which testrail-report`;
-  TestRail::Bin::Report::run(@args);
+  TestRail::Bin::Report::run('args' => @args);
 
 =head1 DESCRIPTION
 
 testrail-report - report raw TAP results to a TestRail install
 
 Can be used as the modulino TestRail::Bin::Report.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 
 =head2 PARAMETERS:
 
@@ -127,13 +128,13 @@ if (!caller()) {
 
 #Main loop------------
 sub run {
-    my $args = \@_;
+    my %params = @_;
     my %opts;
 
     print "testrail-report\n----------------------\n";
 
     #parse switches
-    GetOptionsFromArray($args,
+    GetOptionsFromArray($params{'args'},
         'run=s'          => \$opts{run},
         'apiurl=s'       => \$opts{apiurl},
         'password=s'     => \$opts{password},
@@ -150,10 +151,10 @@ sub run {
         'autoclose'      => \$opts{autoclose},
         'e|encoding=s'   => \$opts{encoding},
         'help'           => \$opts{help},
-        'mock'           => \$opts{mock}
     );
 
     if ($opts{help}) { return ('',TestRail::Utils::help()); }
+    $opts{'browser'} = $params{'browser'};
 
     #Parse config file if we are missing api url/key or user
     my $homedir = my_home() || '.';
@@ -162,7 +163,7 @@ sub run {
     }
 
     #If argument is passed use it instead of stdin
-    my $file = $args->[0];
+    my $file = $params{'args'}->[0];
     die "No Such File $file" if ($file && !-e $file);
 
     die "ERROR: Interactive mode not allowed when piping input.  See --help for options." if ( !$opts{run} || !$opts{apiurl} || !$opts{password} || !$opts{user} || !$opts{project} );
@@ -173,11 +174,7 @@ sub run {
 
     $opts{result_options} = {'version' => $opts{version}} if $opts{version};
 
-    if ($opts{'mock'}) {
-        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm'; ## no critic
-        $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-        $opts{'debug'} = 1;
-    }
+    $opts{'debug'} = 1 if $opts{'browser'};
 
     my $tap;
     foreach my $phil (@files) {

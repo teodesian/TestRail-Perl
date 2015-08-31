@@ -7,7 +7,7 @@
   testrail-runs [OPTIONS] | xargs prove -PTestrail=...
 
   require `which testrail-runs`;
-  TestRail::Bin::Run::run(@args);
+  TestRail::Bin::Run::run('args' => \@args);
 
 =head1 DESCRIPTION
 
@@ -15,6 +15,7 @@ testrail-runs - list runs in a TestRail project matching the provided filters.
 Groups by plan for runs which are children of a plan.
 
 Can be used as the modulino TestRail::Bin::Runs.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 
 =head1 PARAMETERS:
 
@@ -83,13 +84,13 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
 if (!caller()) {
-    my ($out,$code) = run(@ARGV);
+    my ($out,$code) = run('args' => \@ARGV);
     print $out;
     exit $code;
 }
 
 sub run {
-    my $args = \@_;
+    my %params = @_;
     my $opts = {};
 
     # Parse config file
@@ -98,7 +99,7 @@ sub run {
         $opts = TestRail::Utils::parseConfig($homedir);
     }
 
-    GetOptionsFromArray($args,
+    GetOptionsFromArray($params{'args'},
         'apiurl=s'     => \$opts->{'apiurl'},
         'password=s'   => \$opts->{'password'},
         'user=s'       => \$opts->{'user'},
@@ -109,10 +110,11 @@ sub run {
         'l|lifo'       => \$opts->{'lifo'},
         'm|milesort'   => \$opts->{'milesort'},
         'h|help'       => \$opts->{'help'},
-        'mock'         => \$opts->{'mock'}
     );
 
     if ($opts->{help}) { return ('',TestRail::Utils::help()); }
+
+    $opts->{'browser'} = $params{'browser'};
 
     TestRail::Utils::interrogateUser($opts,qw{apiurl user password project});
 

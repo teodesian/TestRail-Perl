@@ -62,10 +62,12 @@ sub make_parser {
     $args->{'sections'}  = \@sections if scalar(@sections);
     $args->{'autoclose'} = $ENV{'TESTRAIL_AUTOCLOSE'};
 
-    #for Testability of plugin
+    #for Testability of plugin XXX probably some of the last remaining grotiness
     if ($ENV{'TESTRAIL_MOCKED'}) {
         use lib 't/lib'; #Unit tests will always run from the main dir during make test
-        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm' unless defined $Test::LWP::UserAgent::TestRailMock::mockObject; ## no critic
+        if (!defined $Test::LWP::UserAgent::TestRailMock::mockObject) {
+            require 't/lib/Test/LWP/UserAgent/TestRailMock.pm'; ## no critic
+        }
         $args->{'debug'} = 1;
         $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     }

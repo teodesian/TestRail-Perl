@@ -10,20 +10,23 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 26;
+use Test::More 'tests' => 27;
 use Test::Fatal;
 
 use TestRail::API;
 use TestRail::Utils;
 use Test::LWP::UserAgent::TestRailMock;
+use IO::CaptureOutput qw{capture};
 
 use File::Basename qw{dirname};
 
 my ($apiurl,$user,$password);
 
 #check help output
-
-is(TestRail::Utils::help(),0,"Help works OK");
+my $out;
+my $code = capture { TestRail::Utils::help() } \$out;
+is($code,0,"Help works OK");
+like($out,qr/bogus bogus/i,"Displays POD OK");
 
 #check the binary output mode
 is(exception {($apiurl,$password,$user) = TestRail::Utils::parseConfig(dirname(__FILE__),1)}, undef, "No exceptions thrown by parseConfig in array mode");
@@ -31,7 +34,6 @@ is($apiurl,'http://hokum.bogus',"APIURL parse OK");
 is($user,'zippy',"USER parse OK");
 is($password, 'happy', 'PASSWORD parse OK');
 
-my $out;
 is(exception {$out = TestRail::Utils::parseConfig(dirname(__FILE__))}, undef, "No exceptions thrown by parseConfig default mode");
 is($out->{apiurl},'http://hokum.bogus',"APIURL parse OK");
 is($out->{user},'zippy',"USER parse OK");
@@ -79,7 +81,7 @@ my $login_opts = {
     'apiurl'   => 'http://testrail.local',
     'user'     => 'teodesian@cpan.org',
     'password' => 'fake',
-    'mock'     => 1
+    'browser'  => $Test::LWP::UserAgent::TestRailMock::mockObject
 };
 my $tr = TestRail::Utils::getHandle($login_opts);
 

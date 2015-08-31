@@ -7,7 +7,7 @@
   testrail-cases [OPTIONS]
 
   require `which testrail-cases`;
-  TestRail::Bin::Cases::run(@args);
+  TestRail::Bin::Cases::run('args' => @args);
 
 =head1 DESCRIPTION
 
@@ -16,6 +16,7 @@ testrail-cases - get information about cases inside various testsuites/sections.
 By default will tell you which cases are in both the testsuite and directory passed.
 
 Can be used as the modulino TestRail::Bin::Cases.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 
 =head1 PARAMETERS:
 
@@ -97,13 +98,13 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
 if (!caller()) {
-    my ($out,$code) = run(@ARGV);
+    my ($out,$code) = run('args' => @ARGV);
     print $out;
     exit $code;
 }
 
 sub run {
-    my $args = \@_;
+    my %params = @_;
     my $opts ={};
 
     #Parse config file if we are missing api url/key or user
@@ -112,7 +113,7 @@ sub run {
         $opts = TestRail::Utils::parseConfig($homedir);
     }
 
-    GetOptionsFromArray($args,
+    GetOptionsFromArray($params{'args'},
         'apiurl=s'        => \$opts->{'apiurl'},
         'password=s'      => \$opts->{'password'},
         'user=s'          => \$opts->{'user'},
@@ -128,10 +129,11 @@ sub run {
         'extension=s'     => \$opts->{'extension'},
         'h|help'          => \$opts->{'help'},
         'test'            => \$opts->{'test'},
-        'mock'            => \$opts->{'mock'} #actually do something, but bogusly
     );
 
     if ($opts->{help}) { return ('',TestRail::Utils::help()); }
+
+    $opts->{'browser'} = $params{'browser'};
 
     #Mutual exclusivity
     $opts->{'no-missing'} = !$opts->{'missing'};

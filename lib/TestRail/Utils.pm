@@ -8,6 +8,7 @@ use warnings;
 
 use Carp qw{confess cluck};
 use Pod::Perldoc 3.20; #Make sure we have ToMan on some unices
+use TestRail::API;
 
 use IO::Interactive::Tiny ();
 use Term::ANSIColor 2.01 qw(colorstrip);
@@ -223,12 +224,11 @@ Has a special 'mock' hash key that can only be used by those testing this distri
 sub getHandle {
     my $opts = shift;
 
-    $opts->{'debug'} = 1 if ($opts->{'mock'});
+    $opts->{'debug'} = 1 if ($opts->{'browser'});
+
     my $tr = TestRail::API->new($opts->{apiurl},$opts->{user},$opts->{password},$opts->{'encoding'},$opts->{'debug'});
-    if ($opts->{'mock'}) {
-        use lib 't/lib'; #Unit tests will always run from the main dir during make test
-        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm' unless defined $Test::LWP::UserAgent::TestRailMock::mockObject; ## no critic
-        $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+    if ($opts->{'browser'}) {
+        $tr->{'browser'} = $opts->{'browser'};
         $tr->{'debug'} = 0;
     }
     return $tr;
