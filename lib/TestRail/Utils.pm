@@ -16,7 +16,7 @@ use Scalar::Util qw{blessed};
 sub help {
     @ARGV = ($0);
     Pod::Perldoc->run();
-    exit 0;
+    return 0;
 }
 
 sub userInput {
@@ -176,7 +176,9 @@ sub getHandle {
     if ( $opts->{'mock'} ) {
         use lib 't/lib'
           ;    #Unit tests will always run from the main dir during make test
-        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm'
+          unless
+          defined $Test::LWP::UserAgent::TestRailMock::mockObject;  ## no critic
         $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
         $tr->{'debug'}   = 0;
     }

@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 # ABSTRACT: List tests in a TestRail run matching the provided filters
-# PODNAME: testrail-tests
+# PODNAME: TestRail::Bin::Tests
 
+package TestRail::Bin::Tests;
+$TestRail::Bin::Tests::VERSION = '0.032';
 use strict;
 use warnings;
 use utf8;
@@ -10,52 +12,64 @@ use TestRail::API;
 use TestRail::Utils;
 use TestRail::Utils::Find;
 
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
-my $opts = {};
-
-#Parse config file if we are missing api url/key or user
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc' ) {
-    $opts = TestRail::Utils::parseConfig($homedir);
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
 }
 
-GetOptions(
-    'apiurl=s'        => \$opts->{'apiurl'},
-    'password=s'      => \$opts->{'password'},
-    'user=s'          => \$opts->{'user'},
-    'j|project=s'     => \$opts->{'project'},
-    'p|plan=s'        => \$opts->{'plan'},
-    'r|run=s'         => \$opts->{'run'},
-    'c|config=s@'     => \$opts->{'configs'},
-    's|status=s@'     => \$opts->{'statuses'},
-    'a|assignedto=s@' => \$opts->{'users'},
-    'm|match=s'       => \$opts->{'match'},
-    'no-match=s'      => \$opts->{'no-match'},
-    'orphans=s'       => \$opts->{'orphans'},
-    'n|no-recurse'    => \$opts->{'no-recurse'},
-    'e|encoding=s'    => \$opts->{'encoding'},
-    'extension=s'     => \$opts->{'extension'},
-    'h|help'          => \$opts->{'help'},
-    'mock'            => \$opts->{'mock'}
-);
+sub run {
+    my $args = \@_;
+    my $opts = {};
 
-if ( $opts->{help} ) { TestRail::Utils::help(); }
+    #Parse config file if we are missing api url/key or user
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc' ) {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
 
-TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project run} );
+    GetOptionsFromArray(
+        $args,
+        'apiurl=s'        => \$opts->{'apiurl'},
+        'password=s'      => \$opts->{'password'},
+        'user=s'          => \$opts->{'user'},
+        'j|project=s'     => \$opts->{'project'},
+        'p|plan=s'        => \$opts->{'plan'},
+        'r|run=s'         => \$opts->{'run'},
+        'c|config=s@'     => \$opts->{'configs'},
+        's|status=s@'     => \$opts->{'statuses'},
+        'a|assignedto=s@' => \$opts->{'users'},
+        'm|match=s'       => \$opts->{'match'},
+        'no-match=s'      => \$opts->{'no-match'},
+        'orphans=s'       => \$opts->{'orphans'},
+        'n|no-recurse'    => \$opts->{'no-recurse'},
+        'e|encoding=s'    => \$opts->{'encoding'},
+        'extension=s'     => \$opts->{'extension'},
+        'h|help'          => \$opts->{'help'},
+        'mock'            => \$opts->{'mock'}
+    );
 
-my $tr = TestRail::Utils::getHandle($opts);
+    if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
 
-my ($cases) = TestRail::Utils::Find::getTests( $opts, $tr );
-die "No cases in TestRail!\n" unless $cases;
+    TestRail::Utils::interrogateUser( $opts,
+        qw{apiurl user password project run} );
 
-$opts->{'names-only'} = 1;
-my @tests = TestRail::Utils::Find::findTests( $opts, @$cases );
+    my $tr = TestRail::Utils::getHandle($opts);
 
-print join( "\n", @tests ) . "\n" if scalar(@tests);
+    my ($cases) = TestRail::Utils::Find::getTests( $opts, $tr );
+    die "No cases in TestRail!\n" unless $cases;
 
-exit 0;
+    $opts->{'names-only'} = 1;
+    my @tests = TestRail::Utils::Find::findTests( $opts, @$cases );
+
+    return ( join( "\n", @tests ) . "\n", 0 ) if scalar(@tests);
+    return ( '', 255 );
+}
+
+1;
 
 =pod
 
@@ -63,7 +77,7 @@ exit 0;
 
 =head1 NAME
 
-testrail-tests - List tests in a TestRail run matching the provided filters
+TestRail::Bin::Tests - List tests in a TestRail run matching the provided filters
 
 =head1 VERSION
 
@@ -73,9 +87,14 @@ version 0.032
 
   testrail-tests [OPTIONS] | xargs prove -PTestrail=...
 
+  require `which testrail-tests`;
+  TestRail::Bin::Test::run(@args);
+
 =head1 DESCRIPTION
 
 testrail-tests - list tests in a run matching the provided filters.
+
+Can be used as the modulino TestRail::Bin::Tests.
 
 =head1 PARAMETERS:
 

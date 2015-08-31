@@ -1,57 +1,71 @@
 #!/usr/bin/env perl
 # ABSTRACT: Lock a test in a TestRail, and return the test name if successful.
-# PODNAME: testrail-lock
+# PODNAME: TestRail::Bin::Lock
 
+package TestRail::Bin::Lock;
+$TestRail::Bin::Lock::VERSION = '0.032';
 use strict;
 use warnings;
 use utf8;
 
 use TestRail::Utils;
 
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 use Sys::Hostname qw{hostname};
 
-my $opts = {};
-
-#Parse config file if we are missing api url/key or user
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc' ) {
-    $opts = TestRail::Utils::parseConfig($homedir);
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
 }
 
-GetOptions(
-    'apiurl=s'       => \$opts->{'apiurl'},
-    'password=s'     => \$opts->{'password'},
-    'user=s'         => \$opts->{'user'},
-    'l|lockname=s'   => \$opts->{'lockname'},
-    'j|project=s'    => \$opts->{'project'},
-    'p|plan=s'       => \$opts->{'plan'},
-    'r|run=s'        => \$opts->{'run'},
-    'c|config=s@'    => \$opts->{'configs'},
-    'm|match=s'      => \$opts->{'match'},
-    'no-match=s'     => \$opts->{'no-match'},
-    'n|no-recurse'   => \$opts->{'no-recurse'},
-    't|case-type=s@' => \$opts->{'case-types'},
-    'e|encoding=s'   => \$opts->{'encoding'},
-    'h|help'         => \$opts->{'help'},
-    'mock'           => \$opts->{'mock'}
-);
+sub run {
+    my $args = \@_;
+    my $opts = {};
 
-if ( $opts->{help} ) { TestRail::Utils::help(); }
-$opts->{'hostname'} = hostname;
+    #Parse config file if we are missing api url/key or user
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc' ) {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
 
-TestRail::Utils::interrogateUser( $opts,
-    qw{apiurl user password project run lockname} );
+    GetOptionsFromArray(
+        $args,
+        'apiurl=s'       => \$opts->{'apiurl'},
+        'password=s'     => \$opts->{'password'},
+        'user=s'         => \$opts->{'user'},
+        'l|lockname=s'   => \$opts->{'lockname'},
+        'j|project=s'    => \$opts->{'project'},
+        'p|plan=s'       => \$opts->{'plan'},
+        'r|run=s'        => \$opts->{'run'},
+        'c|config=s@'    => \$opts->{'configs'},
+        'm|match=s'      => \$opts->{'match'},
+        'no-match=s'     => \$opts->{'no-match'},
+        'n|no-recurse'   => \$opts->{'no-recurse'},
+        't|case-type=s@' => \$opts->{'case-types'},
+        'e|encoding=s'   => \$opts->{'encoding'},
+        'h|help'         => \$opts->{'help'},
+        'mock'           => \$opts->{'mock'}
+    );
 
-my $tr = TestRail::Utils::getHandle($opts);
+    if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
 
-my $ret = TestRail::Utils::pickAndLockTest( $opts, $tr );
+    $opts->{'hostname'} = hostname;
 
-exit 255 if !$ret;
+    TestRail::Utils::interrogateUser( $opts,
+        qw{apiurl user password project run lockname} );
 
-print $ret->{'path'} . "\n";
-exit 0;
+    my $tr = TestRail::Utils::getHandle($opts);
+
+    my $ret = TestRail::Utils::pickAndLockTest( $opts, $tr );
+
+    return ( 'Could not lock case.', 255 ) if !$ret;
+
+    return ( $ret->{'path'} . "\n", 0 );
+}
+
+1;
 
 =pod
 
@@ -59,7 +73,7 @@ exit 0;
 
 =head1 NAME
 
-testrail-lock - Lock a test in a TestRail, and return the test name if successful.
+TestRail::Bin::Lock - Lock a test in a TestRail, and return the test name if successful.
 
 =head1 VERSION
 
@@ -69,6 +83,9 @@ version 0.032
 
   # Lock a group of tests and execute them
   testrail-tests [OPTIONS] | xargs testrail-lock [OPTIONS] | xargs prove -PTestrail=...
+
+  require `which testrail-lock`;
+  TestRail::Bin::Lock::run(@args);
 
 =head1 DESCRIPTION
 
@@ -81,6 +98,8 @@ Results, however have a history of results set, so we use that fact to detect if
 Will respect test priority when making the choice of what test to lock.
 
 This obviously does not make sense with case_per_ok test upload; support for locking entire sections when in case_per_ok upload mode is not supported at this time.
+
+Can also be used as the modulino TestRail::Bin::Lock.
 
 =head1 PARAMETERS:
 

@@ -2,11 +2,18 @@ use strict;
 use warnings;
 
 use Test::More "tests" => 2;
+use FindBin;
+use IO::CaptureOutput qw{capture};
+
+use lib $FindBin::Bin.'/../bin';
+require 'testrail-lock';
 
 #VERY rudimentray checking
-my @args = ($^X,qw{bin/testrail-lock --help});
-my $out = `@args`;
-is($? >> 8, 0, "Can get help output OK");
-chomp $out;
-like($out,qr/useful to lock the test/,"Help Output looks as expected");
+my @args = qw{--help};
+$0 = $FindBin::Bin.'/../bin/testrail-lock';
+my $out;
+my (undef,$code) = capture {TestRail::Bin::Lock::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK asking for help");
+like($out,qr/encoding of arguments/i,"Help output OK");
+
 

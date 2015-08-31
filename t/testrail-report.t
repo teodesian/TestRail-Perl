@@ -1,59 +1,63 @@
 use strict;
 use warnings;
+use FindBin;
+
+use lib $FindBin::Bin.'/../bin';
+require 'testrail-report';
 
 use Test::More 'tests' => 16;
+use IO::CaptureOutput qw{capture};
 
-my @args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "CRUSH ALL HUMANS" --run "SEND T-1000 INFILTRATION UNITS BACK IN TIME" --mock t/test_multiple_files.tap});
-my $out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with multiple files");
+my @args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project}, "CRUSH ALL HUMANS", '--run', "SEND T-1000 INFILTRATION UNITS BACK IN TIME", qw{--mock t/test_multiple_files.tap});
+my $out;
+my (undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with multiple files");
 my $matches = () = $out =~ m/Reporting result of case/ig;
 is($matches,2,"Attempts to upload multiple times");
 
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "CRUSH ALL HUMANS" --run "SEND T-1000 INFILTRATION UNITS BACK IN TIME" --case-ok --mock t/test_multiple_files.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with multiple files (case-ok mode)");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project}, "CRUSH ALL HUMANS", '--run', "SEND T-1000 INFILTRATION UNITS BACK IN TIME", qw{--case-ok --mock t/test_multiple_files.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with multiple files (case-ok mode)");
 $matches = () = $out =~ m/Reporting result of case/ig;
 is($matches,4,"Attempts to upload multiple times (case-ok mode)");
 
 #Test version, case-ok
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite" --case-ok --version '1.0.14' --mock t/test_subtest.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with subtests (case-ok mode)");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject --run TestingSuite --case-ok --version 1.0.14 --mock t/test_subtest.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with subtests (case-ok mode)");
 $matches = () = $out =~ m/Reporting result of case/ig;
 is($matches,2,"Attempts to upload do not do subtests (case-ok mode)");
 
 #Test plans/configs
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "Executing the great plan" --plan "GosPlan" --config "testConfig"  --case-ok --mock t/test_subtest.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with plans");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject --run}, "Executing the great plan", qw{--plan GosPlan --config testConfig --case-ok --mock t/test_subtest.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with plans");
 $matches = () = $out =~ m/Reporting result of case.*OK/ig;
 is($matches,2,"Attempts to to plans work");
 
 #Test that spawn works
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --testsuite_id 9 --case-ok --mock t/test_subtest.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with spawn");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject --run TestingSuite2 --testsuite_id 9 --case-ok --mock t/test_subtest.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with spawn");
 $matches = () = $out =~ m/Reporting result of case.*OK/ig;
 is($matches,2,"Attempts to spawn work: testsuite_id");
 
 #Test that spawn works w/sections
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "TestingSuite2" --testsuite "HAMBURGER-IZE HUMANITY" --case-ok --section "CARBON LIQUEFACTION" --mock t/test_subtest.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with spawn");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject --run TestingSuite2 --testsuite}, "HAMBURGER-IZE HUMANITY", qw{--case-ok --section}, "CARBON LIQUEFACTION", qw{--mock t/test_subtest.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK reported with spawn");
 $matches = () = $out =~ m/with specified sections/ig;
 is($matches,1,"Attempts to spawn work: testsuite name");
 
 #Test that the autoclose option works
-@args = ($^X,qw{bin/testrail-report --apiurl http://testrail.local --user "test@fake.fake" --password "fake" --project "TestProject" --run "FinalRun" --plan "FinalPlan" --config "testConfig" --case-ok --autoclose --mock t/fake.tap});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK when doing autoclose");
+@args = (qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject --run FinalRun --plan FinalPlan --config testConfig --case-ok --autoclose --mock t/fake.tap});
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK when doing autoclose");
 like($out,qr/closing plan/i,"Run closure reported to user");
 
 #Test that help works
-@args = ($^X,qw{bin/testrail-report --help});
-$out = `@args`;
-is($? >> 8, 0, "Exit code OK reported with help");
-$matches = () = $out =~ m/encoding of arguments/ig;
-is($matches,1,"Help output OK");
-
-
+@args = qw{--help};
+$0 = $FindBin::Bin.'/../bin/testrail-report';
+(undef,$code) = capture {TestRail::Bin::Report::run(@args)} \$out, \$out;
+is($code, 0, "Exit code OK asking for help");
+like($out,qr/encoding of arguments/i,"Help output OK");

@@ -1,109 +1,121 @@
 #!/usr/bin/env perl
 # ABSTRACT: Upload your TAP results to TestRail after they've finished
-# PODNAME: testrail-report
+# PODNAME: TestRail::Bin::Report
 
+package TestRail::Bin::Report;
+$TestRail::Bin::Report::VERSION = '0.032';
 use strict;
 use warnings;
 
 use TestRail::Utils;
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 use Test::Rail::Parser;
 use File::HomeDir qw{my_home};
 
-print "testrail-report\n----------------------\n";
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
+}
 
 #Main loop------------
-my %opts;
+sub run {
+    my $args = \@_;
+    my %opts;
 
-#parse switches
-GetOptions(
-    'run=s'          => \$opts{run},
-    'apiurl=s'       => \$opts{apiurl},
-    'password=s'     => \$opts{password},
-    'user=s'         => \$opts{user},
-    'project=s'      => \$opts{project},
-    'case-ok'        => \$opts{case_per_ok},
-    'step-results=s' => \$opts{step_results},
-    'config=s@'      => \$opts{configs},
-    'plan=s'         => \$opts{plan},
-    'version=s'      => \$opts{version},
-    'testsuite_id=i' => \$opts{testsuite_id},
-    'testsuite=s'    => \$opts{testsuite},
-    'section=s@'     => \$opts{sections},
-    'autoclose'      => \$opts{autoclose},
-    'e|encoding=s'   => \$opts{encoding},
-    'help'           => \$opts{help},
-    'mock'           => \$opts{mock}
-);
+    print "testrail-report\n----------------------\n";
 
-if ( $opts{help} ) { TestRail::Utils::help(); }
-
-#Parse config file if we are missing api url/key or user
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc'
-    && ( !$opts{apiurl} || !$opts{password} || !$opts{user} ) )
-{
-    ( $opts{apiurl}, $opts{password}, $opts{user} ) =
-      TestRail::Utils::parseConfig( $homedir, 1 );
-}
-
-#If argument is passed use it instead of stdin
-my $file = $ARGV[0];
-die "No Such File $file" if ( $file && !-e $file );
-
-die
-  "ERROR: Interactive mode not allowed when piping input.  See --help for options."
-  if ( !$opts{run}
-    || !$opts{apiurl}
-    || !$opts{password}
-    || !$opts{user}
-    || !$opts{project} );
-
-my @files = TestRail::Utils::TAP2TestFiles($file);
-
-TestRail::Utils::interrogateUser( \%opts,
-    qw{apiurl user password project run} );
-
-$opts{result_options} = { 'version' => $opts{version} } if $opts{version};
-
-if ( $opts{'mock'} ) {
-    require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
-    $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
-    $opts{'debug'}   = 1;
-}
-
-my $tap;
-foreach my $phil (@files) {
-    $tap = Test::Rail::Parser->new(
-        {
-            'tap'            => $phil,
-            'apiurl'         => $opts{apiurl},
-            'user'           => $opts{user},
-            'pass'           => $opts{password},
-            'run'            => $opts{run},
-            'project'        => $opts{project},
-            'case_per_ok'    => $opts{case_per_ok},
-            'step_results'   => $opts{step_results},
-            'debug'          => $opts{debug},
-            'browser'        => $opts{browser},
-            'plan'           => $opts{plan},
-            'configs'        => $opts{configs},
-            'result_options' => $opts{result_options},
-            'testsuite_id'   => $opts{testsuite_id},
-            'testsuite'      => $opts{testsuite},
-            'sections'       => $opts{sections},
-            'autoclose'      => $opts{autoclose},
-            'encoding'       => $opts{encoding},
-            'merge'          => 1
-        }
+    #parse switches
+    GetOptionsFromArray(
+        $args,
+        'run=s'          => \$opts{run},
+        'apiurl=s'       => \$opts{apiurl},
+        'password=s'     => \$opts{password},
+        'user=s'         => \$opts{user},
+        'project=s'      => \$opts{project},
+        'case-ok'        => \$opts{case_per_ok},
+        'step-results=s' => \$opts{step_results},
+        'config=s@'      => \$opts{configs},
+        'plan=s'         => \$opts{plan},
+        'version=s'      => \$opts{version},
+        'testsuite_id=i' => \$opts{testsuite_id},
+        'testsuite=s'    => \$opts{testsuite},
+        'section=s@'     => \$opts{sections},
+        'autoclose'      => \$opts{autoclose},
+        'e|encoding=s'   => \$opts{encoding},
+        'help'           => \$opts{help},
+        'mock'           => \$opts{mock}
     );
-    $tap->run();
+
+    if ( $opts{help} ) { return ( '', TestRail::Utils::help() ); }
+
+    #Parse config file if we are missing api url/key or user
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc'
+        && ( !$opts{apiurl} || !$opts{password} || !$opts{user} ) )
+    {
+        ( $opts{apiurl}, $opts{password}, $opts{user} ) =
+          TestRail::Utils::parseConfig( $homedir, 1 );
+    }
+
+    #If argument is passed use it instead of stdin
+    my $file = $args->[0];
+    die "No Such File $file" if ( $file && !-e $file );
+
+    die
+      "ERROR: Interactive mode not allowed when piping input.  See --help for options."
+      if ( !$opts{run}
+        || !$opts{apiurl}
+        || !$opts{password}
+        || !$opts{user}
+        || !$opts{project} );
+
+    my @files = TestRail::Utils::TAP2TestFiles($file);
+
+    TestRail::Utils::interrogateUser( \%opts,
+        qw{apiurl user password project run} );
+
+    $opts{result_options} = { 'version' => $opts{version} } if $opts{version};
+
+    if ( $opts{'mock'} ) {
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
+        $opts{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
+        $opts{'debug'}   = 1;
+    }
+
+    my $tap;
+    foreach my $phil (@files) {
+        $tap = Test::Rail::Parser->new(
+            {
+                'tap'            => $phil,
+                'apiurl'         => $opts{apiurl},
+                'user'           => $opts{user},
+                'pass'           => $opts{password},
+                'run'            => $opts{run},
+                'project'        => $opts{project},
+                'case_per_ok'    => $opts{case_per_ok},
+                'step_results'   => $opts{step_results},
+                'debug'          => $opts{debug},
+                'browser'        => $opts{browser},
+                'plan'           => $opts{plan},
+                'configs'        => $opts{configs},
+                'result_options' => $opts{result_options},
+                'testsuite_id'   => $opts{testsuite_id},
+                'testsuite'      => $opts{testsuite},
+                'sections'       => $opts{sections},
+                'autoclose'      => $opts{autoclose},
+                'encoding'       => $opts{encoding},
+                'merge'          => 1
+            }
+        );
+        $tap->run();
+    }
+
+    #all done
+    return ( "Done.\n", 0 );
 }
 
-print "Done.\n";
-
-#all done
-0;
+1;
 
 __END__
 
@@ -113,7 +125,7 @@ __END__
 
 =head1 NAME
 
-testrail-report - Upload your TAP results to TestRail after they've finished
+TestRail::Bin::Report - Upload your TAP results to TestRail after they've finished
 
 =head1 VERSION
 
@@ -128,9 +140,14 @@ version 0.032
 
   prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t
 
+  require `which testrail-report`;
+  TestRail::Bin::Report::run(@args);
+
 =head1 DESCRIPTION
 
 testrail-report - report raw TAP results to a TestRail install
+
+Can be used as the modulino TestRail::Bin::Report.
 
 =head2 PARAMETERS:
 

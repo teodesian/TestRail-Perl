@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 # ABSTRACT: List runs in a TestRail project matching the provided filters
-# PODNAME: testrail-runs
+# PODNAME: TestRail::Bin::Runs
 
+package TestRail::Bin::Runs;
+$TestRail::Bin::Runs::VERSION = '0.032';
 use strict;
 use warnings;
 use utf8;
@@ -10,42 +12,53 @@ use TestRail::API;
 use TestRail::Utils;
 use TestRail::Utils::Find;
 
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
-my $opts = {};
-
-# Parse config file
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc' ) {
-    $opts = TestRail::Utils::parseConfig($homedir);
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
 }
 
-GetOptions(
-    'apiurl=s'     => \$opts->{'apiurl'},
-    'password=s'   => \$opts->{'password'},
-    'user=s'       => \$opts->{'user'},
-    'j|project=s'  => \$opts->{'project'},
-    'c|config=s@'  => \$opts->{'configs'},
-    's|status=s@'  => \$opts->{'statuses'},
-    'e|encoding=s' => \$opts->{'encoding'},
-    'l|lifo'       => \$opts->{'lifo'},
-    'm|milesort'   => \$opts->{'milesort'},
-    'h|help'       => \$opts->{'help'},
-    'mock'         => \$opts->{'mock'}
-);
+sub run {
+    my $args = \@_;
+    my $opts = {};
 
-if ( $opts->{help} ) { TestRail::Utils::help(); }
+    # Parse config file
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc' ) {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
 
-TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project} );
+    GetOptionsFromArray(
+        $args,
+        'apiurl=s'     => \$opts->{'apiurl'},
+        'password=s'   => \$opts->{'password'},
+        'user=s'       => \$opts->{'user'},
+        'j|project=s'  => \$opts->{'project'},
+        'c|config=s@'  => \$opts->{'configs'},
+        's|status=s@'  => \$opts->{'statuses'},
+        'e|encoding=s' => \$opts->{'encoding'},
+        'l|lifo'       => \$opts->{'lifo'},
+        'm|milesort'   => \$opts->{'milesort'},
+        'h|help'       => \$opts->{'help'},
+        'mock'         => \$opts->{'mock'}
+    );
 
-my $tr = TestRail::Utils::getHandle($opts);
+    if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
 
-my $runs = TestRail::Utils::Find::findRuns( $opts, $tr );
+    TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project} );
 
-@$runs = map { $_->{name} } @$runs;
-print join( "\n", @$runs ) . "\n" if scalar(@$runs);
-exit 0;
+    my $tr = TestRail::Utils::getHandle($opts);
+    my $runs = TestRail::Utils::Find::findRuns( $opts, $tr );
+
+    @$runs = map { $_->{name} } @$runs;
+    return ( join( "\n", @$runs ) . "\n", 0 ) if scalar(@$runs);
+    return ( "No runs found matching your criterion.\n", 255 );
+}
+
+1;
 
 =pod
 
@@ -53,7 +66,7 @@ exit 0;
 
 =head1 NAME
 
-testrail-runs - List runs in a TestRail project matching the provided filters
+TestRail::Bin::Runs - List runs in a TestRail project matching the provided filters
 
 =head1 VERSION
 
@@ -63,10 +76,15 @@ version 0.032
 
   testrail-runs [OPTIONS] | xargs prove -PTestrail=...
 
+  require `which testrail-runs`;
+  TestRail::Bin::Run::run(@args);
+
 =head1 DESCRIPTION
 
-testrail-tests - list runs in a TestRail project matching the provided filters.
+testrail-runs - list runs in a TestRail project matching the provided filters.
 Groups by plan for runs which are children of a plan.
+
+Can be used as the modulino TestRail::Bin::Runs.
 
 =head1 PARAMETERS:
 

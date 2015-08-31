@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 # ABSTRACT: Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
-# PODNAME: testrail-bulk-mark-results
+# PODNAME: TestRail::Bin::BulkMarkResults
 
+package TestRail::Bin::BulkMarkResults;
+$TestRail::Bin::BulkMarkResults::VERSION = '0.032';
 use strict;
 use warnings;
 use utf8;
@@ -10,56 +12,70 @@ use TestRail::API;
 use TestRail::Utils;
 use TestRail::Utils::Results;
 
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 Getopt::Long::Configure('pass_through');
 
 use File::HomeDir qw{my_home};
 
-my $opts = {};
-
-# Parse config file
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc' ) {
-    $opts = TestRail::Utils::parseConfig($homedir);
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
 }
 
-# Override configuration with switches
-GetOptions(
-    'apiurl=s'        => \$opts->{'apiurl'},
-    'password=s'      => \$opts->{'password'},
-    'user=s'          => \$opts->{'user'},
-    'assignedto=s@'   => \$opts->{'users'},
-    'status=s@'       => \$opts->{'statuses'},
-    'j|project=s'     => \$opts->{'project'},
-    'p|plan=s'        => \$opts->{'plan'},
-    'r|run=s'         => \$opts->{'run'},
-    'c|config=s@'     => \$opts->{'configs'},
-    'a|assignedto=s@' => \$opts->{'users'},
-    'e|encoding=s'    => \$opts->{'encoding'},
-    'h|help'          => \$opts->{'help'},
-    'mock'            => \$opts->{'mock'}
-);
+sub run {
+    my $args = \@_;
+    my $opts = {};
 
-if ( $opts->{help} ) { TestRail::Utils::help(); }
+    # Parse config file
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc' ) {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
 
-my $status = $ARGV[0];
-my $reason = $ARGV[1];
+    # Override configuration with switches
+    GetOptionsFromArray(
+        $args,
+        'apiurl=s'        => \$opts->{'apiurl'},
+        'password=s'      => \$opts->{'password'},
+        'user=s'          => \$opts->{'user'},
+        'assignedto=s@'   => \$opts->{'users'},
+        'status=s@'       => \$opts->{'statuses'},
+        'j|project=s'     => \$opts->{'project'},
+        'p|plan=s'        => \$opts->{'plan'},
+        'r|run=s'         => \$opts->{'run'},
+        'c|config=s@'     => \$opts->{'configs'},
+        'a|assignedto=s@' => \$opts->{'users'},
+        'e|encoding=s'    => \$opts->{'encoding'},
+        'h|help'          => \$opts->{'help'},
+        'mock'            => \$opts->{'mock'}
+    );
 
-die("No status to set provided.") unless $status;
-TestRail::Utils::interrogateUser( $opts, qw{apiurl user password project run} );
+    if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
 
-my $tr = TestRail::Utils::getHandle($opts);
+    my $status = $args->[0];
+    my $reason = $args->[1];
 
-$opts->{'set_status_to'} = $status;
-$opts->{'reason'}        = $reason;
-my $results = TestRail::Utils::Results::bulkMarkResults( $opts, $tr );
+    die("No status to set provided.") unless $status;
+    TestRail::Utils::interrogateUser( $opts,
+        qw{apiurl user password project run} );
 
-print "Successfully set the status of "
-  . scalar(@$results)
-  . " cases to $status.\n"
-  if $results;
+    my $tr = TestRail::Utils::getHandle($opts);
 
-exit 0;
+    $opts->{'set_status_to'} = $status;
+    $opts->{'reason'}        = $reason;
+    my $results = TestRail::Utils::Results::bulkMarkResults( $opts, $tr );
+
+    return (
+        "Successfully set the status of "
+          . scalar(@$results)
+          . " cases to $status.\n",
+        0
+    ) if $results;
+    return ( "Could find no cases to set results for.\n", 255 );
+}
+
+1;
 
 =pod
 
@@ -67,7 +83,7 @@ exit 0;
 
 =head1 NAME
 
-testrail-bulk-mark-results - Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
+TestRail::Bin::BulkMarkResults - Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
 
 =head1 VERSION
 
@@ -79,9 +95,14 @@ Sometimes it is useful to mark entire runs of tests when, for example, a prerequ
 For example, if a binary produced for test fails to run at all, more detailed testing will be impossible;
 it would save time to just mark everything as blocked.
 
+Can be used as the modulino TestRail::Bin::BulkMarkResults.
+
 =head1 USAGE
 
   testrail-bulk-mark-results [OPTIONS] status [reason]
+
+  require `which testrail-bulk-mark-results`;
+  TestRail::Bin::BulkMarkResults::run(@args);
 
 =head1 PARAMETERS:
 

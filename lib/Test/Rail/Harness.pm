@@ -47,7 +47,11 @@ sub make_parser {
 
     #for Testability of plugin
     if ( $ENV{'TESTRAIL_MOCKED'} ) {
-        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm';    ## no critic
+        use lib 't/lib'
+          ;    #Unit tests will always run from the main dir during make test
+        require 't/lib/Test/LWP/UserAgent/TestRailMock.pm'
+          unless
+          defined $Test::LWP::UserAgent::TestRailMock::mockObject;  ## no critic
         $args->{'debug'}   = 1;
         $args->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject;
     }

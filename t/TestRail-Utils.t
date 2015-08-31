@@ -1,10 +1,16 @@
+=head1 POD TEST
+
+Bogus bogus
+
+=cut
+
 use strict;
 use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 25;
+use Test::More 'tests' => 26;
 use Test::Fatal;
 
 use TestRail::API;
@@ -14,6 +20,10 @@ use Test::LWP::UserAgent::TestRailMock;
 use File::Basename qw{dirname};
 
 my ($apiurl,$user,$password);
+
+#check help output
+
+is(TestRail::Utils::help(),0,"Help works OK");
 
 #check the binary output mode
 is(exception {($apiurl,$password,$user) = TestRail::Utils::parseConfig(dirname(__FILE__),1)}, undef, "No exceptions thrown by parseConfig in array mode");

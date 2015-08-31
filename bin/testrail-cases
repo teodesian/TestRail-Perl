@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 # ABSTRACT: get information about cases inside various testsuites/sections.
-# PODNAME: testrail-cases
+# PODNAME: TestRail::Bin::Cases
 
+package TestRail::Bin::Cases;
+$TestRail::Bin::Cases::VERSION = '0.032';
 use strict;
 use warnings;
 use utf8;
@@ -10,67 +12,81 @@ use TestRail::API;
 use TestRail::Utils;
 use TestRail::Utils::Find;
 
-use Getopt::Long;
+use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
-my $opts = {};
-
-#Parse config file if we are missing api url/key or user
-my $homedir = my_home() || '.';
-if ( -e $homedir . '/.testrailrc' ) {
-    $opts = TestRail::Utils::parseConfig($homedir);
+if ( !caller() ) {
+    my ( $out, $code ) = run(@ARGV);
+    print $out;
+    exit $code;
 }
 
-GetOptions(
-    'apiurl=s'      => \$opts->{'apiurl'},
-    'password=s'    => \$opts->{'password'},
-    'user=s'        => \$opts->{'user'},
-    'j|project=s'   => \$opts->{'project'},
-    't|testsuite=s' => \$opts->{'testsuite'},
-    'd|directory=s' => \$opts->{'directory'},
-    'm|missing'     => \$opts->{'missing'},
-    'o|orphans'     => \$opts->{'orphans'},
-    'n|no-recurse'  => \$opts->{'no-recurse'},
-    'e|encoding=s'  => \$opts->{'encoding'},
-    'section=s'     => \$opts->{'section'},
-    'type=s@'       => \$opts->{'types'},
-    'extension=s'   => \$opts->{'extension'},
-    'h|help'        => \$opts->{'help'},
-    'test'          => \$opts->{'test'},
-    'mock' => \$opts->{'mock'}    #actually do something, but bogusly
-);
+sub run {
+    my $args = \@_;
+    my $opts = {};
 
-if ( $opts->{help} ) { TestRail::Utils::help(); }
+    #Parse config file if we are missing api url/key or user
+    my $homedir = my_home() || '.';
+    if ( -e $homedir . '/.testrailrc' ) {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
 
-#Mutual exclusivity
-$opts->{'no-missing'} = !$opts->{'missing'};
-$opts->{'update'} = !( $opts->{'orphans'} || $opts->{'missing'} );
-die("orphans and mising options are mutually exclusive.")
-  if $opts->{'orphans'} && $opts->{'missing'};
-delete $opts->{'missing'};
+    GetOptionsFromArray(
+        $args,
+        'apiurl=s'      => \$opts->{'apiurl'},
+        'password=s'    => \$opts->{'password'},
+        'user=s'        => \$opts->{'user'},
+        'j|project=s'   => \$opts->{'project'},
+        't|testsuite=s' => \$opts->{'testsuite'},
+        'd|directory=s' => \$opts->{'directory'},
+        'm|missing'     => \$opts->{'missing'},
+        'o|orphans'     => \$opts->{'orphans'},
+        'n|no-recurse'  => \$opts->{'no-recurse'},
+        'e|encoding=s'  => \$opts->{'encoding'},
+        'section=s'     => \$opts->{'section'},
+        'type=s@'       => \$opts->{'types'},
+        'extension=s'   => \$opts->{'extension'},
+        'h|help'        => \$opts->{'help'},
+        'test'          => \$opts->{'test'},
+        'mock' => \$opts->{'mock'}    #actually do something, but bogusly
+    );
 
-TestRail::Utils::interrogateUser( $opts,
-    qw{apiurl user password project testsuite directory} );
+    if ( $opts->{help} ) { return ( '', TestRail::Utils::help() ); }
 
-my $tr = TestRail::Utils::getHandle($opts);
+    #Mutual exclusivity
+    $opts->{'no-missing'} = !$opts->{'missing'};
+    $opts->{'update'} = !( $opts->{'orphans'} || $opts->{'missing'} );
+    die("orphans and mising options are mutually exclusive.")
+      if $opts->{'orphans'} && $opts->{'missing'};
+    delete $opts->{'missing'};
 
-my $cases = TestRail::Utils::Find::getCases( $opts, $tr );
-die "No cases in TestRail!\n" unless $cases;
+    TestRail::Utils::interrogateUser( $opts,
+        qw{apiurl user password project testsuite directory} );
 
-my $tests = TestRail::Utils::Find::findCases( $opts, @$cases );
+    my $tr = TestRail::Utils::getHandle($opts);
 
-my ( @update, @add, @orphan );
-@update = map { $_->{'title'} } @{ $tests->{'update'} }
-  if ref $tests->{'update'} eq 'ARRAY';
-@add = map { $_->{'title'} } @{ $tests->{'orphans'} }
-  if ref $tests->{'orphans'} eq 'ARRAY';
-@orphan = @{ $tests->{'missing'} } if ref $tests->{'missing'} eq 'ARRAY';
+    my $cases = TestRail::Utils::Find::getCases( $opts, $tr );
+    die "No cases in TestRail!\n" unless $cases;
 
-print join( "\n", @update );
-print join( "\n", @add );
-print join( "\n", @orphan );
-print "\n";
-exit 0;
+    my $tests = TestRail::Utils::Find::findCases( $opts, @$cases );
+
+    my ( @update, @add, @orphan );
+    @update = map { $_->{'title'} } @{ $tests->{'update'} }
+      if ref $tests->{'update'} eq 'ARRAY';
+    @add = map { $_->{'title'} } @{ $tests->{'orphans'} }
+      if ref $tests->{'orphans'} eq 'ARRAY';
+    @orphan = @{ $tests->{'missing'} } if ref $tests->{'missing'} eq 'ARRAY';
+
+    my $out = '';
+    $out .= join( "\n", @update );
+    $out .= join( "\n", @add );
+    $out .= join( "\n", @orphan );
+    $out .= "\n";
+
+    return ( $out, 0 );
+}
+
+1;
 
 =pod
 
@@ -78,7 +94,7 @@ exit 0;
 
 =head1 NAME
 
-testrail-cases - get information about cases inside various testsuites/sections.
+TestRail::Bin::Cases - get information about cases inside various testsuites/sections.
 
 =head1 VERSION
 
@@ -88,11 +104,16 @@ version 0.032
 
   testrail-cases [OPTIONS]
 
+  require `which testrail-cases`;
+  TestRail::Bin::Cases::run(@args);
+
 =head1 DESCRIPTION
 
 testrail-cases - get information about cases inside various testsuites/sections.
 
 By default will tell you which cases are in both the testsuite and directory passed.
+
+Can be used as the modulino TestRail::Bin::Cases.
 
 =head1 PARAMETERS:
 
