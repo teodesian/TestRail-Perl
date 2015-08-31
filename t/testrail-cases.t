@@ -29,9 +29,4 @@ like($out,qr/nothere\.test/,"Shows orphan tests");
 chomp $out;
 like($out,qr/t\/skipall\.test/,"Shows missing tests");
 
-#Verify no-match returns non path
-@args = qw{--help};
-$0 = $FindBin::Bin.'/../bin/testrail-cases';
-(undef,$code) = capture {TestRail::Bin::Cases::run('args' => \@args)} \$out, \$out;
-is($code, 0, "Exit code OK asking for help");
-like($out,qr/encoding of arguments/i,"Help output OK");
+
