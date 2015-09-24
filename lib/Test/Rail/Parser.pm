@@ -288,6 +288,8 @@ sub new {
     $self->{'errors'}  = 0;
     #Start the shot clock
     $self->{'starttime'} = time();
+    #Make sure we get the time it took to get to each step from the last correctly
+    $self->{'lasttime'} = $self->{'starttime'};
     $self->{'raw_output'} = "";
 
     return $self;
@@ -353,7 +355,9 @@ sub testCallback {
 
     if ( $self->{'track_time'} ) {
         #Test done.  Record elapsed time.
-        $self->{'tr_opts'}->{'result_options'}->{'elapsed'} = _compute_elapsed($self->{'starttime'},time());
+        my $tm = time();
+        $self->{'tr_opts'}->{'result_options'}->{'elapsed'} = _compute_elapsed($self->{'lasttime'},$tm);
+        $self->{'lasttime'} = $tm;
     }
 
     #Default assumption is that case name is step text (case_per_ok), unless...
@@ -417,6 +421,8 @@ sub testCallback {
     if ($self->{'tr_opts'}->{'step_results'}) {
         $self->{'tr_opts'}->{'result_custom_options'} = {} if !defined $self->{'tr_opts'}->{'result_custom_options'};
         $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} = [] if !defined $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'};
+        #TimeStamp every particular step
+        $line = "[".$self->{'tr_opts'}->{'result_options'}->{'elapsed'}."] $line";
         #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
         push(
             @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
