@@ -9,7 +9,7 @@ use utf8;
 
 use parent qw/TAP::Parser/;
 use Carp qw{cluck confess};
-use POSIX qw{floor};
+use POSIX qw{floor strftime};
 use Clone qw{clone};
 
 use TestRail::API;
@@ -357,12 +357,15 @@ sub testCallback {
         #Test done.  Record elapsed time.
         my $tm = time();
         $self->{'tr_opts'}->{'result_options'}->{'elapsed'} = _compute_elapsed($self->{'lasttime'},$tm);
+        $self->{'elapse_display'} = defined($self->{'tr_opts'}->{'result_options'}->{'elapsed'}) ? $self->{'tr_opts'}->{'result_options'}->{'elapsed'} : "0s";
         $self->{'lasttime'} = $tm;
     }
 
     #Default assumption is that case name is step text (case_per_ok), unless...
     my $line = $test->as_string;
-    $self->{'raw_output'} .= "$line\n";
+    my $tline = $line;
+    $tline = "[".strftime("%H:%M:%S %b %e %Y",localtime($self->{'lasttime'}))." ($self->{elapse_display})] $line" if $self->{'track_time'};
+    $self->{'raw_output'} .= "$tline\n";
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if ( !($self->{'tr_opts'}->{'step_results'} || $self->{'tr_opts'}->{'case_per_ok'}) ) {
@@ -422,7 +425,8 @@ sub testCallback {
         $self->{'tr_opts'}->{'result_custom_options'} = {} if !defined $self->{'tr_opts'}->{'result_custom_options'};
         $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} = [] if !defined $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'};
         #TimeStamp every particular step
-        $line = "[".$self->{'tr_opts'}->{'result_options'}->{'elapsed'}."] $line";
+
+        $line = "[".strftime("%H:%M:%S %b %e %Y",localtime($self->{'lasttime'}))." ($self->{elapse_display})] $line" if $self->{'track_time'};
         #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
         push(
             @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
