@@ -18,8 +18,6 @@ use Scalar::Util qw{reftype};
 
 use File::Basename qw{basename};
 
-our $self;
-
 =head1 DESCRIPTION
 
 A TAP parser which will upload your test results to a TestRail install.
@@ -108,7 +106,6 @@ Step results will always be whatever status is relevant to the particular step.
 
 sub new {
     my ($class,$opts) = @_;
-    our $self;
     $opts = clone $opts; #Convenience, if we are passing over and over again...
 
     #Load our callbacks
@@ -271,7 +268,7 @@ sub new {
     }
     confess("No run ID provided, and no run with specified name exists in provided project/plan!") if !$tropts->{'run_id'};
 
-    $self = $class->SUPER::new($opts);
+    my $self = $class->SUPER::new($opts);
     if (defined($self->{'_iterator'}->{'command'}) && reftype($self->{'_iterator'}->{'command'}) eq 'ARRAY' ) {
         $self->{'file'} = $self->{'_iterator'}->{'command'}->[-1];
         print "# PROCESSING RESULTS FROM TEST FILE: $self->{'file'}\n";
@@ -306,12 +303,13 @@ Stores said filename for future use if encountered.
 
 # Look for file boundaries, etc.
 sub unknownCallback {
-    my (@args) = @_;
-    our $self;
-    my $line = $args[0]->as_string;
+    my ($test) = @_;
+    my $self = $test->{'parser'};
+    my $line = $test->as_string;
     $self->{'raw_output'} .= "$line\n";
 
-    #try to pick out the filename if we are running this on TAP in files
+    #XXX I'd love to just rely on the 'name' attr in App::Prove::State::Result::Test, but...
+    #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
     $self->{'file'} = $file if $file;
 }
@@ -325,9 +323,9 @@ Especially useful when merge=1 is passed to the constructor.
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
 sub commentCallback {
-    my (@args) = @_;
-    our $self;
-    my $line = $args[0]->as_string;
+    my ($test) = @_;
+    my $self = $test->{'parser'};
+    my $line = $test->as_string;
     $self->{'raw_output'} .= "$line\n";
 
     if ($line =~ m/^#TESTDESC:\s*/) {
@@ -349,9 +347,8 @@ Otherwise, do nothing.
 =cut
 
 sub testCallback {
-    my (@args) = @_;
-    my $test = $args[0];
-    our $self;
+    my ($test) = @_;
+    my $self = $test->{'parser'};
 
     if ( $self->{'track_time'} ) {
         #Test done.  Record elapsed time.
@@ -441,7 +438,7 @@ sub testCallback {
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
-    _set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
+    $self->_set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
     #Re-start the shot clock
     $self->{'starttime'} = time();
 
@@ -460,7 +457,7 @@ Otherwise, upload the overall results of the test to TestRail.
 =cut
 
 sub EOFCallback {
-    our $self;
+    my ($self) = @_;
 
     if ( $self->{'track_time'} ) {
         #Test done.  Record elapsed time.
@@ -498,7 +495,7 @@ sub EOFCallback {
 
 
     print "# Setting results...\n";
-    my $cres = _set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
+    my $cres = $self->_set_result($run_id,$test_name,$status,$notes,$options,$custom_options);
     $self->_test_closure();
     $self->{'global_status'} = $status;
 
@@ -508,8 +505,7 @@ sub EOFCallback {
 }
 
 sub _set_result {
-    my ($run_id,$test_name,$status,$notes,$options,$custom_options) = @_;
-    our $self;
+    my ($self,$run_id,$test_name,$status,$notes,$options,$custom_options) = @_;
     my $tc;
 
     print "# Test elapsed: ".$options->{'elapsed'}."\n" if $options->{'elapsed'};
@@ -588,6 +584,20 @@ sub _test_closure {
     $self->{'run_closed'} = 1;
     return $self->{'tr_opts'}->{'testrail'}->closeRun($self->{'tr_opts'}->{'run_id'});
 }
+
+=head2 make_result
+
+make_result has been overridden to make the parser object available to callbacks.
+
+=cut
+
+sub make_result {
+    my ($self,@args) = @_;
+    my $res = $self->SUPER::make_result(@args);
+    $res->{'parser'} = $self;
+    return $res;
+}
+
 
 1;
 

@@ -6,7 +6,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 6;
+use Test::More 'tests' => 8;
 use Test::Fatal;
 use App::Prove;
 use App::Prove::Plugin::TestRail;
@@ -49,6 +49,7 @@ $prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someU
 is (exception {$prove->run()},undef,"Running TR parser with autoclose works correctly");
 
 #Test multi-job upload shizz
+#Note that I don't care if it even uploads, just that it *would have* done so correctly.
 $prove = App::Prove->new();
 $prove->process_args("-PTestRail=apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,plan=FinalPlan,run=FinalRun,configs=testConfig,step_results=step_results", '-j2', 't/fake.test', 't/skipall.test');
 
@@ -60,16 +61,14 @@ subtest "Both step_result tracking and raw_output is correct (tests share parser
         my $step_results = $tres->{$test}->{'parser'}->{'tr_opts'}->{'result_custom_options'}->{'step_results'};
         my $toutput = $tres->{$test}->{'parser'}->{'raw_output'};
         note $test;
-        if ($test eq 'skipall.test') {
-            unlike($toutput,qr/NOT SO SEARED AFTER ALL/i,"Test steps in full test output");
-            if (is(ref $step_results, 'ARRAY', "step_results is ARRAY ref")) {
-                is(scalar(@$step_results),0,"No steps to upload when doing skip_all");
-            }
+        if ($test eq 't/skipall.test') {
+            unlike($toutput,qr/STORAGE TANKS SEARED/i,"Test steps in full test output");
+            isnt(ref $step_results, 'ARRAY', "step_results isnt ARRAY ref");
         } else {
-            like($toutput,qr/NOT SO SEARED AFTER ALL/i,"Test steps in full test output");
+            like($toutput,qr/STORAGE TANKS SEARED/i,"Test steps in full test output");
             unlike($toutput,qr/SKIP/i,"Skip all info in full test output");
             if (is(ref $step_results, 'ARRAY', "step_results is ARRAY ref")) {
-                is(scalar(@$step_results),2,"No steps to upload when doing skip_all");
+                is(scalar(@$step_results),2,"2 steps to upload for normal test");
             }
         }
     }
