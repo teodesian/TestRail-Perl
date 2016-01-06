@@ -369,7 +369,7 @@ sub testCallback {
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if ( !($self->{'tr_opts'}->{'step_results'} || $self->{'tr_opts'}->{'case_per_ok'}) ) {
-        print "# Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n" if $self->{'tr_opts'}->{'debug'};
+        print "# Neither step_results or case_per_ok set.  No action to be taken, except on a whole test basis.\n" if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
     if ($self->{'tr_opts'}->{'step_results'} && $self->{'tr_opts'}->{'case_per_ok'}) {
