@@ -132,6 +132,7 @@ sub new {
         'test'    => \&testCallback,
         'comment' => \&commentCallback,
         'unknown' => \&unknownCallback,
+        'bailout' => \&bailoutCallback,
         'EOF'     => \&EOFCallback
     };
 
@@ -475,6 +476,30 @@ sub testCallback {
     $self->{'tr_opts'}->{'test_desc'} = undef;
 }
 
+=head2 bailoutCallback
+
+If bail_out is called, note it and add step results.
+
+=cut
+
+sub bailoutCallback {
+    my ($test) = @_;
+    my $self = $test->{'parser'};
+    my $line = $test->as_string;
+    $self->{'raw_output'} .= "$line\n";
+
+    if ($self->{'tr_opts'}->{'step_results'}) {
+        #Handle the case where we die right off
+        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+        push(
+            @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
+            TestRail::API::buildStepResults("Bail Out!.","Continued testing",$test->explanation,$self->{'tr_opts'}->{'not_ok'}->{'id'})
+        );
+    }
+    $self->{'is_bailout'} = 1;
+    return;
+}
+
 =head2 EOFCallback
 
 If we are running in step_results mode, send over all the step results to TestRail.
@@ -517,8 +542,8 @@ sub EOFCallback {
     #Global status override
     $status = $self->{'global_status'} if $self->{'global_status'};
 
-    #Notify user about bad plan a bit better
-    if (!$self->is_good_plan()) {
+    #Notify user about bad plan a bit better, supposing we haven't bailed
+    if (!$self->is_good_plan()  && !$self->{'is_bailout'}) {
         $self->{'raw_output'} .= "\n# ERROR: Bad plan.  You ran ".$self->tests_run." tests, but planned ".$self->tests_planned.".";
         if ($self->{'tr_opts'}->{'step_results'}) {
             #Handle the case where we die right off
