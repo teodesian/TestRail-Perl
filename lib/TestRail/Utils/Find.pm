@@ -2,7 +2,7 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.032';
+$TestRail::Utils::Find::VERSION = '0.033';
 use strict;
 use warnings;
 
@@ -271,7 +271,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.032
+version 0.033
 
 =head1 DESCRIPTION
 
@@ -383,7 +383,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by George S. Baugh.
+This software is copyright (c) 2016 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

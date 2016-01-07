@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 83;
+use Test::More 'tests' => 85;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -82,7 +82,7 @@ not ok 2 - NOT SO SEARED AFTER ARR
 #   at t/fake.test line 10.
 # Looks like you failed 1 test of 2.
 ";
-is($tap->{'raw_output'},$fcontents,"Full raw content uploaded in non step results mode");
+like($tap->{'raw_output'},qr/SEARED\n# whee.*\n.*AFTER ARR\n\n.*Failed/msxi,"Full raw content uploaded in non step results mode");
 
 #Check that time run is being uploaded
 my $timeResults = $tap->{'tr_opts'}->{'testrail'}->getTestResults(1);
@@ -113,6 +113,11 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails even if there are TODO passes");
+    subtest 'Timestamp/elapsed printed in step results' => sub {
+        foreach my $result (@{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}}) {
+            like($result->{'content'}, qr/^\[.*\(.*\)\]/i, "Timestamp printed in step results");
+        }
+    };
 }
 
 #Default mode
@@ -125,6 +130,8 @@ isa_ok($tap,"Test::Rail::Parser");
 if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
+    my @matches = $tap->{'raw_output'} =~ m/^(\[.*\(.*\)\])/msgi;
+    ok(scalar(@matches),"Timestamps present in raw TAP");
 }
 
 #Default mode

@@ -2,14 +2,14 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.032';
+$Test::Rail::Parser::VERSION = '0.033';
 use strict;
 use warnings;
 use utf8;
 
 use parent qw/TAP::Parser/;
 use Carp qw{cluck confess};
-use POSIX qw{floor};
+use POSIX qw{floor strftime};
 use Clone qw{clone};
 
 use TestRail::API;
@@ -18,11 +18,8 @@ use Scalar::Util qw{reftype};
 
 use File::Basename qw{basename};
 
-our $self;
-
 sub new {
     my ( $class, $opts ) = @_;
-    our $self;
     $opts = clone $opts;  #Convenience, if we are passing over and over again...
 
     #Load our callbacks
@@ -264,7 +261,7 @@ sub new {
         "No run ID provided, and no run with specified name exists in provided project/plan!"
     ) if !$tropts->{'run_id'};
 
-    $self = $class->SUPER::new($opts);
+    my $self = $class->SUPER::new($opts);
     if ( defined( $self->{'_iterator'}->{'command'} )
         && reftype( $self->{'_iterator'}->{'command'} ) eq 'ARRAY' )
     {
@@ -287,7 +284,10 @@ sub new {
     $self->{'errors'}  = 0;
 
     #Start the shot clock
-    $self->{'starttime'}  = time();
+    $self->{'starttime'} = time();
+
+    #Make sure we get the time it took to get to each step from the last correctly
+    $self->{'lasttime'}   = $self->{'starttime'};
     $self->{'raw_output'} = "";
 
     return $self;
@@ -295,21 +295,22 @@ sub new {
 
 # Look for file boundaries, etc.
 sub unknownCallback {
-    my (@args) = @_;
-    our $self;
-    my $line = $args[0]->as_string;
+    my ($test) = @_;
+    my $self   = $test->{'parser'};
+    my $line   = $test->as_string;
     $self->{'raw_output'} .= "$line\n";
 
-    #try to pick out the filename if we are running this on TAP in files
+    #XXX I'd love to just rely on the 'name' attr in App::Prove::State::Result::Test, but...
+    #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
     $self->{'file'} = $file if $file;
 }
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
 sub commentCallback {
-    my (@args) = @_;
-    our $self;
-    my $line = $args[0]->as_string;
+    my ($test) = @_;
+    my $self   = $test->{'parser'};
+    my $line   = $test->as_string;
     $self->{'raw_output'} .= "$line\n";
 
     if ( $line =~ m/^#TESTDESC:\s*/ ) {
@@ -323,20 +324,30 @@ sub commentCallback {
 }
 
 sub testCallback {
-    my (@args) = @_;
-    my $test = $args[0];
-    our $self;
+    my ($test) = @_;
+    my $self = $test->{'parser'};
 
     if ( $self->{'track_time'} ) {
 
         #Test done.  Record elapsed time.
+        my $tm = time();
         $self->{'tr_opts'}->{'result_options'}->{'elapsed'} =
-          _compute_elapsed( $self->{'starttime'}, time() );
+          _compute_elapsed( $self->{'lasttime'}, $tm );
+        $self->{'elapse_display'} =
+          defined( $self->{'tr_opts'}->{'result_options'}->{'elapsed'} )
+          ? $self->{'tr_opts'}->{'result_options'}->{'elapsed'}
+          : "0s";
+        $self->{'lasttime'} = $tm;
     }
 
     #Default assumption is that case name is step text (case_per_ok), unless...
-    my $line = $test->as_string;
-    $self->{'raw_output'} .= "$line\n";
+    my $line  = $test->as_string;
+    my $tline = $line;
+    $tline = "["
+      . strftime( "%H:%M:%S %b %e %Y", localtime( $self->{'lasttime'} ) )
+      . " ($self->{elapse_display})] $line"
+      if $self->{'track_time'};
+    $self->{'raw_output'} .= "$tline\n";
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
     if (
@@ -347,7 +358,7 @@ sub testCallback {
       )
     {
         print
-          "# Neither step_results of case_per_ok set.  No action to be taken, except on a whole test basis.\n"
+          "# Neither step_results or case_per_ok set.  No action to be taken, except on a whole test basis.\n"
           if $self->{'tr_opts'}->{'debug'};
         return 1;
     }
@@ -419,6 +430,13 @@ sub testCallback {
           defined $self->{'tr_opts'}->{'result_custom_options'}
           ->{'step_results'};
 
+        #TimeStamp every particular step
+
+        $line = "["
+          . strftime( "%H:%M:%S %b %e %Y", localtime( $self->{'lasttime'} ) )
+          . " ($self->{elapse_display})] $line"
+          if $self->{'track_time'};
+
         #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
         push(
             @{
@@ -437,7 +455,7 @@ sub testCallback {
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
-    _set_result( $run_id, $test_name, $status, $notes, $options,
+    $self->_set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
 
     #Re-start the shot clock
@@ -450,7 +468,7 @@ sub testCallback {
 }
 
 sub EOFCallback {
-    our $self;
+    my ($self) = @_;
 
     if ( $self->{'track_time'} ) {
 
@@ -495,7 +513,8 @@ sub EOFCallback {
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
     print "# Setting results...\n";
-    my $cres = _set_result( $run_id, $test_name, $status, $notes, $options,
+    my $cres =
+      $self->_set_result( $run_id, $test_name, $status, $notes, $options,
         $custom_options );
     $self->_test_closure();
     $self->{'global_status'} = $status;
@@ -506,8 +525,8 @@ sub EOFCallback {
 }
 
 sub _set_result {
-    my ( $run_id, $test_name, $status, $notes, $options, $custom_options ) = @_;
-    our $self;
+    my ( $self, $run_id, $test_name, $status, $notes, $options,
+        $custom_options ) = @_;
     my $tc;
 
     print "# Test elapsed: " . $options->{'elapsed'} . "\n"
@@ -608,6 +627,13 @@ sub _test_closure {
       ->closeRun( $self->{'tr_opts'}->{'run_id'} );
 }
 
+sub make_result {
+    my ( $self, @args ) = @_;
+    my $res = $self->SUPER::make_result(@args);
+    $res->{'parser'} = $self;
+    return $res;
+}
+
 1;
 
 __END__
@@ -622,7 +648,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.032
+version 0.033
 
 =head1 DESCRIPTION
 
@@ -730,6 +756,10 @@ If we are running in step_results mode, send over all the step results to TestRa
 If we are running in case_per_ok mode, do nothing.
 Otherwise, upload the overall results of the test to TestRail.
 
+=head2 make_result
+
+make_result has been overridden to make the parser object available to callbacks.
+
 =head1 NOTES
 
 When using SKIP: {} (or TODO skip) blocks, you may want to consider naming your skip reasons the same as your test names when running in test_per_ok mode.
@@ -755,7 +785,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by George S. Baugh.
+This software is copyright (c) 2016 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

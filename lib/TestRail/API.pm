@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.032';
+$TestRail::API::VERSION = '0.033';
 
 use 5.010;
 
@@ -1207,7 +1207,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.032
+version 0.033
 
 =head1 SYNOPSIS
 
@@ -2387,7 +2387,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by George S. Baugh.
+This software is copyright (c) 2016 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
