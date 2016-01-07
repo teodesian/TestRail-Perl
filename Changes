@@ -1,5 +1,9 @@
 Revision history for Perl module TestRail::API
 
+0.033 2016-01-6 TEODESIAN
+    - Fix issue where running TestRail::Parser with multiple -j in prove corrupted results
+    - Add timestamps to every step reported for better test bottleneck detection
+
 0.032 2015-08-31 TEODESIAN
     - Fix issue in getCases where arrayref filters were not handled properly
     - Add TestRail::API::typeNamesToIds
