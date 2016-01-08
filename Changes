@@ -1,6 +1,9 @@
 Revision history for Perl module TestRail::API
 
-0.033 2016-01-6 TEODESIAN
+0.034 2016-01-?? TEODESIAN
+    - Use Capture::Tiny rahter than IO::CaptureOutput in unit tests
+
+0.033 2016-01-06 TEODESIAN
     - Fix issue where running TestRail::Parser with multiple -j in prove corrupted results
     - Add timestamps to every step reported for better test bottleneck detection
 

@@ -3,7 +3,7 @@ use warnings;
 
 use Test::More "tests" => 4;
 use FindBin;
-use IO::CaptureOutput qw{capture};
+use Capture::Tiny qw{capture_merged};
 
 use lib $FindBin::Bin.'/../bin';
 require 'testrail-lock';
@@ -13,8 +13,7 @@ use Test::LWP::UserAgent::TestRailMock;
 
 my @args = qw{--help};
 $0 = $FindBin::Bin.'/../bin/testrail-lock';
-my $out;
-my (undef,$code) = capture {TestRail::Bin::Lock::run('args' => \@args)} \$out, \$out;
+my ($out,(undef,$code)) = capture_merged {TestRail::Bin::Lock::run('args' => \@args)};
 is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
 
