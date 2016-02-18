@@ -173,13 +173,13 @@ sub _doRequest {
     my $response = $self->{'browser'}->request($req);
 
     #Uncomment to generate mocks
-    #use Data::Dumper;
-    #open(my $fh, '>>', 'mock.out');
-    #print $fh "{\n\n";
-    #print $fh Dumper($path,'200','OK',$response->headers,$response->content);
-    #print $fh '$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));';
-    #print $fh "\n\n}\n\n";
-    #close $fh;
+    use Data::Dumper;
+    open(my $fh, '>>', 'mock.out');
+    print $fh "{\n\n";
+    print $fh Dumper($path,'200','OK',$response->headers,$response->content);
+    print $fh '$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));';
+    print $fh "\n\n}\n\n";
+    close $fh;
 
     return $response if !defined($response); #worst case
     if ($response->code == 403) {
@@ -2189,7 +2189,6 @@ sub getTestResults {
 =head2 B<getConfigurationGroups(project_id)>
 
 Gets the available configuration groups for a project, with their configurations as children.
-Basically a direct wrapper of The 'get_configs' api call, with caching tacked on.
 
 =over 4
 
@@ -2206,9 +2205,84 @@ sub getConfigurationGroups {
     my ($self,$project_id) = $check->(@_);
 
     my $url = "index.php?/api/v2/get_configs/$project_id";
-    return $self->{'configurations'}->{$project_id} if $self->{'configurations'}->{$project_id}; #cache this since we can't change it with the API
-    $self->{'configurations'}->{$project_id} = $self->_doRequest($url);
-    return $self->{'configurations'}->{$project_id};
+    return $self->_doRequest($url);
+}
+
+=head2 B<addConfigurationGroup(project_id,name)>
+
+New in TestRail 5.2.
+
+Add a configuration group to the specified project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of relevant project
+
+=item STRING C<NAME> - Name for new configuration Group.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=cut
+
+sub addConfigurationGroup {
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$name) = $check->(@_);
+
+    my $url = "index.php?/api/v2/add_config_group/$project_id";
+    return $self->_doRequest($url,'POST',{'name' => $name});
+}
+
+=head2 B<editConfigurationGroup(config_group_id,name)>
+
+New in TestRail 5.2.
+
+Change the name of a configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIG_GROUP_ID> - ID of relevant configuration group
+
+=item STRING C<NAME> - Name for new configuration Group.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=cut
+
+sub editConfigurationGroup {
+    state $check = compile(Object, Int, Str);
+    my ($self,$config_group_id,$name) = $check->(@_);
+
+    my $url = "index.php?/api/v2/update_config_group/$config_group_id";
+    return $self->_doRequest($url,'POST',{'name' => $name});
+}
+
+=head2 B<deleteConfigurationGroup(config_group_id)>
+
+New in TestRail 5.2.
+
+Delete a configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIG_GROUP_ID> - ID of relevant configuration group
+
+
+=back
+
+Returns BOOL.
+
+=cut
+
+sub deleteConfigurationGroup {
+    state $check = compile(Object, Int);
+    my ($self,$config_group_id) = $check->(@_);
+
+    my $url = "index.php?/api/v2/delete_config_group/$config_group_id";
+    return $self->_doRequest($url,'POST');
 }
 
 =head2 B<getConfigurations(project_id)>
@@ -2238,6 +2312,82 @@ sub getConfigurations {
         push(@$configs, @{$cfg->{'configs'}});
     }
     return $configs;
+}
+
+=head2 B<addConfiguration(configuration_group_id,name)>
+
+New in TestRail 5.2.
+
+Add a configuration to the specified configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIGURATION_GROUP_ID> - ID of relevant configuration group
+
+=item STRING C<NAME> - Name for new configuration.
+
+=back
+
+Returns HASHREF with new configuration.
+
+=cut
+
+sub addConfiguration {
+    state $check = compile(Object, Int, Str);
+    my ($self,$configuration_group_id,$name) = $check->(@_);
+
+    my $url = "index.php?/api/v2/add_config/$configuration_group_id";
+    return $self->_doRequest($url,'POST',{'name' => $name});
+}
+
+=head2 B<editConfiguration(config_id,name)>
+
+New in TestRail 5.2.
+
+Change the name of a configuration.
+
+=over 4
+
+=item INTEGER C<CONFIG_ID> - ID of relevant configuration.
+
+=item STRING C<NAME> - New name for configuration.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=cut
+
+sub editConfiguration {
+    state $check = compile(Object, Int, Str);
+    my ($self,$config_id,$name) = $check->(@_);
+
+    my $url = "index.php?/api/v2/update_config/$config_id";
+    return $self->_doRequest($url,'POST',{'name' => $name});
+}
+
+=head2 B<deleteConfiguration(config_id)>
+
+New in TestRail 5.2.
+
+Delete a configuration.
+
+=over 4
+
+=item INTEGER C<CONFIG_ID> - ID of relevant configuration
+
+=back
+
+Returns BOOL.
+
+=cut
+
+sub deleteConfiguration {
+    state $check = compile(Object, Int);
+    my ($self,$config_id) = $check->(@_);
+
+    my $url = "index.php?/api/v2/delete_config/$config_id";
+    return $self->_doRequest($url,'POST');
 }
 
 =head2 B<translateConfigNamesToIds(project_id,configs)>

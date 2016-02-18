@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 81;
+use Test::More tests => 87;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -224,6 +224,21 @@ if ($is_arr) {
 }
 my @t_config_ids = $tr->translateConfigNamesToIds($new_project->{'id'},@config_names);
 is_deeply(\@config_ids,\@t_config_ids, "Can correctly translate Project names to IDs, and they are correctly sorted");
+
+my $grp = $tr->addConfigurationGroup($new_project->{'id'},"zippy");
+is($grp->{'name'},'zippy',"Can add configuration group successfully");
+
+my $newgrp = $tr->editConfigurationGroup($grp->{'id'},"doodah");
+is($newgrp->{'name'},'doodah',"Can edit configuration group successfully");
+
+my $config = $tr->addConfiguration($grp->{'id'},"potzrebie");
+is($config->{'name'},"potzrebie","Can add configuration successfully");
+
+my $newconfig = $tr->editConfiguration($config->{'id'},"poyiut");
+is($newconfig->{'name'},"poyiut","Can edit configuration successfully");
+
+ok($tr->deleteConfiguration($config->{'id'}),"Can delete configuration successfully");
+ok($tr->deleteConfigurationGroup($grp->{'id'}),"Can delete group successfully");
 
 ############################################################
 # TestRail arbitrarily limits many calls to 250 result sets.

@@ -2745,6 +2745,169 @@ $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4
 
 }
 
+#Configuration goodies
+{
+
+$VAR1 = 'index.php?/api/v2/add_config_group/9';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'content-length' => '51',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 },
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:34 GMT',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 18 Feb 2016 02:57:34 GMT',
+                 'content-type' => 'application/json; charset=utf-8'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":3,"name":"zippy","project_id":9,"configs":[]}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/update_config_group/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 '::std_case' => {
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date',
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 },
+                 'client-peer' => '192.168.122.217:80',
+                 'connection' => 'close',
+                 'content-length' => '52',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-response-num' => 1,
+                 'content-type' => 'application/json; charset=utf-8',
+                 'date' => 'Thu, 18 Feb 2016 02:57:34 GMT',
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:34 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":3,"name":"doodah","project_id":3,"configs":[]}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_config/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 },
+                 'connection' => 'close',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '40',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-response-num' => 1,
+                 'date' => 'Thu, 18 Feb 2016 02:57:34 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:35 GMT'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":2,"name":"potzrebie","group_id":3}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/update_config/2';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 'client-response-num' => 1,
+                 'content-type' => 'application/json; charset=utf-8',
+                 'date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 'connection' => 'close',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '37',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":2,"name":"poyiut","group_id":3}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/delete_config/2';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-response-num' => 1,
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'content-length' => '0',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'connection' => 'close',
+                 'client-peer' => '192.168.122.217:80'
+               }, 'HTTP::Headers' );
+$VAR5 = '';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/delete_config_group/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'date' => 'Thu, 18 Feb 2016 02:57:35 GMT',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'content-length' => '0',
+                 'client-peer' => '192.168.122.217:80',
+                 'connection' => 'close',
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = '';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
 sub lockMockStep0 {
 
 $VAR1 = 'index.php?/api/v2/get_tests/1099';

@@ -48,6 +48,11 @@ If your system has no concept of user homes, it will look in the current directo
 
 See the documentation for the constructor of L<Test::Rail::Parser> as to why you might want to pass the aforementioned options.
 
+=head1 CAVEATS
+
+When running prove in multiple job mode (-j), or when breaking out test jobs into multiple prove processes, auto-spawn of plans & runs can race.
+Be sure to extend your harness to make sure these things are already created if you do either of these things.
+
 =head1 OVERRIDDEN METHODS
 
 =head2 load(parser)
