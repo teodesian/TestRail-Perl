@@ -110,7 +110,7 @@ A line that begins like so:
 
 % mark_status=
 
-Will allow you to force the status of a test case to whatever is on the RHS of the = expression.
+Will allow you to force the status of a test case to whatever is on the right hand side of the = expression.
 
 Example (force test to retest in event of tool failure):
 
