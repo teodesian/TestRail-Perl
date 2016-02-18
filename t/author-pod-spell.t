@@ -103,6 +103,7 @@ parseConfig
 getPlanSummary
 getRunSummary
 judgements
+bailoutCallback
 George
 Baugh
 teodesian
