@@ -4,7 +4,7 @@ use warnings;
 use Test::More "tests" => 31;
 use Test::Fatal;
 use FindBin;
-use IO::CaptureOutput qw{capture};
+use Capture::Tiny qw{capture_merged};
 
 use lib $FindBin::Bin.'/../bin';
 require 'testrail-tests';
@@ -101,6 +101,6 @@ like($out,qr/NOT SO SEARED AFTER ARR/,"Gets test correctly in orphan mode");
 #Verify no-match returns non path
 @args = qw{--help};
 $0 = $FindBin::Bin.'/../bin/testrail-tests';
-(undef,$code) = capture {TestRail::Bin::Tests::run('args' => \@args)} \$out, \$out;
+($out,(undef,$code)) = capture_merged {TestRail::Bin::Tests::run('args' => \@args)};
 is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");

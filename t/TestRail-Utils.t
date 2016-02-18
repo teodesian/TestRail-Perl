@@ -16,15 +16,14 @@ use Test::Fatal;
 use TestRail::API;
 use TestRail::Utils;
 use Test::LWP::UserAgent::TestRailMock;
-use IO::CaptureOutput qw{capture};
+use Capture::Tiny qw{capture_merged};
 
 use File::Basename qw{dirname};
 
 my ($apiurl,$user,$password);
 
 #check help output
-my $out;
-my $code = capture { TestRail::Utils::help() } \$out;
+my ($out,($code)) = capture_merged { TestRail::Utils::help() };
 is($code,0,"Help works OK");
 like($out,qr/bogus bogus/i,"Displays POD OK");
 

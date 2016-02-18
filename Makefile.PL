@@ -57,12 +57,12 @@ my %WriteMakefileArgs = (
   },
   "TEST_REQUIRES" => {
     "App::Prove" => 0,
+    "Capture::Tiny" => 0,
     "Class::Inspector" => 0,
     "File::Spec" => 0,
     "FindBin" => 0,
     "HTTP::Headers" => 0,
     "HTTP::Response" => 0,
-    "IO::CaptureOutput" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
     "Test::Deep" => 0,
@@ -70,7 +70,7 @@ my %WriteMakefileArgs = (
     "Test::LWP::UserAgent" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "0.033",
+  "VERSION" => "0.034",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -79,6 +79,7 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "App::Prove" => 0,
+  "Capture::Tiny" => 0,
   "Carp" => 0,
   "Class::Inspector" => 0,
   "Clone" => 0,
@@ -95,7 +96,6 @@ my %FallbackPrereqs = (
   "HTTP::Headers" => 0,
   "HTTP::Request" => 0,
   "HTTP::Response" => 0,
-  "IO::CaptureOutput" => 0,
   "IO::Handle" => 0,
   "IO::Interactive::Tiny" => 0,
   "IPC::Open3" => 0,

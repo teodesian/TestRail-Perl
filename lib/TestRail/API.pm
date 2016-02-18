@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.033';
+$TestRail::API::VERSION = '0.034';
 
 use 5.010;
 
@@ -1153,11 +1153,31 @@ sub getConfigurationGroups {
     my ( $self, $project_id ) = $check->(@_);
 
     my $url = "index.php?/api/v2/get_configs/$project_id";
-    return $self->{'configurations'}->{$project_id}
-      if $self->{'configurations'}->{$project_id}
-      ;    #cache this since we can't change it with the API
-    $self->{'configurations'}->{$project_id} = $self->_doRequest($url);
-    return $self->{'configurations'}->{$project_id};
+    return $self->_doRequest($url);
+}
+
+sub addConfigurationGroup {
+    state $check = compile( Object, Int, Str );
+    my ( $self, $project_id, $name ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/add_config_group/$project_id";
+    return $self->_doRequest( $url, 'POST', { 'name' => $name } );
+}
+
+sub editConfigurationGroup {
+    state $check = compile( Object, Int, Str );
+    my ( $self, $config_group_id, $name ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/update_config_group/$config_group_id";
+    return $self->_doRequest( $url, 'POST', { 'name' => $name } );
+}
+
+sub deleteConfigurationGroup {
+    state $check = compile( Object, Int );
+    my ( $self, $config_group_id ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/delete_config_group/$config_group_id";
+    return $self->_doRequest( $url, 'POST' );
 }
 
 sub getConfigurations {
@@ -1171,6 +1191,30 @@ sub getConfigurations {
         push( @$configs, @{ $cfg->{'configs'} } );
     }
     return $configs;
+}
+
+sub addConfiguration {
+    state $check = compile( Object, Int, Str );
+    my ( $self, $configuration_group_id, $name ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/add_config/$configuration_group_id";
+    return $self->_doRequest( $url, 'POST', { 'name' => $name } );
+}
+
+sub editConfiguration {
+    state $check = compile( Object, Int, Str );
+    my ( $self, $config_id, $name ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/update_config/$config_id";
+    return $self->_doRequest( $url, 'POST', { 'name' => $name } );
+}
+
+sub deleteConfiguration {
+    state $check = compile( Object, Int );
+    my ( $self, $config_id ) = $check->(@_);
+
+    my $url = "index.php?/api/v2/delete_config/$config_id";
+    return $self->_doRequest( $url, 'POST' );
 }
 
 sub translateConfigNamesToIds {
@@ -1207,7 +1251,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.033
+version 0.034
 
 =head1 SYNOPSIS
 
@@ -2300,7 +2344,6 @@ Returns ARRAYREF of result definition HASHREFs.
 =head2 B<getConfigurationGroups(project_id)>
 
 Gets the available configuration groups for a project, with their configurations as children.
-Basically a direct wrapper of The 'get_configs' api call, with caching tacked on.
 
 =over 4
 
@@ -2309,6 +2352,52 @@ Basically a direct wrapper of The 'get_configs' api call, with caching tacked on
 =back
 
 Returns ARRAYREF of configuration group definition HASHREFs.
+
+=head2 B<addConfigurationGroup(project_id,name)>
+
+New in TestRail 5.2.
+
+Add a configuration group to the specified project.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - ID of relevant project
+
+=item STRING C<NAME> - Name for new configuration Group.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=head2 B<editConfigurationGroup(config_group_id,name)>
+
+New in TestRail 5.2.
+
+Change the name of a configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIG_GROUP_ID> - ID of relevant configuration group
+
+=item STRING C<NAME> - Name for new configuration Group.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=head2 B<deleteConfigurationGroup(config_group_id)>
+
+New in TestRail 5.2.
+
+Delete a configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIG_GROUP_ID> - ID of relevant configuration group
+
+=back
+
+Returns BOOL.
 
 =head2 B<getConfigurations(project_id)>
 
@@ -2323,6 +2412,52 @@ Mostly for convenience (no need to write a boilerplate loop over the groups).
 
 Returns ARRAYREF of configuration definition HASHREFs.
 Returns result of getConfigurationGroups (likely -500) in the event that call fails.
+
+=head2 B<addConfiguration(configuration_group_id,name)>
+
+New in TestRail 5.2.
+
+Add a configuration to the specified configuration group.
+
+=over 4
+
+=item INTEGER C<CONFIGURATION_GROUP_ID> - ID of relevant configuration group
+
+=item STRING C<NAME> - Name for new configuration.
+
+=back
+
+Returns HASHREF with new configuration.
+
+=head2 B<editConfiguration(config_id,name)>
+
+New in TestRail 5.2.
+
+Change the name of a configuration.
+
+=over 4
+
+=item INTEGER C<CONFIG_ID> - ID of relevant configuration.
+
+=item STRING C<NAME> - New name for configuration.
+
+=back
+
+Returns HASHREF with new configuration group.
+
+=head2 B<deleteConfiguration(config_id)>
+
+New in TestRail 5.2.
+
+Delete a configuration.
+
+=over 4
+
+=item INTEGER C<CONFIG_ID> - ID of relevant configuration
+
+=back
+
+Returns BOOL.
 
 =head2 B<translateConfigNamesToIds(project_id,configs)>
 

@@ -2,7 +2,7 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.033';
+$App::Prove::Plugin::TestRail::VERSION = '0.034';
 use strict;
 use warnings;
 use utf8;
@@ -73,7 +73,7 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.033
+version 0.034
 
 =head1 SYNOPSIS
 
@@ -110,6 +110,11 @@ Values passed in via query string will override values in \$HOME/.testrailrc.
 If your system has no concept of user homes, it will look in the current directory for .testrailrc.
 
 See the documentation for the constructor of L<Test::Rail::Parser> as to why you might want to pass the aforementioned options.
+
+=head1 CAVEATS
+
+When running prove in multiple job mode (-j), or when breaking out test jobs into multiple prove processes, auto-spawn of plans & runs can race.
+Be sure to extend your harness to make sure these things are already created if you do either of these things.
 
 =head1 OVERRIDDEN METHODS
 

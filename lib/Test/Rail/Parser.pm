@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.033';
+$Test::Rail::Parser::VERSION = '0.034';
 use strict;
 use warnings;
 use utf8;
@@ -27,6 +27,7 @@ sub new {
         'test'    => \&testCallback,
         'comment' => \&commentCallback,
         'unknown' => \&unknownCallback,
+        'bailout' => \&bailoutCallback,
         'EOF'     => \&EOFCallback
     };
 
@@ -300,6 +301,20 @@ sub unknownCallback {
     my $line   = $test->as_string;
     $self->{'raw_output'} .= "$line\n";
 
+    #Unofficial "Extensions" to TAP
+    my ($status_override) = $line =~ m/^% mark_status=([a-z|_]*)/;
+    if ($status_override) {
+        cluck "Unknown status override"
+          unless defined $self->{'tr_opts'}->{$status_override}->{'id'};
+        $self->{'global_status'} =
+          $self->{'tr_opts'}->{$status_override}->{'id'}
+          if $self->{'tr_opts'}->{$status_override};
+        print "# Overriding status to $status_override ("
+          . $self->{'global_status'}
+          . ")...\n"
+          if $self->{'global_status'};
+    }
+
     #XXX I'd love to just rely on the 'name' attr in App::Prove::State::Result::Test, but...
     #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
@@ -467,6 +482,30 @@ sub testCallback {
     $self->{'tr_opts'}->{'test_desc'}  = undef;
 }
 
+sub bailoutCallback {
+    my ($test) = @_;
+    my $self   = $test->{'parser'};
+    my $line   = $test->as_string;
+    $self->{'raw_output'} .= "$line\n";
+
+    if ( $self->{'tr_opts'}->{'step_results'} ) {
+
+        #Handle the case where we die right off
+        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+        push(
+            @{
+                $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}
+            },
+            TestRail::API::buildStepResults(
+                "Bail Out!.",       "Continued testing",
+                $test->explanation, $self->{'tr_opts'}->{'not_ok'}->{'id'}
+            )
+        );
+    }
+    $self->{'is_bailout'} = 1;
+    return;
+}
+
 sub EOFCallback {
     my ($self) = @_;
 
@@ -502,9 +541,40 @@ sub EOFCallback {
       if !$self->tests_run();    #No tests were run, env fail
     $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'}
       if $self->todo_passed()
-      && !$self->failed();    #If no fails, but a TODO pass, mark as TODO PASS
+      && !$self->failed()
+      && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODO PASS
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}
-      if $self->skip_all();    #Skip all, whee
+      if $self->skip_all();     #Skip all, whee
+
+    #Global status override
+    $status = $self->{'global_status'} if $self->{'global_status'};
+
+    #Notify user about bad plan a bit better, supposing we haven't bailed
+    if ( !$self->is_good_plan() && !$self->{'is_bailout'} ) {
+        $self->{'raw_output'} .=
+            "\n# ERROR: Bad plan.  You ran "
+          . $self->tests_run
+          . " tests, but planned "
+          . $self->tests_planned . ".";
+        if ( $self->{'tr_opts'}->{'step_results'} ) {
+
+            #Handle the case where we die right off
+            $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //=
+              [];
+            push(
+                @{
+                    $self->{'tr_opts'}->{'result_custom_options'}
+                      ->{'step_results'}
+                },
+                TestRail::API::buildStepResults(
+                    "Bad Plan.",
+                    $self->tests_planned . " Tests",
+                    $self->tests_run . " Tests",
+                    $status
+                )
+            );
+        }
+    }
 
     #Optional args
     my $notes = $self->{'tr_opts'}->{'test_notes'};
@@ -648,7 +718,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.033
+version 0.034
 
 =head1 DESCRIPTION
 
@@ -732,6 +802,25 @@ If you are not in case_per_ok mode, the global status of the case will be set ac
 
 Step results will always be whatever status is relevant to the particular step.
 
+=head1 TAP Extensions
+
+=head2 Forcing status reported
+
+A line that begins like so:
+
+% mark_status=
+
+Will allow you to force the status of a test case to whatever is on the right hand side of the = expression.
+
+Example (force test to retest in event of tool failure):
+
+    my $failed = do_something_possibly_causing_tool_failure();
+    print "% mark_status=retest" if $failed;
+
+Bogus statuses will cluck, but otherwise be ignored.  Valid statuses are any of the required internal names in your TestRail install (see above).
+
+Multiple instances of this will ignore all but the latest valid status.
+
 =head1 PARSER CALLBACKS
 
 =head2 unknownCallback
@@ -749,6 +838,10 @@ Especially useful when merge=1 is passed to the constructor.
 If we are using step_results, append it to the step results array for use at EOF.
 If we are using case_per_ok, update TestRail per case.
 Otherwise, do nothing.
+
+=head2 bailoutCallback
+
+If bail_out is called, note it and add step results.
 
 =head2 EOFCallback
 

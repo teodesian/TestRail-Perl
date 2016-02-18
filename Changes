@@ -1,6 +1,14 @@
 Revision history for Perl module TestRail::API
 
-0.033 2016-01-6 TEODESIAN
+0.034 2016-02-18 TEODESIAN
+    - Use Capture::Tiny rahter than IO::CaptureOutput in unit tests
+    - Allow users to signal Test::Rail::Parser to set a custom status
+    - Fix issue where todo_pass would be marked even when a bad plan occurred
+    - Add functions for TestRail 5.2 add/update/remove configurations & groups
+    - Add bad plan step_result and a comment when not in case_per_ok & bad plan detected
+    - Add bailout step_result and a comment when not in case_per_ok & bailout detected
+
+0.033 2016-01-06 TEODESIAN
     - Fix issue where running TestRail::Parser with multiple -j in prove corrupted results
     - Add timestamps to every step reported for better test bottleneck detection
 
