@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 89;
+use Test::More 'tests' => 93;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -336,7 +336,7 @@ $fcontents = "
 todo_pass.test ..
 1..2
 ok 1 - STORAGE TANKS SEARED #TODO todo pass
-#goo
+# goo
 ";
 undef $opts->{'source'};
 $opts->{'tap'} = $fcontents;
@@ -348,6 +348,27 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},5, "Test global result is FAIL on todo pass test w/ bad plan");
+}
+
+undef $tap;
+#Check bad plan w/ todo pass logic
+$fcontents = "
+todo_pass.test ..
+1..2
+ok 1 - STORAGE TANKS SEARED #TODO todo pass
+# goo
+% mark_status=todo_fail #Appears tanks weren't so sealed after all
+";
+undef $opts->{'source'};
+$opts->{'tap'} = $fcontents;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},7, "Test global result is FAIL on todo pass test w/ bad plan");
 }
 undef $opts->{'tap'};
 

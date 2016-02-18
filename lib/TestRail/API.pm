@@ -173,13 +173,13 @@ sub _doRequest {
     my $response = $self->{'browser'}->request($req);
 
     #Uncomment to generate mocks
-    use Data::Dumper;
-    open(my $fh, '>>', 'mock.out');
-    print $fh "{\n\n";
-    print $fh Dumper($path,'200','OK',$response->headers,$response->content);
-    print $fh '$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));';
-    print $fh "\n\n}\n\n";
-    close $fh;
+    #use Data::Dumper;
+    #open(my $fh, '>>', 'mock.out');
+    #print $fh "{\n\n";
+    #print $fh Dumper($path,'200','OK',$response->headers,$response->content);
+    #print $fh '$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));';
+    #print $fh "\n\n}\n\n";
+    #close $fh;
 
     return $response if !defined($response); #worst case
     if ($response->code == 403) {
