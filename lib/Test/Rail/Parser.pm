@@ -484,7 +484,7 @@ sub EOFCallback {
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'}    if $self->has_problems();
     $status = $self->{'tr_opts'}->{'retest'}->{'id'}    if !$self->tests_run(); #No tests were run, env fail
-    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed(); #If no fails, but a TODO pass, mark as TODO PASS
+    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODO PASS
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}      if $self->skip_all(); #Skip all, whee
 
     #Optional args

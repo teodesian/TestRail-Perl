@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 85;
+use Test::More 'tests' => 89;
 use Test::Fatal qw{exception};
 
 #Same song and dance as in TestRail-API.t
@@ -330,6 +330,27 @@ if (!$res) {
     is($tap->{'global_status'},8, "Test global result is TODO PASS on todo pass test");
 }
 
+undef $tap;
+#Check bad plan w/ todo pass logic
+$fcontents = "
+todo_pass.test ..
+1..2
+ok 1 - STORAGE TANKS SEARED #TODO todo pass
+#goo
+";
+undef $opts->{'source'};
+$opts->{'tap'} = $fcontents;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
+    is($tap->{'global_status'},5, "Test global result is FAIL on todo pass test w/ bad plan");
+}
+undef $opts->{'tap'};
+
 #Check autoclose functionality against Run with all tests in run status.
 undef $tap;
 $opts->{'source'} = 't/skip.test';
@@ -423,5 +444,3 @@ like($res,qr/run provided is completed/i,"TR Parser explodes on instantiation du
 $opts->{'testsuite_id'} = 9;
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser runs all the way through on completed run when spawning");
-
-
