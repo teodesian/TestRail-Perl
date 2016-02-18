@@ -517,6 +517,19 @@ sub EOFCallback {
     #Global status override
     $status = $self->{'global_status'} if $self->{'global_status'};
 
+    #Notify user about bad plan a bit better
+    if (!$self->is_good_plan()) {
+        $self->{'raw_output'} .= "\n# ERROR: Bad plan.  You ran ".$self->tests_run." tests, but planned ".$self->tests_planned.".";
+        if ($self->{'tr_opts'}->{'step_results'}) {
+            #Handle the case where we die right off
+            $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+            push(
+                @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
+                TestRail::API::buildStepResults("Bad Plan.",$self->tests_planned." Tests",$self->tests_run." Tests",$status)
+            );
+        }
+    }
+
     #Optional args
     my $notes          = $self->{'tr_opts'}->{'test_notes'};
     $notes = $self->{'raw_output'};
