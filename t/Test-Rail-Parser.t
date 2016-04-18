@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 111;
+use Test::More 'tests' => 112;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 
@@ -115,6 +115,7 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails even if there are TODO passes");
     subtest 'Timestamp/elapsed printed in step results' => sub {
+        diag explain $tap->{'tr_opts'}->{'result_custom_options'};
         foreach my $result (@{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}}) {
             like($result->{'content'}, qr/^\[.*\(.*\)\]/i, "Timestamp printed in step results");
         }
@@ -256,7 +257,7 @@ if (!$res) {
 #Verify that case_per_ok and step_results are mutually exclusive, and die.
 undef $tap;
 $opts->{'case_per_ok'} = 1;
-$opts->{'step_results'} = 'sr_step_results';
+$opts->{'step_results'} = 'step_results';
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 isnt($res,undef,"TR Parser explodes on instantiation when mutually exclusive options are passed");
 
@@ -332,6 +333,11 @@ if (!$res) {
 }
 
 undef $tap;
+$opts->{'step_results'} = 'bogus_garbage';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+like($res,qr/invalid step results/i,"Bogus step results name throws");
+
+undef $tap;
 $opts->{'source'} = 't/todo_pass_and_fail.test';
 $opts->{'step_results'} = 'step_results';
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
@@ -342,7 +348,6 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},1,"Errors encountered uploading case results for case that does not exist in TestRail");
     is($tap->{'global_status'},7, "Test global result is TODO FAIL on todo pass & fail test");
-
     my @desired_statuses = qw{1 8 7};
     my @got_statuses = map {$_->{'status_id'}} @{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}};
     my @desired_expected = ('OK', 'OK', 'OK');

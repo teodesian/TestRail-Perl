@@ -1957,6 +1957,8 @@ Gets a test result field by it's system name.  Optionally filter by project ID.
 
 =back
 
+Returns a value less than 0 if unsuccessful.
+
 =cut
 
 sub getTestResultFieldByName {

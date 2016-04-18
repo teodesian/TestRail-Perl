@@ -299,7 +299,9 @@ sub new {
     }
 
     #Make sure the step results field passed exists on the system
+    my $sr_name = $tropts->{'step_results'};
     $tropts->{'step_results'} = $tr->getTestResultFieldByName($tropts->{'step_results'},$tropts->{'project_id'}) if defined $tropts->{'step_results'};
+    confess("Invalid step results name '$sr_name' passed.") if ref $tropts->{'step_results'} ne 'HASH' && $sr_name;
 
     $self->{'tr_opts'} = $tropts;
     $self->{'errors'}  = 0;
@@ -455,14 +457,15 @@ sub testCallback {
 
     #Setup step options and exit if that's the mode we be rollin'
     if ($self->{'tr_opts'}->{'step_results'}) {
+        my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
         $self->{'tr_opts'}->{'result_custom_options'} = {} if !defined $self->{'tr_opts'}->{'result_custom_options'};
-        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} = [] if !defined $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'};
+        $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} = [] if !defined $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name};
         #TimeStamp every particular step
 
         $line = "[".strftime("%H:%M:%S %b %e %Y",localtime($self->{'lasttime'}))." ($self->{elapse_display})] $line" if $self->{'track_time'};
         #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
         push(
-            @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
+            @{$self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name}},
             TestRail::API::buildStepResults($line,"OK",$status_name,$status)
         );
         print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
@@ -497,10 +500,11 @@ sub bailoutCallback {
     $self->{'raw_output'} .= "$line\n";
 
     if ($self->{'tr_opts'}->{'step_results'}) {
+        my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
         #Handle the case where we die right off
-        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+        $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} //= [];
         push(
-            @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
+            @{$self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name}},
             TestRail::API::buildStepResults("Bail Out!.","Continued testing",$test->explanation,$self->{'tr_opts'}->{'not_ok'}->{'id'})
         );
     }
@@ -556,10 +560,11 @@ sub EOFCallback {
     if (!$self->is_good_plan()  && !$self->{'is_bailout'}) {
         $self->{'raw_output'} .= "\n# ERROR: Bad plan.  You ran ".$self->tests_run." tests, but planned ".$self->tests_planned.".";
         if ($self->{'tr_opts'}->{'step_results'}) {
+            my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
             #Handle the case where we die right off
-            $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+            $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} //= [];
             push(
-                @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
+                @{$self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name}},
                 TestRail::API::buildStepResults("Bad Plan.",$self->tests_planned." Tests",$self->tests_run." Tests",$status)
             );
         }
