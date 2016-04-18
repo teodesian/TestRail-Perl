@@ -10,8 +10,9 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 103;
+use Test::More 'tests' => 111;
 use Test::Fatal qw{exception};
+use Test::Deep qw{cmp_deeply};
 
 #Same song and dance as in TestRail-API.t
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
@@ -329,6 +330,32 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},8, "Test global result is TODO PASS on todo pass test");
 }
+
+undef $tap;
+$opts->{'source'} = 't/todo_pass_and_fail.test';
+$opts->{'step_results'} = 'step_results';
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},1,"Errors encountered uploading case results for case that does not exist in TestRail");
+    is($tap->{'global_status'},7, "Test global result is TODO FAIL on todo pass & fail test");
+
+    my @desired_statuses = qw{1 8 7};
+    my @got_statuses = map {$_->{'status_id'}} @{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}};
+    my @desired_expected = ('OK', 'OK', 'OK');
+    my @got_expected = map {$_->{'expected'}} @{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}};
+    my @desired_actual = ('OK', 'TODO PASS', 'TODO FAIL');
+    my @got_actual = map {$_->{'actual'}} @{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}};
+    cmp_deeply(\@got_expected,\@desired_expected,"Expected status names look OK");
+    cmp_deeply(\@got_actual,\@desired_actual,"Actual status names look OK");
+    cmp_deeply(\@got_statuses,\@desired_statuses,"Step result status codes set correctly");
+
+    like($tap->{'tr_opts'}->{'test_notes'},qr/ez duz it/i,"TODO reason captured in test notes");
+}
+undef $opts->{'step_results'};
 
 undef $tap;
 #Check bad plan w/ todo pass logic

@@ -105,7 +105,7 @@ $opts->{'extension'} = '.test';
 is(scalar(grep {$_ eq 'skipall.test'} @tests),0,"Tests in tree are not returned in no-match mode");
 is(scalar(grep {$_ eq 'NOT SO SEARED AFTER ALL'} @tests),0,"Tests not in tree that do exist are not returned in no-match mode");
 is(scalar(grep {$_ eq $FindBin::Bin.'/faker.test'} @tests),1,"Orphan Tests in tree ARE returned in no-match mode");
-is(scalar(@tests),6,"Correct number of non-existant cases shown (no-match, names-only)");
+is(scalar(@tests),7,"Correct number of non-existant cases shown (no-match, names-only)");
 
 $opts->{'configs'} = ['testPlatform1'];
 isnt(exception { TestRail::Utils::Find::getTests($opts,$tr) } , undef,"Correct number of non-existant cases shown (no-match, names-only)");
@@ -115,13 +115,13 @@ delete $opts->{'names-only'};
 @tests = TestRail::Utils::Find::findTests($opts,@$cases);
 my @filtered_tests = grep {defined $_} map {$_->{'full_title'}} @tests;
 is(scalar(@filtered_tests),0,"Full titles not returned in no-match mode");
-is(scalar(@tests),6,"Correct number of nonexistant cases shown in no-match mode");
+is(scalar(@tests),7,"Correct number of nonexistant cases shown in no-match mode");
 
 delete $opts->{'no-recurse'};
 $opts->{'names-only'} = 1;
 ($cases) = TestRail::Utils::Find::getTests($opts,$tr);
 @tests = TestRail::Utils::Find::findTests($opts,@$cases);
-is(scalar(@tests),10,"Correct number of non-existant cases shown (no-match, names-only, recurse)");
+is(scalar(@tests),11,"Correct number of non-existant cases shown (no-match, names-only, recurse)");
 
 #mutual excl
 $opts->{'match'} = $FindBin::Bin;
@@ -195,7 +195,7 @@ is($output->{'update'},undef,'No update cases returned');
 
 delete $opts->{'no-missing'};
 $output = TestRail::Utils::Find::findCases($opts,@$cases);
-is(scalar(@{$output->{'missing'}}),10,'Correct number of missing cases returned');
+is(scalar(@{$output->{'missing'}}),11,'Correct number of missing cases returned');
 is($output->{'orphans'},undef,'No orphan cases returned');
 is($output->{'update'},undef,'No update cases returned');
 
@@ -218,7 +218,7 @@ is($output->{'update'}->[0]->{'title'},'fake.test',"Correct update case return")
 delete $opts->{'no-missing'};
 $opts->{'orphans'} = 1;
 $output = TestRail::Utils::Find::findCases($opts,@$cases);
-is(scalar(@{$output->{'missing'}}),10,'Correct number of missing cases returned');
+is(scalar(@{$output->{'missing'}}),11,'Correct number of missing cases returned');
 is(scalar(@{$output->{'orphans'}}),1,'1 orphan case returned');
 is(scalar(@{$output->{'update'}}),1,'1 update case returned');
 

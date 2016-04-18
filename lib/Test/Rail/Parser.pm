@@ -418,29 +418,37 @@ sub testCallback {
     my $todo_reason;
     #Setup args to pass to function
     my $status = $self->{'tr_opts'}->{'not_ok'}->{'id'};
+    my $status_name = 'NOT OK';
     if ($test->is_actual_ok()) {
         $status = $self->{'tr_opts'}->{'ok'}->{'id'};
+        $status_name = 'OK';
         if ($test->has_skip()) {
             $status = $self->{'tr_opts'}->{'skip'}->{'id'};
+            $status_name = 'SKIP';
             $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
             $test_name =~ s/^# skip //gi;
+            print "# '$test_name'\n";
         }
         if ($test->has_todo()) {
             $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
-            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
-            $test_name =~ s/(^# todo & skip )//gi; #handle todo_skip
-            $test_name =~ s/ # todo\s(.*)$//gi;
-            $todo_reason = $1;
+            $status_name = 'TODO PASS';
+            $test_name   =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name   =~ s/^# todo & skip //gi; #handle todo_skip
+            $test_name   =~ s/# todo\s(.*)$//gi;
+            $todo_reason = $test->explanation();
         }
     } else {
         if ($test->has_todo()) {
-            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
-            $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
-            $test_name =~ s/^# todo & skip //gi; #handle todo_skip
-            $test_name =~ s/# todo\s(.*)$//gi;
-            $todo_reason = $1;
+            $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'};
+            $status_name = 'TODO FAIL';
+            $test_name   =~ s/^(ok|not ok)\s[0-9]*\s//g;
+            $test_name   =~ s/^# todo & skip //gi; #handle todo_skip
+            $test_name   =~ s/# todo\s(.*)$//gi;
+            $todo_reason = $test->explanation();
         }
     }
+    #XXX much of the above code would be unneeded if $test->description wasn't garbage
+    $test_name =~ s/\s+$//g;
 
     #If this is a TODO, set the reason in the notes
     $self->{'tr_opts'}->{'test_notes'} .= "\nTODO reason: $todo_reason\n" if $todo_reason;
@@ -455,7 +463,7 @@ sub testCallback {
         #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
         push(
             @{$self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}},
-            TestRail::API::buildStepResults($line,"Good result","Bad Result",$status)
+            TestRail::API::buildStepResults($line,"OK",$status_name,$status)
         );
         print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
         return 1;
@@ -534,9 +542,11 @@ sub EOFCallback {
     my $test_name  = basename($self->{'file'});
 
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
+    my $todo_failed = $self->todo() - $self->todo_passed();
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'}    if $self->has_problems();
     $status = $self->{'tr_opts'}->{'retest'}->{'id'}    if !$self->tests_run(); #No tests were run, env fail
-    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODO PASS
+    $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODOP
+    $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'} if $todo_failed && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO fail, prefer TODOF to TODOP
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}      if $self->skip_all(); #Skip all, whee
 
     #Global status override
