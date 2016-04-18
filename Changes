@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.035 2016-04-17 TEODESIAN
+    - Fix testrail-report and testrail-cases broken binary arg passing
+
 0.034 2016-02-18 TEODESIAN
     - Use Capture::Tiny rahter than IO::CaptureOutput in unit tests
     - Allow users to signal Test::Rail::Parser to set a custom status

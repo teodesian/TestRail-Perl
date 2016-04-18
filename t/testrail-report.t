@@ -5,7 +5,7 @@ use FindBin;
 use lib $FindBin::Bin.'/../bin';
 require 'testrail-report';
 
-use Test::More 'tests' => 16;
+use Test::More 'tests' => 17;
 use Capture::Tiny qw{capture_merged};
 
 use lib $FindBin::Bin.'/lib';
@@ -63,3 +63,7 @@ $0 = $FindBin::Bin.'/../bin/testrail-report';
 ($out,(undef,$code)) = capture_merged {TestRail::Bin::Report::run('args' => \@args)};
 is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
+
+#Make sure that the binary itself processes args correctly
+$out = `$0 --help`;
+like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");

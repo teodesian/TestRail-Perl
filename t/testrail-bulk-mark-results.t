@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 4;
+use Test::More "tests" => 5;
 use FindBin;
 use Capture::Tiny qw{capture_merged};
 
@@ -23,5 +23,9 @@ $0 = $FindBin::Bin.'/../bin/testrail-bulk-mark-results';
 ($out,(undef,$code)) = capture_merged {TestRail::Bin::BulkMarkResults::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args)};
 is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
+
+#Make sure that the binary itself processes args correctly
+$out = `$0 --help`;
+like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");
 
 #TODO more thorough testing

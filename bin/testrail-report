@@ -121,7 +121,7 @@ use Test::Rail::Parser;
 use File::HomeDir qw{my_home};
 
 if (!caller()) {
-    my ($out,$code) = run(@ARGV);
+    my ($out,$code) = run('args' => \@ARGV);
     print $out;
     exit $code;
 }
@@ -130,8 +130,6 @@ if (!caller()) {
 sub run {
     my %params = @_;
     my %opts;
-
-    print "testrail-report\n----------------------\n";
 
     #parse switches
     GetOptionsFromArray($params{'args'},
@@ -167,6 +165,8 @@ sub run {
     die "No Such File $file" if ($file && !-e $file);
 
     die "ERROR: Interactive mode not allowed when piping input.  See --help for options." if ( !$opts{run} || !$opts{apiurl} || !$opts{password} || !$opts{user} || !$opts{project} );
+
+    print "testrail-report\n----------------------\n";
 
     my @files = TestRail::Utils::TAP2TestFiles($file);
 

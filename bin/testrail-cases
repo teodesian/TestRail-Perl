@@ -98,7 +98,7 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
 if (!caller()) {
-    my ($out,$code) = run('args' => @ARGV);
+    my ($out,$code) = run('args' => \@ARGV);
     print $out;
     exit $code;
 }
