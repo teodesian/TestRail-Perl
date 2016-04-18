@@ -404,8 +404,9 @@ sub testCallback {
         $self->{'errors'}++;
         return 0;
     }
-    #Fail on unplanned tests
-    if ($test->is_unplanned()) {
+
+    #Can't upload unplanned tests when it's case_per_ok
+    if ($test->is_unplanned() && $self->{'tr_opts'}->{'case_per_ok'}) {
         cluck("ERROR: Unplanned test detected.  Will not attempt to upload results.");
         $self->{'errors'}++;
         return 0;

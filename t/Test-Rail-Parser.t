@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 112;
+use Test::More 'tests' => 119;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 
@@ -407,6 +407,42 @@ if (!$res) {
 }
 undef $opts->{'step_results'};
 
+#Check unplanned tests
+$fcontents = "
+todo_pass.test ..
+1..1
+ok 1 - STORAGE TANKS SEARED
+ok 2 - ZIPPPEEE
+";
+$opts->{'case_per_ok'} = 1;
+$opts->{'tap'} = $fcontents;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},1,"Error encountered uploading case results w/nonexistent case name in case-per-ok");
+}
+undef $opts->{'case_per_ok'};
+
+#Check unplanned tests
+$fcontents = "
+todo_pass.test ..
+1..1
+ok 1 - STORAGE TANKS SEARED
+ok 2 - ZIPPPEEE
+";
+$opts->{'tap'} = $fcontents;
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser doesn't explode on instantiation");
+isa_ok($tap,"Test::Rail::Parser");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results w/ unplanned tests");
+    is($tap->{'global_status'},5, "Test global result is FAIL when unplanned test seen without case-per-ok");
+}
 
 undef $tap;
 #Check bad plan w/ todo pass logic
