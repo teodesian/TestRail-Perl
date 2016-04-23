@@ -1294,7 +1294,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
+$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"fake.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skip.test"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"}]';
 $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -1349,7 +1349,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
+$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"fake.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skip.test"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"} ]';
 $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -1377,7 +1377,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"STORAGE TANKS SEARED","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skipall.test"},{"id":16,"case_id":9,"status_id":3,"assignedto_id":null,"run_id":22,"title":"notests.test"},{"id":17,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"pass.test"},{"id":18,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"todo_pass.test"}]';
+$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"fake.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skip.test"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skipall.test"},{"id":16,"case_id":9,"status_id":3,"assignedto_id":null,"run_id":22,"title":"notests.test"},{"id":17,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"pass.test"},{"id":18,"case_id":10,"status_id":1,"assignedto_id":null,"run_id":22,"title":"todo_pass.test"}]';
 $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }

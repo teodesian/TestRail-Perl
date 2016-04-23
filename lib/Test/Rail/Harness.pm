@@ -53,7 +53,6 @@ sub make_parser {
     @configs = split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
     $args->{'configs'}        = \@configs if scalar(@configs);
     $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
-    $args->{'case_per_ok'}    = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
     $args->{'testsuite_id'}   = $ENV{'TESTRAIL_SPAWN'};
     $args->{'testsuite'}      = $ENV{'TESTRAIL_TESTSUITE'};

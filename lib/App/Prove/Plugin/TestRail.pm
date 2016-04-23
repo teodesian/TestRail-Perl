@@ -33,7 +33,6 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     plan=GosPlan
     configs=config1:config2:config3: ... :configN
     version=xx.xx.xx.xx
-    case_per_ok=0
     step_results=sr_sys_name
     lockname=internal_lock_name
     testsuite_id=123
@@ -99,7 +98,6 @@ sub load {
     $ENV{'TESTRAIL_PLAN'}      = $params->{plan};
     $ENV{'TESTRAIL_CONFIGS'}   = $params->{configs};
     $ENV{'TESTRAIL_VERSION'}   = $params->{version};
-    $ENV{'TESTRAIL_CASEOK'}    = $params->{case_per_ok};
     $ENV{'TESTRAIL_STEPS'}     = $params->{step_results};
     $ENV{'TESTRAIL_SPAWN'}     = $params->{testsuite_id};
     $ENV{'TESTRAIL_TESTSUITE'} = $params->{testsuite};

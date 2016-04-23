@@ -144,7 +144,6 @@ sub getTests {
 
     my (undef,undef,$run) = TestRail::Utils::getRunInformation($tr,$opts);
     my ($status_ids,$user_ids);
-
     #Process statuses
     @$status_ids = $tr->statusNamesToIds(@{$opts->{'statuses'}}) if $opts->{'statuses'};
 

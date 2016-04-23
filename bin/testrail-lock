@@ -20,8 +20,6 @@ Results, however have a history of results set, so we use that fact to detect if
 
 Will respect test priority when making the choice of what test to lock.
 
-This obviously does not make sense with case_per_ok test upload; support for locking entire sections when in case_per_ok upload mode is not supported at this time.
-
 Can also be used as the modulino TestRail::Bin::Lock.
 Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
 

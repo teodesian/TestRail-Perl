@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 119;
+use Test::More 'tests' => 115;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 
@@ -31,7 +31,6 @@ if ($is_mock) {
 #test exceptions...
 #TODO
 
-#case_per_ok mode
 my $fcontents = "
 fake.test ..
 1..2
@@ -51,7 +50,6 @@ my $opts = {
     'run'                 => 'TestingSuite',
     'project'             => 'TestProject',
     'merge'               => 1,
-    'case_per_ok'         => 1
 };
 
 my $res = exception { $tap = Test::Rail::Parser->new($opts) };
@@ -75,7 +73,8 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
 
-$fcontents = "ok 1 - STORAGE TANKS SEARED
+$fcontents = "fake.test...
+ok 1 - STORAGE TANKS SEARED
 # whee
 not ok 2 - NOT SO SEARED AFTER ARR
 
@@ -99,11 +98,9 @@ is(Test::Rail::Parser::_compute_elapsed(0,61),'1m 1s',"Elapsed computation corre
 is(Test::Rail::Parser::_compute_elapsed(0,3661),'1h 1m 1s',"Elapsed computation correct at hour boundary");
 is(Test::Rail::Parser::_compute_elapsed(0,86461),'24h 1m 1s',"Elapsed computation correct at day boundary");
 
-#Time for non case_per_ok mode
 undef $tap;
 $opts->{'source'} = 't/faker.test';
 $opts->{'run'} = 'OtherOtherSuite';
-delete $opts->{'case_per_ok'};
 $opts->{'step_results'} = 'step_results';
 
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
@@ -115,7 +112,6 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
     is($tap->{'global_status'},5, "Test global result is FAIL when one subtest fails even if there are TODO passes");
     subtest 'Timestamp/elapsed printed in step results' => sub {
-        diag explain $tap->{'tr_opts'}->{'result_custom_options'};
         foreach my $result (@{$tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'}}) {
             like($result->{'content'}, qr/^\[.*\(.*\)\]/i, "Timestamp printed in step results");
         }
@@ -152,7 +148,6 @@ $opts->{'tap'} = $fcontents;
 delete $opts->{'source'};
 delete $opts->{'step_results'};
 $opts->{'run'} = 'TestingSuite';
-$opts->{'case_per_ok'} = 1;
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
@@ -162,7 +157,6 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
 
-#skip/todo in case_per_ok
 undef $tap;
 delete $opts->{'tap'};
 $opts->{'source'} = 't/skip.test';
@@ -178,7 +172,6 @@ if (!$res) {
 #Default mode skip (skip_all)
 undef $tap;
 $opts->{'source'} = 't/skipall.test';
-delete $opts->{'case_per_ok'};
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
@@ -254,13 +247,6 @@ if (!$res) {
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
 
-#Verify that case_per_ok and step_results are mutually exclusive, and die.
-undef $tap;
-$opts->{'case_per_ok'} = 1;
-$opts->{'step_results'} = 'step_results';
-$res = exception { $tap = Test::Rail::Parser->new($opts) };
-isnt($res,undef,"TR Parser explodes on instantiation when mutually exclusive options are passed");
-
 #Check that per-section spawn works
 undef $tap;
 $opts->{'source'} = 't/fake.test';
@@ -297,7 +283,6 @@ isnt($res,undef,"TR Parser explodes on instantiation with invalid section");
 undef $tap;
 $opts->{'source'} = 't/notests.test';
 delete $opts->{'sections'};
-delete $opts->{'case_per_ok'};
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
@@ -414,25 +399,6 @@ todo_pass.test ..
 ok 1 - STORAGE TANKS SEARED
 ok 2 - ZIPPPEEE
 ";
-$opts->{'case_per_ok'} = 1;
-$opts->{'tap'} = $fcontents;
-$res = exception { $tap = Test::Rail::Parser->new($opts) };
-is($res,undef,"TR Parser doesn't explode on instantiation");
-isa_ok($tap,"Test::Rail::Parser");
-
-if (!$res) {
-    $tap->run();
-    is($tap->{'errors'},1,"Error encountered uploading case results w/nonexistent case name in case-per-ok");
-}
-undef $opts->{'case_per_ok'};
-
-#Check unplanned tests
-$fcontents = "
-todo_pass.test ..
-1..1
-ok 1 - STORAGE TANKS SEARED
-ok 2 - ZIPPPEEE
-";
 $opts->{'tap'} = $fcontents;
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
@@ -495,13 +461,12 @@ if (!$res) {
     is($tap->{'run_closed'},undef, "Run not closed by parser when results are outstanding");
 }
 
-#Check that autoclose works against plan wiht all tests in run status
+#Check that autoclose works against plan with all tests in run status
 undef $tap;
 $opts->{'source'} = 't/fake.test';
 $opts->{'run'} = 'FinalRun';
 $opts->{'plan'} = 'FinalPlan';
 $opts->{'configs'} = ['testConfig'];
-$opts->{'case_per_ok'} = 1;
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
@@ -570,7 +535,6 @@ Bail out!  #YOLO
 undef $opts->{'source'};
 $opts->{'tap'} = $fcontents;
 $opts->{'step_results'} = 'step_results';
-undef $opts->{'case_per_ok'};
 $res = exception { $tap = Test::Rail::Parser->new($opts) };
 is($res,undef,"TR Parser runs all the way through on bailout");
 
