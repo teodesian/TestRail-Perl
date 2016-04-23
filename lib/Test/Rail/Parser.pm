@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.034';
+$Test::Rail::Parser::VERSION = '0.035';
 use strict;
 use warnings;
 use utf8;
@@ -41,7 +41,6 @@ sub new {
         'project'      => delete $opts->{'project'},
         'project_id'   => delete $opts->{'project_id'},
         'step_results' => delete $opts->{'step_results'},
-        'case_per_ok'  => delete $opts->{'case_per_ok'},
         'plan'         => delete $opts->{'plan'},
         'configs'      => delete $opts->{'configs'} // [],
         'testsuite_id' => delete $opts->{'testsuite_id'},
@@ -57,8 +56,6 @@ sub new {
 
     confess("plan passed, but no run passed!")
       if !$tropts->{'run'} && $tropts->{'plan'};
-    confess("case_per_ok and step_results options are mutually exclusive")
-      if ( $tropts->{'case_per_ok'} && $tropts->{'step_results'} );
 
     #Allow natural confessing from constructor
     my $tr = TestRail::API->new(
@@ -276,10 +273,13 @@ sub new {
     }
 
     #Make sure the step results field passed exists on the system
+    my $sr_name = $tropts->{'step_results'};
     $tropts->{'step_results'} =
       $tr->getTestResultFieldByName( $tropts->{'step_results'},
         $tropts->{'project_id'} )
       if defined $tropts->{'step_results'};
+    confess("Invalid step results name '$sr_name' passed.")
+      if ref $tropts->{'step_results'} ne 'HASH' && $sr_name;
 
     $self->{'tr_opts'} = $tropts;
     $self->{'errors'}  = 0;
@@ -319,6 +319,7 @@ sub unknownCallback {
     #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
     $self->{'file'} = $file if $file;
+    return;
 }
 
 # Register the current suite or test desc for use by test callback, if the line begins with the special magic words
@@ -331,11 +332,8 @@ sub commentCallback {
     if ( $line =~ m/^#TESTDESC:\s*/ ) {
         $self->{'tr_opts'}->{'test_desc'} = $line;
         $self->{'tr_opts'}->{'test_desc'} =~ s/^#TESTDESC:\s*//g;
-        return;
     }
-
-    #keep all comments before a test that aren't these special directives to save in NOTES field of reportTCResult
-    $self->{'tr_opts'}->{'test_notes'} .= "$line\n";
+    return;
 }
 
 sub testCallback {
@@ -355,7 +353,6 @@ sub testCallback {
         $self->{'lasttime'} = $tm;
     }
 
-    #Default assumption is that case name is step text (case_per_ok), unless...
     my $line  = $test->as_string;
     my $tline = $line;
     $tline = "["
@@ -365,40 +362,15 @@ sub testCallback {
     $self->{'raw_output'} .= "$tline\n";
 
     #Don't do anything if we don't want to map TR case => ok or use step-by-step results
-    if (
-        !(
-               $self->{'tr_opts'}->{'step_results'}
-            || $self->{'tr_opts'}->{'case_per_ok'}
-        )
-      )
-    {
+    if ( !$self->{'tr_opts'}->{'step_results'} ) {
         print
-          "# Neither step_results or case_per_ok set.  No action to be taken, except on a whole test basis.\n"
+          "# step_results not set.  No action to be taken, except on a whole test basis.\n"
           if $self->{'tr_opts'}->{'debug'};
         return 1;
-    }
-    if (   $self->{'tr_opts'}->{'step_results'}
-        && $self->{'tr_opts'}->{'case_per_ok'} )
-    {
-        cluck(
-            "ERROR: step_options and case_per_ok options are mutually exclusive!"
-        );
-        $self->{'errors'}++;
-        return 0;
-    }
-
-    #Fail on unplanned tests
-    if ( $test->is_unplanned() ) {
-        cluck(
-            "ERROR: Unplanned test detected.  Will not attempt to upload results."
-        );
-        $self->{'errors'}++;
-        return 0;
     }
 
     $line =~ s/^(ok|not ok)\s[0-9]*\s-\s//g;
     my $test_name = $line;
-    my $run_id    = $self->{'tr_opts'}->{'run_id'};
 
     print "# Assuming test name is '$test_name'...\n"
       if $self->{'tr_opts'}->{'debug'} && !$self->{'tr_opts'}->{'step_results'};
@@ -406,80 +378,65 @@ sub testCallback {
     my $todo_reason;
 
     #Setup args to pass to function
-    my $status = $self->{'tr_opts'}->{'not_ok'}->{'id'};
+    my $status      = $self->{'tr_opts'}->{'not_ok'}->{'id'};
+    my $status_name = 'NOT OK';
     if ( $test->is_actual_ok() ) {
-        $status = $self->{'tr_opts'}->{'ok'}->{'id'};
+        $status      = $self->{'tr_opts'}->{'ok'}->{'id'};
+        $status_name = 'OK';
         if ( $test->has_skip() ) {
-            $status = $self->{'tr_opts'}->{'skip'}->{'id'};
+            $status      = $self->{'tr_opts'}->{'skip'}->{'id'};
+            $status_name = 'SKIP';
             $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
             $test_name =~ s/^# skip //gi;
+            print "# '$test_name'\n";
         }
         if ( $test->has_todo() ) {
-            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $status      = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $status_name = 'TODO PASS';
             $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
-            $test_name =~ s/(^# todo & skip )//gi;    #handle todo_skip
-            $test_name =~ s/ # todo\s(.*)$//gi;
-            $todo_reason = $1;
+            $test_name =~ s/^# todo & skip //gi;    #handle todo_skip
+            $test_name =~ s/# todo\s(.*)$//gi;
+            $todo_reason = $test->explanation();
         }
     }
     else {
         if ( $test->has_todo() ) {
-            $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'};
+            $status      = $self->{'tr_opts'}->{'todo_fail'}->{'id'};
+            $status_name = 'TODO FAIL';
             $test_name =~ s/^(ok|not ok)\s[0-9]*\s//g;
-            $test_name =~ s/^# todo & skip //gi;      #handle todo_skip
+            $test_name =~ s/^# todo & skip //gi;    #handle todo_skip
             $test_name =~ s/# todo\s(.*)$//gi;
-            $todo_reason = $1;
+            $todo_reason = $test->explanation();
         }
     }
+
+    #XXX much of the above code would be unneeded if $test->description wasn't garbage
+    $test_name =~ s/\s+$//g;
 
     #If this is a TODO, set the reason in the notes
     $self->{'tr_opts'}->{'test_notes'} .= "\nTODO reason: $todo_reason\n"
       if $todo_reason;
 
-    #Setup step options and exit if that's the mode we be rollin'
-    if ( $self->{'tr_opts'}->{'step_results'} ) {
-        $self->{'tr_opts'}->{'result_custom_options'} = {}
-          if !defined $self->{'tr_opts'}->{'result_custom_options'};
-        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} = []
-          if !
-          defined $self->{'tr_opts'}->{'result_custom_options'}
-          ->{'step_results'};
+    my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
+    $self->{'tr_opts'}->{'result_custom_options'} = {}
+      if !defined $self->{'tr_opts'}->{'result_custom_options'};
+    $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} = []
+      if !defined $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name};
 
-        #TimeStamp every particular step
+    #TimeStamp every particular step
 
-        $line = "["
-          . strftime( "%H:%M:%S %b %e %Y", localtime( $self->{'lasttime'} ) )
-          . " ($self->{elapse_display})] $line"
-          if $self->{'track_time'};
+    $line = "["
+      . strftime( "%H:%M:%S %b %e %Y", localtime( $self->{'lasttime'} ) )
+      . " ($self->{elapse_display})] $line"
+      if $self->{'track_time'};
 
-        #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
-        push(
-            @{
-                $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}
-            },
-            TestRail::API::buildStepResults(
-                $line, "Good result", "Bad Result", $status
-            )
-        );
-        print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
-        return 1;
-    }
-
-    #Optional args
-    my $notes          = $self->{'tr_opts'}->{'test_notes'};
-    my $options        = $self->{'tr_opts'}->{'result_options'};
-    my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
-
-    $self->_set_result( $run_id, $test_name, $status, $notes, $options,
-        $custom_options );
-
-    #Re-start the shot clock
-    $self->{'starttime'} = time();
-
-    #Blank out test description in anticipation of next test
-    # also blank out notes
-    $self->{'tr_opts'}->{'test_notes'} = undef;
-    $self->{'tr_opts'}->{'test_desc'}  = undef;
+    #XXX Obviously getting the 'expected' and 'actual' from the tap DIAGs would be ideal
+    push(
+        @{ $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} },
+        TestRail::API::buildStepResults( $line, "OK", $status_name, $status )
+    );
+    print "# Appended step results.\n" if $self->{'tr_opts'}->{'debug'};
+    return 1;
 }
 
 sub bailoutCallback {
@@ -489,13 +446,12 @@ sub bailoutCallback {
     $self->{'raw_output'} .= "$line\n";
 
     if ( $self->{'tr_opts'}->{'step_results'} ) {
+        my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
 
         #Handle the case where we die right off
-        $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //= [];
+        $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} //= [];
         push(
-            @{
-                $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'}
-            },
+            @{ $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} },
             TestRail::API::buildStepResults(
                 "Bail Out!.",       "Continued testing",
                 $test->explanation, $self->{'tr_opts'}->{'not_ok'}->{'id'}
@@ -516,13 +472,6 @@ sub EOFCallback {
           _compute_elapsed( $self->{'starttime'}, time() );
     }
 
-    if ( $self->{'tr_opts'}->{'case_per_ok'} ) {
-        print "# Nothing left to do.\n";
-        $self->_test_closure();
-        undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
-        return 1;
-    }
-
     #Fail if the file is not set
     if ( !defined( $self->{'file'} ) ) {
         cluck(
@@ -535,16 +484,22 @@ sub EOFCallback {
     my $run_id    = $self->{'tr_opts'}->{'run_id'};
     my $test_name = basename( $self->{'file'} );
 
-    my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
+    my $status      = $self->{'tr_opts'}->{'ok'}->{'id'};
+    my $todo_failed = $self->todo() - $self->todo_passed();
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'} if $self->has_problems();
     $status = $self->{'tr_opts'}->{'retest'}->{'id'}
       if !$self->tests_run();    #No tests were run, env fail
     $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'}
       if $self->todo_passed()
       && !$self->failed()
-      && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODO PASS
+      && $self->is_good_plan();    #If no fails, but a TODO pass, mark as TODOP
+    $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'}
+      if $todo_failed
+      && !$self->failed()
+      && $self->is_good_plan()
+      ;    #If no fails, but a TODO fail, prefer TODOF to TODOP
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}
-      if $self->skip_all();     #Skip all, whee
+      if $self->skip_all();    #Skip all, whee
 
     #Global status override
     $status = $self->{'global_status'} if $self->{'global_status'};
@@ -557,14 +512,15 @@ sub EOFCallback {
           . " tests, but planned "
           . $self->tests_planned . ".";
         if ( $self->{'tr_opts'}->{'step_results'} ) {
+            my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
 
             #Handle the case where we die right off
-            $self->{'tr_opts'}->{'result_custom_options'}->{'step_results'} //=
+            $self->{'tr_opts'}->{'result_custom_options'}->{$sr_sys_name} //=
               [];
             push(
                 @{
                     $self->{'tr_opts'}->{'result_custom_options'}
-                      ->{'step_results'}
+                      ->{$sr_sys_name}
                 },
                 TestRail::API::buildStepResults(
                     "Bad Plan.",
@@ -577,8 +533,7 @@ sub EOFCallback {
     }
 
     #Optional args
-    my $notes = $self->{'tr_opts'}->{'test_notes'};
-    $notes = $self->{'raw_output'};
+    my $notes          = $self->{'raw_output'};
     my $options        = $self->{'tr_opts'}->{'result_options'};
     my $custom_options = $self->{'tr_opts'}->{'result_custom_options'};
 
@@ -718,7 +673,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 DESCRIPTION
 
@@ -762,9 +717,7 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<project_id> - INTEGER (optional): ID of project containing your desired run.  Required if project not passed.
 
-=item B<step_results> - STRING (optional): 'internal name' of the 'step_results' type field available for your project.  Mutually exclusive with case_per_ok
-
-=item B<case_per_ok> - BOOLEAN (optional): Consider test files to correspond to section names, and test steps (OKs) to correspond to tests in TestRail.  Mutually exclusive with step_results.
+=item B<step_results> - STRING (optional): 'internal name' of the 'step_results' type field available for your project.
 
 =item B<result_options> - HASHREF (optional): Extra options to set with your result.  See L<TestRail::API>'s createTestResults function for more information.
 
@@ -784,14 +737,13 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =back
 
-It is worth noting that if neither step_results or case_per_ok is passed, that the test will be passed if it has no problems of any sort, failed otherwise.
 In both this mode and step_results, the file name of the test is expected to correspond to the test name in TestRail.
 
 This module also attempts to calculate the elapsed time to run each test if it is run by a prove plugin rather than on raw TAP.
 
 The constructor will terminate if the statuses 'pass', 'fail', 'retest', 'skip', 'todo_pass', and 'todo_fail' are not registered as result internal names in your TestRail install.
 
-If you are not in case_per_ok mode, the global status of the case will be set according to the following rules:
+The global status of the case will be set according to the following rules:
 
     1. If there are no issues whatsoever besides TODO failing tests & skips, mark as PASS
     2. If there are any non-skipped or TODOed fails OR a bad plan (extra/missing tests), mark as FAIL
@@ -836,7 +788,6 @@ Especially useful when merge=1 is passed to the constructor.
 =head2 testCallback
 
 If we are using step_results, append it to the step results array for use at EOF.
-If we are using case_per_ok, update TestRail per case.
 Otherwise, do nothing.
 
 =head2 bailoutCallback
@@ -846,7 +797,6 @@ If bail_out is called, note it and add step results.
 =head2 EOFCallback
 
 If we are running in step_results mode, send over all the step results to TestRail.
-If we are running in case_per_ok mode, do nothing.
 Otherwise, upload the overall results of the test to TestRail.
 
 =head2 make_result

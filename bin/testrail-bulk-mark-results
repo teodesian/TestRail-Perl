@@ -3,7 +3,7 @@
 # PODNAME: TestRail::Bin::BulkMarkResults
 
 package TestRail::Bin::BulkMarkResults;
-$TestRail::Bin::BulkMarkResults::VERSION = '0.034';
+$TestRail::Bin::BulkMarkResults::VERSION = '0.035';
 use strict;
 use warnings;
 use utf8;
@@ -88,7 +88,7 @@ TestRail::Bin::BulkMarkResults - Bulk mark entire runs/plans (or groups of tests
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 DESCRIPTION
 

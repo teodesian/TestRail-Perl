@@ -1,5 +1,13 @@
 Revision history for Perl module TestRail::API
 
+0.035 2016-04-17 TEODESIAN
+    - Fix testrail-report and testrail-cases broken binary arg passing
+    - Fix issue where TODO PASS was reported in tests with TODO FAILs.
+    - Fix issue where TODO FAILED steps were reported as TODO PASS.
+    - Fix issue where the value of the step_results field was ignored by Test::Rail::Parser
+    - Fix issue where Test::Rail::Parser would truncate results in non case-per-ok mode
+    - Remove case_per_ok feature from Test::Rail::Parser, never really worked it turns out
+
 0.034 2016-02-18 TEODESIAN
     - Use Capture::Tiny rahter than IO::CaptureOutput in unit tests
     - Allow users to signal Test::Rail::Parser to set a custom status

@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.034';
+$TestRail::API::VERSION = '0.035';
 
 use 5.010;
 
@@ -1251,7 +1251,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 SYNOPSIS
 
@@ -2227,6 +2227,8 @@ Gets a test result field by it's system name.  Optionally filter by project ID.
 =item B<PROJECT ID> - INTEGER (optional): Filter by whether or not the field is enabled for said project
 
 =back
+
+Returns a value less than 0 if unsuccessful.
 
 =head2 B<getPossibleTestStatuses()>
 

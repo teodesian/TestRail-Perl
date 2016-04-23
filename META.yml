@@ -28,28 +28,28 @@ name: TestRail-API
 provides:
   App::Prove::Plugin::TestRail:
     file: lib/App/Prove/Plugin/TestRail.pm
-    version: 0.034
+    version: 0.035
   Test::Rail::Harness:
     file: lib/Test/Rail/Harness.pm
-    version: 0.034
+    version: 0.035
   Test::Rail::Parser:
     file: lib/Test/Rail/Parser.pm
-    version: 0.034
+    version: 0.035
   TestRail::API:
     file: lib/TestRail/API.pm
-    version: 0.034
+    version: 0.035
   TestRail::Utils:
     file: lib/TestRail/Utils.pm
-    version: 0.034
+    version: 0.035
   TestRail::Utils::Find:
     file: lib/TestRail/Utils/Find.pm
-    version: 0.034
+    version: 0.035
   TestRail::Utils::Lock:
     file: lib/TestRail/Utils/Lock.pm
-    version: 0.034
+    version: 0.035
   TestRail::Utils::Results:
     file: lib/TestRail/Utils/Results.pm
-    version: 0.034
+    version: 0.035
 requires:
   Carp: 0
   Clone: 0
@@ -85,6 +85,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=TestRail-API
   homepage: https://github.com/teodesian/TestRail-Perl
   repository: git://github.com/teodesian/TestRail-Perl.git
-version: 0.034
+version: 0.035
 x_contributors:
   - 'Neil Bowers <neil@bowers.com>'

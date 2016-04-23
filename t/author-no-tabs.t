@@ -75,7 +75,8 @@ my @files = (
     't/testrail-report.t',
     't/testrail-runs.t',
     't/testrail-tests.t',
-    't/todo_pass.test'
+    't/todo_pass.test',
+    't/todo_pass_and_fail.test'
 );
 
 notabs_ok($_) foreach @files;

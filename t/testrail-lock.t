@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More "tests" => 4;
+use Test::More "tests" => 5;
 use FindBin;
 use Capture::Tiny qw{capture_merged};
 
@@ -22,3 +22,7 @@ like($out,qr/encoding of arguments/i,"Help output OK");
 is($code, 255, "Exit code bad when no case could be locked");
 chomp $out;
 like($out,qr/could not lock case/i,"Output is as expected");
+
+#Make sure that the binary itself processes args correctly
+$out = `$0 --help`;
+like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");

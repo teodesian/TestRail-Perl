@@ -3,7 +3,7 @@
 # PODNAME: TestRail::Bin::Cases
 
 package TestRail::Bin::Cases;
-$TestRail::Bin::Cases::VERSION = '0.034';
+$TestRail::Bin::Cases::VERSION = '0.035';
 use strict;
 use warnings;
 use utf8;
@@ -16,7 +16,7 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 
 if ( !caller() ) {
-    my ( $out, $code ) = run( 'args' => @ARGV );
+    my ( $out, $code ) = run( 'args' => \@ARGV );
     print $out;
     exit $code;
 }
@@ -99,7 +99,7 @@ TestRail::Bin::Cases - get information about cases inside various testsuites/sec
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 SYNOPSIS
 

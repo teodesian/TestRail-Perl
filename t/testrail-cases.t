@@ -9,7 +9,7 @@ require 'testrail-cases';
 use lib $FindBin::Bin.'/lib';
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More "tests" => 6;
+use Test::More "tests" => 7;
 use Capture::Tiny qw{capture_merged};
 
 #check plan mode
@@ -35,3 +35,7 @@ $0 = $FindBin::Bin.'/../bin/testrail-cases';
 ($out,(undef,$code)) = capture_merged {TestRail::Bin::Cases::run('args' => \@args)};
 is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
+
+#Make sure that the binary itself processes args correctly
+$out = `$0 --help`;
+like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");

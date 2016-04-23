@@ -3,7 +3,7 @@
 # PODNAME: TestRail::Bin::Lock
 
 package TestRail::Bin::Lock;
-$TestRail::Bin::Lock::VERSION = '0.034';
+$TestRail::Bin::Lock::VERSION = '0.035';
 use strict;
 use warnings;
 use utf8;
@@ -78,7 +78,7 @@ TestRail::Bin::Lock - Lock a test in a TestRail, and return the test name if suc
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 SYNOPSIS
 
@@ -97,8 +97,6 @@ This is accomplished via setting a special locking result on a test rather than 
 Results, however have a history of results set, so we use that fact to detect if a locking collision occurred (race condition) and fail to return a result when another process locked during our attempt to lock.
 
 Will respect test priority when making the choice of what test to lock.
-
-This obviously does not make sense with case_per_ok test upload; support for locking entire sections when in case_per_ok upload mode is not supported at this time.
 
 Can also be used as the modulino TestRail::Bin::Lock.
 Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.

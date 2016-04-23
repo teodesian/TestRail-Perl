@@ -1,7 +1,7 @@
 # ABSTRACT: TestRail testing harness
 # PODNAME: Test::Rail::Harness
 package Test::Rail::Harness;
-$Test::Rail::Harness::VERSION = '0.034';
+$Test::Rail::Harness::VERSION = '0.035';
 use strict;
 use warnings;
 
@@ -35,7 +35,6 @@ sub make_parser {
     $args->{'configs'} = \@configs if scalar(@configs);
     $args->{'result_options'} = { 'version' => $ENV{'TESTRAIL_VERSION'} }
       if $ENV{'TESTRAIL_VERSION'};
-    $args->{'case_per_ok'}  = $ENV{'TESTRAIL_CASEOK'};
     $args->{'step_results'} = $ENV{'TESTRAIL_STEPS'};
     $args->{'testsuite_id'} = $ENV{'TESTRAIL_SPAWN'};
     $args->{'testsuite'}    = $ENV{'TESTRAIL_TESTSUITE'};
@@ -80,7 +79,7 @@ Test::Rail::Harness - TestRail testing harness
 
 =head1 VERSION
 
-version 0.034
+version 0.035
 
 =head1 DESCRIPTION
 

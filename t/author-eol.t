@@ -75,7 +75,8 @@ my @files = (
     't/testrail-report.t',
     't/testrail-runs.t',
     't/testrail-tests.t',
-    't/todo_pass.test'
+    't/todo_pass.test',
+    't/todo_pass_and_fail.test'
 );
 
 eol_unix_ok($_, { trailing_whitespace => 1 }) foreach @files;
