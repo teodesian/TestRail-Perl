@@ -2,7 +2,7 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.035';
+$TestRail::Utils::Find::VERSION = '0.036';
 use strict;
 use warnings;
 
@@ -87,11 +87,13 @@ sub findRuns {
         $sortkey = 'due_on';
     }
 
+    #Suppress 'no such option' warnings
+    @$runs = map { $_->{$sortkey} //= ''; $_ } @$runs;
     if ( $opts->{'lifo'} ) {
-        @$runs = sort { $b->{$sortkey} <=> $a->{$sortkey} } @$runs;
+        @$runs = sort { $b->{$sortkey} cmp $a->{$sortkey} } @$runs;
     }
     else {
-        @$runs = sort { $a->{$sortkey} <=> $b->{$sortkey} } @$runs;
+        @$runs = sort { $a->{$sortkey} cmp $b->{$sortkey} } @$runs;
     }
 
     return $runs;
@@ -271,7 +273,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.035
+version 0.036
 
 =head1 DESCRIPTION
 

@@ -10,6 +10,7 @@ use Test::More 'tests' => 14;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Scalar::Util qw{reftype};
+use Capture::Tiny qw{capture};
 
 my $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
 my $tr = TestRail::API->new('http://hokum.bogus','fake','fake',undef,1);
@@ -40,9 +41,12 @@ is($projResType,-3,"Bad project returns no result field");
 
 # I can't delete closed plans, so...test closePlan et cetera
 is(reftype($tr->closeRun(666)),'HASH',"Can close run that exists");
-is($tr->closeRun(90210),-404,"Can't close run that doesn't exist");
+my $res;
+capture { $res = $tr->closeRun(90210) };
+is($res,-404,"Can't close run that doesn't exist");
 is(reftype($tr->closePlan(23)),'HASH',"Can close plan that exists");
-is($tr->closePlan(75020),-404,"Can't close plan that doesn't exist");
+capture { $res = $tr->closePlan(75020) };
+is($res,-404,"Can't close plan that doesn't exist");
 
 # Test case type method
 my $ct = $tr->getCaseTypeByName("Automated");

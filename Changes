@@ -1,6 +1,12 @@
 Revision history for Perl module TestRail::API
 
-0.035 2016-04-17 TEODESIAN
+0.036 2016-04-25 TEODESIAN
+    - Fix using wrong perl during testsuite when running binaries
+    - Silence testsuite for easier diagnosis of issues
+    - Fix warnings due to undef comparison in TestRail::Utils::Find
+    - Change to using Pod::Usage for help output rather than Pod::Perldoc
+
+0.035 2016-04-23 TEODESIAN
     - Fix testrail-report and testrail-cases broken binary arg passing
     - Fix issue where TODO PASS was reported in tests with TODO FAILs.
     - Fix issue where TODO FAILED steps were reported as TODO PASS.

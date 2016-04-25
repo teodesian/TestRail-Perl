@@ -2,12 +2,12 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.035';
+$TestRail::Utils::VERSION = '0.036';
 use strict;
 use warnings;
 
 use Carp qw{confess cluck};
-use Pod::Perldoc 3.20;    #Make sure we have ToMan on some unices
+use Pod::Usage ();
 use TestRail::API;
 
 use IO::Interactive::Tiny ();
@@ -15,8 +15,11 @@ use Term::ANSIColor 2.01 qw(colorstrip);
 use Scalar::Util qw{blessed};
 
 sub help {
-    @ARGV = ($0);
-    Pod::Perldoc->run();
+    Pod::Usage::pod2usage(
+        '-verbose'   => 2,
+        '-noperldoc' => 1,
+        '-exitval'   => 'NOEXIT'
+    );
     return 0;
 }
 
@@ -196,7 +199,7 @@ TestRail::Utils - Utilities for the testrail command line functions, and their m
 
 =head1 VERSION
 
-version 0.035
+version 0.036
 
 =head1 SCRIPT HELPER FUNCTIONS
 

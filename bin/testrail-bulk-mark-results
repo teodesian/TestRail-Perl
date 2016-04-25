@@ -3,7 +3,7 @@
 # PODNAME: TestRail::Bin::BulkMarkResults
 
 package TestRail::Bin::BulkMarkResults;
-$TestRail::Bin::BulkMarkResults::VERSION = '0.035';
+$TestRail::Bin::BulkMarkResults::VERSION = '0.036';
 use strict;
 use warnings;
 use utf8;
@@ -39,7 +39,6 @@ sub run {
         'apiurl=s'        => \$opts->{'apiurl'},
         'password=s'      => \$opts->{'password'},
         'user=s'          => \$opts->{'user'},
-        'assignedto=s@'   => \$opts->{'users'},
         'status=s@'       => \$opts->{'statuses'},
         'j|project=s'     => \$opts->{'project'},
         'p|plan=s'        => \$opts->{'plan'},
@@ -88,7 +87,7 @@ TestRail::Bin::BulkMarkResults - Bulk mark entire runs/plans (or groups of tests
 
 =head1 VERSION
 
-version 0.035
+version 0.036
 
 =head1 DESCRIPTION
 
