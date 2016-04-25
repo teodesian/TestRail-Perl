@@ -13,6 +13,7 @@ use Test::Rail::Parser;
 use Test::More 'tests' => 115;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
+use Capture::Tiny qw{capture};
 
 #Same song and dance as in TestRail-API.t
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
@@ -330,7 +331,7 @@ is($res,undef,"TR Parser doesn't explode on instantiation");
 isa_ok($tap,"Test::Rail::Parser");
 
 if (!$res) {
-    $tap->run();
+    capture { $tap->run() };
     is($tap->{'errors'},1,"Errors encountered uploading case results for case that does not exist in TestRail");
     is($tap->{'global_status'},7, "Test global result is TODO FAIL on todo pass & fail test");
     my @desired_statuses = qw{1 8 7};
