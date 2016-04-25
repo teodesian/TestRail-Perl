@@ -99,6 +99,8 @@ sub findRuns {
         $sortkey = 'due_on';
     }
 
+    #Suppress 'no such option' warnings
+    @$runs = map { $_->{$sortkey} //= ''; $_ } @$runs;
     if ($opts->{'lifo'}) {
         @$runs = sort { $b->{$sortkey} <=> $a->{$sortkey} } @$runs;
     } else {
