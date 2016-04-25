@@ -102,9 +102,9 @@ sub findRuns {
     #Suppress 'no such option' warnings
     @$runs = map { $_->{$sortkey} //= ''; $_ } @$runs;
     if ($opts->{'lifo'}) {
-        @$runs = sort { $b->{$sortkey} <=> $a->{$sortkey} } @$runs;
+        @$runs = sort { $b->{$sortkey} cmp $a->{$sortkey} } @$runs;
     } else {
-        @$runs = sort { $a->{$sortkey} <=> $b->{$sortkey} } @$runs;
+        @$runs = sort { $a->{$sortkey} cmp $b->{$sortkey} } @$runs;
     }
 
     return $runs;
