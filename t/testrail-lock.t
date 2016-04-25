@@ -24,5 +24,5 @@ chomp $out;
 like($out,qr/could not lock case/i,"Output is as expected");
 
 #Make sure that the binary itself processes args correctly
-$out = `$0 --help`;
+$out = `$^X $0 --help`;
 like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");

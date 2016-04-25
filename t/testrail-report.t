@@ -59,5 +59,5 @@ is($code, 0, "Exit code OK asking for help");
 like($out,qr/encoding of arguments/i,"Help output OK");
 
 #Make sure that the binary itself processes args correctly
-$out = `$0 --help`;
+$out = `$^X $0 --help`;
 like($out,qr/encoding of arguments/i,"Appears we can run binary successfully");
