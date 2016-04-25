@@ -11,6 +11,7 @@ use Test::More tests => 87;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
+use Capture::Tiny qw{capture};
 
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
@@ -22,7 +23,7 @@ my $is_mock = (!$apiurl && !$login && !$pw);
 like(exception {TestRail::API->new('trash','bogus','bogus');}, qr/invalid uri/i, "Non-URIs bounce constructor");
 
 #XXX for some insane reason 'hokum.bogus' seems to be popular with cpantesters
-my $bogoError = exception {TestRail::API->new('http://hokum.bogus','lies','moreLies',undef,0); };
+my $bogoError = exception { capture { TestRail::API->new('http://hokum.bogus','lies','moreLies',undef,0); } };
 SKIP: {
     skip("Some CPANTesters like to randomly redirect all DNS misses to some other host, apparently", 1) if ($bogoError =~ m/404|302/);
     like($bogoError, qr/Could not communicate with TestRail Server/i,"Bogus Testrail URI rejected");
@@ -43,7 +44,9 @@ my $tr = new TestRail::API($apiurl,$login,$pw,undef,1);
 $tr->{'debug'} = 0;
 $tr->{'browser'} = $Test::LWP::UserAgent::TestRailMock::mockObject if $is_mock;
 
-is($tr->_doRequest('noSuchMethod'),-404,'Requesting bad URI returns 404');
+my $res;
+capture { $res = $tr->_doRequest('noSuchMethod') };
+is($res,-404,'Requesting bad URI returns 404');
 
 #Test USER methods
 my $userlist = $tr->getUsers();
