@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use Carp qw{confess cluck};
-use Pod::Perldoc 3.20; #Make sure we have ToMan on some unices
+use Pod::Usage ();
 use TestRail::API;
 
 use IO::Interactive::Tiny ();
@@ -23,8 +23,7 @@ Print the perldoc for $0 and exit.
 =cut
 
 sub help {
-    @ARGV = ($0);
-    Pod::Perldoc->run();
+    Pod::Usage::pod2usage( '-verbose' => 2, '-noperldoc' => 1, '-exitval' => 'NOEXIT' );
     return 0;
 }
 
