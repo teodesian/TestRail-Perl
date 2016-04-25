@@ -112,7 +112,6 @@ sub run {
         'apiurl=s'        => \$opts->{'apiurl'},
         'password=s'      => \$opts->{'password'},
         'user=s'          => \$opts->{'user'},
-        'assignedto=s@'   => \$opts->{'users'},
         'status=s@'       => \$opts->{'statuses'},
         'j|project=s'     => \$opts->{'project'},
         'p|plan=s'        => \$opts->{'plan'},
