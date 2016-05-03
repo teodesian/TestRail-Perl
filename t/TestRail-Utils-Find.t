@@ -231,4 +231,6 @@ like(exception {TestRail::Utils::Find::findCases($opts,@$cases)},qr/Directory pa
 $opts->{'directory'} = 'bogoDir/';
 like(exception {TestRail::Utils::Find::findCases($opts,@$cases)},qr/No such directory/i,"Bad directory being passed results in error");
 
+#XXX Deliberately omitting the tests for getResults.  It's adequately covered (for now) by testrail-results unit test
+
 #Test synchronize

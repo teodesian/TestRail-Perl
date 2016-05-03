@@ -314,6 +314,39 @@ sub findCases {
     return $ret;
 }
 
+=head2 getResults(options, $prior_runs, @cases)
+
+Get results for tests by name, filtered by the provided options, and skipping any runs found in the provided ARRAYREF of run IDs.
+
+Probably should have called this findResults, but we all prefer to get results right?
+
+=cut
+
+sub getResults {
+    my ($tr,$opts,$prior_runs,@cases) = @_;
+    my $res = {};
+    my $projects = $tr->getProjects();
+
+    #TODO obey options passed for project/plan/run
+    #TODO obey status filtering
+    #TODO obey result notes text grepping
+    foreach my $project (@$projects) {
+        my $runs = $tr->getRuns($project->{'id'});
+        foreach my $run (@$runs) {
+            next if grep { $run->{id} eq $_ } @$prior_runs;
+            foreach my $case (@cases) {
+                my $c = $tr->getTestByName($run->{'id'},basename($case));
+                next unless ref $c eq 'HASH';
+
+                $res->{$case} //= [];
+                $c->{results} = $tr->getTestResults($c->{'id'},$tr->{'global_limit'},0);
+                push(@{$res->{$case}}, $c);
+            }
+        }
+    }
+    return $res;
+}
+
 1;
 
 __END__

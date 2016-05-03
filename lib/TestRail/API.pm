@@ -1988,13 +1988,17 @@ Gets all possible statuses a test can be set to.
 
 Returns ARRAYREF of status definition HASHREFs.
 
+Caches the result for the lifetime of the TestRail::API object.
+
 =cut
 
 sub getPossibleTestStatuses {
     state $check = compile(Object);
     my ($self) = $check->(@_);
+    return $self->{'status_cache'} if $self->{'status_cache'};
 
-    return $self->_doRequest('index.php?/api/v2/get_statuses');
+    $self->{'status_cache'} = $self->_doRequest('index.php?/api/v2/get_statuses');
+    return $self->{'status_cache'};
 }
 
 =head2 statusNamesToIds(names)
