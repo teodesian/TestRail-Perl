@@ -314,6 +314,63 @@ sub findCases {
     return $ret;
 }
 
+=head2 getResults(options, $prior_runs, @cases)
+
+Get results for tests by name, filtered by the provided options, and skipping any runs found in the provided ARRAYREF of run IDs.
+
+Probably should have called this findResults, but we all prefer to get results right?
+
+=cut
+
+sub getResults {
+    my ($tr,$opts,$prior_runs,@cases) = @_;
+    my $res = {};
+    my $projects = $tr->getProjects();
+
+    #TODO obey status filtering
+    #TODO obey result notes text grepping
+    foreach my $project (@$projects) {
+        next if $opts->{projects} && !( grep { $_ eq $project->{'name'} } @{$opts->{'projects'}} );
+        my $runs = $tr->getRuns($project->{'id'});
+
+        #Translate plan names to ids
+        my $plans = $tr->getPlans($project->{'id'}) || [];
+        $opts->{'runs'} //= [];
+        my $plan_filters = [];
+        foreach my $plan (@$plans) {
+            $plan = $tr->getPlanByID($plan->{'id'});
+            my $plan_runs = $tr->getChildRuns($plan);
+            push(@$runs,@$plan_runs) if $plan_runs;
+        }
+
+        if ($opts->{'plans'}) {
+            @$plan_filters = map { $_->{'id'} } grep { my $p = $_; grep { $p->{'name'} eq $_} @{$opts->{'plans'}} } @$plans;
+        }
+
+        foreach my $run (@$runs) {
+            next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
+            next if scalar(@$plan_filters) && !( grep { $run->{'plan_id'} ? $_ eq $run->{'plan_id'} : undef } @$plan_filters );
+            next if grep { $run->{id} eq $_ } @$prior_runs;
+            foreach my $case (@cases) {
+                my $c = $tr->getTestByName($run->{'id'},basename($case));
+                next unless ref $c eq 'HASH';
+
+                $res->{$case} //= [];
+                $c->{results} = $tr->getTestResults($c->{'id'},$tr->{'global_limit'},0);
+
+                #Filter by provided pattern, if any
+                if ($opts->{'pattern'}) {
+                    my $pattern = $opts->{pattern};
+                    @{$c->{results}} = grep { my $comment = $_->{comment} || ''; $comment =~ m/$pattern/i } @{$c->{results}};
+                }
+
+                push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
+            }
+        }
+    }
+    return $res;
+}
+
 1;
 
 __END__
