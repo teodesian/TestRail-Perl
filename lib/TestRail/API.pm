@@ -1631,7 +1631,7 @@ sub getPlanSummary {
     return $ret;
 }
 
-=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
+=head2 B<createRunInPlan (plan_id,suite_id,name,milestone_id,assigned_to_id,config_ids,case_ids)>
 
 Create a run in a plan.
 
