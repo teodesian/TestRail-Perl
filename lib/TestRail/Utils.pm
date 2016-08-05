@@ -52,7 +52,7 @@ sub interrogateUser {
     my ($options,@keys) = @_;
     foreach my $key (@keys) {
         if (!$options->{$key}) {
-            print "Type the $key for your testLink install below:\n";
+            print "Type the $key for your TestRail install below:\n";
             $options->{$key} = TestRail::Utils::userInput();
             die "$key cannot be blank!" unless $options->{$key};
         }
