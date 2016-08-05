@@ -12,7 +12,7 @@ use TestRail::Utils;
 
 =head1 SYNOPSIS
 
-`prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
+`prove -PTestRail='apiurl=http://some.testrail.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
 
 =cut
 

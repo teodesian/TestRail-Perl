@@ -7,8 +7,8 @@ package TestRail::API;
 
     use TestRail::API;
 
-    my ($username,$password,$host) = ('foo','bar','testlink.baz.foo');
-    my $tr = TestRail::API->new($username, $password, $host);
+    my ($username,$password,$host) = ('foo','bar','http://testrail.baz.foo');
+    my $tr = TestRail::API->new($host, $username, $password);
 
 =head1 DESCRIPTION
 
