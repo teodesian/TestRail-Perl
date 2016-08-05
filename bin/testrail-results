@@ -71,7 +71,7 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -l --links   : Print links to the relevant run, plan, and test, if enabled.  Append them to JSON results if applicable.
 
--p --prior   : Load the provided file as a place to pick up your search from.
+-P --prior   : Load the provided file as a place to pick up your search from.
 
 --json       : Print results as a JSON serialization.
 
@@ -135,7 +135,7 @@ sub run {
         'e|encoding=s'    => \$opts->{'encoding'},
         'g|grep=s'        => \$opts->{'pattern'},
         'l|links'         => \$opts->{'links'},
-        'p|prior=s'       => \$opts->{'prior'},
+        'P|prior=s'       => \$opts->{'prior'},
         'json'            => \$opts->{'json'},
         'h|help'          => \$opts->{'help'},
     );
@@ -231,6 +231,7 @@ sub run {
 
 sub _elapsed2secs {
     my $stamp = shift;
+    return 0 if !$stamp;
     my ($seconds)         = $stamp =~ m/(\d*)s/;
     my ($seconds_minutes) = $stamp =~ m/(\d*)m/;
     my ($seconds_hours)   = $stamp =~ m/(\d*)h/;

@@ -331,8 +331,24 @@ sub getResults {
     #TODO obey status filtering
     #TODO obey result notes text grepping
     foreach my $project (@$projects) {
+        next if $opts->{projects} && !( grep { $_ eq $project->{'name'} } @{$opts->{'projects'}} );
         my $runs = $tr->getRuns($project->{'id'});
+
+        #Translate plan names to ids
+        my $plans = $tr->getPlans($project->{'id'}) || [];
+        my $plan_filters = [];
+        foreach my $plan (@$plans) {
+            my $plan_runs = $tr->getChildRuns($plan);
+            push(@$runs,@$plan_runs) if $plan_runs;
+        }
+
+        if ($opts->{'plans'}) {
+            @$plan_filters = grep { $_->{'id'} } grep { my $p = $_; grep { $p->{'name'} eq $_} @{$opts->{'plans'}} } @$plans;
+        }
+
         foreach my $run (@$runs) {
+            next if $opts->{runs} && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
+            next if $plan_filters && !( grep { $run->{'plan_id'} ? $_ eq $run->{'plan_id'} : undef } @$plan_filters );
             next if grep { $run->{id} eq $_ } @$prior_runs;
             foreach my $case (@cases) {
                 my $c = $tr->getTestByName($run->{'id'},basename($case));
