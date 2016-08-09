@@ -677,7 +677,11 @@ sub getSections {
     state $check = compile(Object, Int, Int);
     my ($self,$project_id,$suite_id) = $check->(@_);
 
-    return $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+    #Cache sections to reduce requests in tight loops
+    return $self->{'sections'}->{$project_id} if $self->{'sections'}->{$project_id};
+    $self->{'sections'}->{$project_id} = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+
+    return $self->{'sections'}->{$project_id};
 }
 
 =head2 B<getSectionByID (section_id)>
@@ -736,6 +740,40 @@ sub getSectionByName {
     }
     return 0;
 }
+
+=head2 B<getChildSections ($project_id, section)>
+
+Gets desired section's child sections.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - parent project ID of section.
+
+=item HASHREF C<SECTION> - section definition HASHREF.
+
+=back
+
+Returns ARRAYREF of section definition HASHREF.  ARRAYREF is empty if there are none.
+
+Recursively searches for children, so the children of child sections will be returned as well.
+
+    $tr->getChildSections($section);
+
+=cut
+
+sub getChildSections {
+    state $check = compile(Object, Int, HashRef);
+    my ($self, $project_id, $section) = $check->(@_);
+
+    my $sections_orig = $self->getSections($project_id,$section->{suite_id});
+    return [] if !$sections_orig || (reftype($sections_orig) || 'undef') ne 'ARRAY';
+    my @sections = grep { $_->{'parent_id'} ? $_->{'parent_id'} == $section->{'id'} : 0 } @$sections_orig;
+    foreach my $sec (@sections) {
+        push(@sections, grep { $_->{'parent_id'} ? $_->{'parent_id'} == $sec->{'id'} : 0 } @$sections_orig);
+    }
+    return \@sections;
+}
+
 
 =head2 sectionNamesToIds(project_id,suite_id,names)
 

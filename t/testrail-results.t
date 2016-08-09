@@ -60,7 +60,7 @@ use warnings;
 my @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake t/fake.test };
 my ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
 is($code, 0, "Exit code OK looking for results of fake.test");
-like($out,qr/fake\.test was present in 514 runs/,"Gets correct # of runs with test inside it");
+like($out,qr/fake\.test was present in 515 runs/,"Gets correct # of runs with test inside it");
 
 #check project filters
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --project TestProject t/fake.test };
@@ -73,7 +73,7 @@ like($out,qr/fake\.test was present in 10 runs/,"Gets correct # of runs with tes
 push(@args,'mah dubz plan', 't/fake.test');
 ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
 is($code, 0, "Exit code OK looking for results of fake.test");
-like($out,qr/fake\.test was present in 257 runs/,"Gets correct # of runs with test inside it when filtering by plan name");
+like($out,qr/fake\.test was present in 258 runs/,"Gets correct # of runs with test inside it when filtering by plan name");
 
 #check run filters
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --run FinalRun t/fake.test};
@@ -85,8 +85,8 @@ like($out,qr/fake\.test was present in 1 runs/,"Gets correct # of runs with test
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --grep zippy t/fake.test};
 ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
 is($code, 0, "Exit code OK looking for results of fake.test");
-like($out,qr/Retest: 514/,"Gets correct # & status of runs with test inside it when grepping");
-unlike($out,qr/Failed: 514/,"Gets correct # & status of runs with test inside it when grepping");
+like($out,qr/Retest: 515/,"Gets correct # & status of runs with test inside it when grepping");
+unlike($out,qr/Failed: 515/,"Gets correct # & status of runs with test inside it when grepping");
 
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --json t/fake.test };
 ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);

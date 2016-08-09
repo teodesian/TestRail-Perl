@@ -170,7 +170,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":9,"name":"CRUSH ALL HUMANS","announcement":"Robo-Signed Soviet 5 Year Project","show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":3,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/projects\\/overview\\/9"},{"id":10,"name":"TestProject","is_completed":false}]';
+$VAR5 = '[{"id":9,"name":"CRUSH ALL HUMANS","announcement":"Robo-Signed Soviet 5 Year Project","show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":3,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/projects\\/overview\\/9"},{"id":10,"name":"TestProject","is_completed":false},{"id":3,"name":"zippy","announcement":null,"show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":2,"url":"http:\\/\\/testrail.local\\/index.php?\\/projects\\/overview\\/3"}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -1431,7 +1431,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"display_order":1,"system_name":"custom_step_results","name":"step_results","description":"Step by step results","is_active":1,"type_id":11,"configs":[{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[5],"is_global":1},"id":"43410543-edaf-44d2-91fc-58a6f9b3f743"},{"options":{"is_required":1,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[1],"is_global":1},"id":"0ab86184-0468-40d8-a385-a9b3a1ec41a4"},{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[10],"is_global":1},"id":"43ebdf1f-c9b9-4b91-a729-5c9f21252f00"}],"id":6,"label":"Step Results"}]';
+$VAR5 = '[{"display_order":1,"system_name":"custom_step_results","name":"step_results","description":"Step by step results","is_active":1,"type_id":11,"configs":[{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[5,3],"is_global":1},"id":"43410543-edaf-44d2-91fc-58a6f9b3f743"},{"options":{"is_required":1,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[1],"is_global":1},"id":"0ab86184-0468-40d8-a385-a9b3a1ec41a4"},{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[10],"is_global":1},"id":"43ebdf1f-c9b9-4b91-a729-5c9f21252f00"}],"id":6,"label":"Step Results"}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -2907,6 +2907,366 @@ $VAR5 = '';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
+
+########################
+# getChildSections mocks
+########################
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_suites/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-length' => '199',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By'
+                                 },
+                 'client-date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-type' => 'application/json; charset=utf-8'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":5,"name":"Master","description":null,"project_id":3,"is_master":true,"is_baseline":false,"is_completed":false,"completed_on":null,"url":"http:\\/\\/testrail.local\\/index.php?\\/suites\\/view\\/5"}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_sections/3&suite_id=5';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'client-date' => 'Wed, 10 Aug 2016 03:07:52 GMT',
+                 'date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-length' => '835',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-peer' => '192.168.122.217:80',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":6,"suite_id":5,"name":"Column A","description":null,"parent_id":null,"display_order":1,"depth":0},{"id":8,"suite_id":5,"name":"zippy","description":null,"parent_id":6,"display_order":2,"depth":1},{"id":7,"suite_id":5,"name":"Column B","description":null,"parent_id":null,"display_order":3,"depth":0},{"id":9,"suite_id":5,"name":"zippy","description":null,"parent_id":7,"display_order":4,"depth":1},{"id":11,"suite_id":5,"name":"Recursing section","description":null,"parent_id":null,"display_order":5,"depth":0},{"id":12,"suite_id":5,"name":"child","description":null,"parent_id":11,"display_order":6,"depth":1},{"id":13,"suite_id":5,"name":"grandchild","description":null,"parent_id":12,"display_order":7,"depth":2},{"id":14,"suite_id":5,"name":"great-grandchild","description":null,"parent_id":13,"display_order":8,"depth":3}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_configs/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-response-num' => 1,
+                 'content-length' => '2',
+                 'connection' => 'close',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 },
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'date' => 'Wed, 10 Aug 2016 03:39:47 GMT'
+               }, 'HTTP::Headers' );
+$VAR5 = '[]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_runs/3&offset=0&limit=250';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By'
+                                 },
+                 'connection' => 'close',
+                 'content-length' => '588',
+                 'client-response-num' => 1
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":32,"suite_id":5,"name":"Master Shake","description":null,"milestone_id":null,"assignedto_id":null,"include_all":true,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":1,"blocked_count":0,"untested_count":3,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":3,"plan_id":null,"created_on":1470345740,"created_by":1,"url":"http:\\/\\/testrail.local\\/index.php?\\/runs\\/view\\/32"}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_sections/3&suite_id=5';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-response-num' => 1,
+                 'content-length' => '835',
+                 'connection' => 'close'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":6,"suite_id":5,"name":"Column A","description":null,"parent_id":null,"display_order":1,"depth":0},{"id":8,"suite_id":5,"name":"zippy","description":null,"parent_id":6,"display_order":2,"depth":1},{"id":7,"suite_id":5,"name":"Column B","description":null,"parent_id":null,"display_order":3,"depth":0},{"id":9,"suite_id":5,"name":"zippy","description":null,"parent_id":7,"display_order":4,"depth":1},{"id":11,"suite_id":5,"name":"Recursing section","description":null,"parent_id":null,"display_order":5,"depth":0},{"id":12,"suite_id":5,"name":"child","description":null,"parent_id":11,"display_order":6,"depth":1},{"id":13,"suite_id":5,"name":"grandchild","description":null,"parent_id":12,"display_order":7,"depth":2},{"id":14,"suite_id":5,"name":"great-grandchild","description":null,"parent_id":13,"display_order":8,"depth":3}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_cases/3&suite_id=5&section_id=11';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:47 GMT',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 '::std_case' => {
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-response-num' => 1,
+                 'content-length' => '2',
+                 'connection' => 'close'
+               }, 'HTTP::Headers' );
+$VAR5 = '[]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_cases/3&suite_id=5&section_id=14';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By'
+                                 },
+                 'connection' => 'close',
+                 'content-length' => '321',
+                 'client-response-num' => 1
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":16,"title":"pass.test","section_id":14,"template_id":1,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1470799296,"updated_by":1,"updated_on":1470799296,"estimate":null,"estimate_forecast":null,"suite_id":5,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_cases/3&suite_id=5&section_id=12';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-response-num' => 1,
+                 'content-length' => '321',
+                 'connection' => 'close'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":17,"title":"fake.test","section_id":12,"template_id":1,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1470799305,"updated_by":1,"updated_on":1470799305,"estimate":null,"estimate_forecast":null,"suite_id":5,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_cases/3&suite_id=5&section_id=13';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num'
+                                 },
+                 'client-response-num' => 1,
+                 'connection' => 'close',
+                 'content-length' => '321'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":18,"title":"skip.test","section_id":13,"template_id":1,"type_id":6,"priority_id":4,"milestone_id":null,"refs":null,"created_by":1,"created_on":1470799317,"updated_by":1,"updated_on":1470799317,"estimate":null,"estimate_forecast":null,"suite_id":5,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_run/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:48 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By'
+                                 },
+                 'content-type' => 'application/json; charset=utf-8',
+                 'connection' => 'close',
+                 'content-length' => '625',
+                 'client-response-num' => 1
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":36,"suite_id":5,"name":"zippyRun","description":"Automatically created Run from TestRail::API","milestone_id":null,"assignedto_id":null,"include_all":false,"is_completed":false,"completed_on":null,"config":null,"config_ids":[],"passed_count":0,"blocked_count":0,"untested_count":3,"retest_count":0,"failed_count":0,"custom_status1_count":0,"custom_status2_count":0,"custom_status3_count":0,"custom_status4_count":0,"custom_status5_count":0,"custom_status6_count":0,"custom_status7_count":0,"project_id":3,"plan_id":null,"created_on":1470800388,"created_by":1,"url":"http:\\/\\/testrail.local\\/index.php?\\/runs\\/view\\/36"}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_tests/36';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:39:49 GMT',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:49 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'content-length' => '820',
+                 'connection' => 'close',
+                 'client-response-num' => 1
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":43,"case_id":17,"status_id":3,"assignedto_id":null,"run_id":36,"title":"fake.test","template_id":1,"type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":44,"case_id":18,"status_id":3,"assignedto_id":null,"run_id":36,"title":"skip.test","template_id":1,"type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":42,"case_id":16,"status_id":3,"assignedto_id":null,"run_id":36,"title":"pass.test","template_id":1,"type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/add_result/42';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-response-num' => 1,
+                 'connection' => 'close',
+                 'content-length' => '194',
+                 'content-type' => 'application/json; charset=utf-8',
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'client-peer' => '192.168.122.217:80',
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-date' => 'Wed, 10 Aug 2016 03:39:49 GMT',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'date' => 'Wed, 10 Aug 2016 03:39:49 GMT'
+               }, 'HTTP::Headers' );
+$VAR5 = '{"id":516,"test_id":42,"status_id":1,"created_by":1,"created_on":1470800389,"assignedto_id":null,"comment":"[22:39:48 Aug  9 2016 (0s)] ok 1 - yay!","version":null,"elapsed":null,"defects":null}';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_plans/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.5',
+                 'client-response-num' => 1,
+                 'date' => 'Tue, 23 Dec 2014 20:02:10 GMT',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-length' => '554',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer'
+                                 },
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:10 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+
+###########
+#Lock mocks
+###########
 
 sub lockMockStep0 {
 
