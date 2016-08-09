@@ -252,6 +252,12 @@ sub new {
             confess("Sections passed to spawn must be ARRAYREF") unless (reftype($tropts->{'sections'}) || 'undef') eq 'ARRAY';
             @{$tropts->{'sections'}} = $tr->sectionNamesToIds($tropts->{'project_id'},$tropts->{'testsuite_id'},@{$tropts->{'sections'}});
             foreach my $section (@{$tropts->{'sections'}}) {
+                #Get the child sections, and append them to our section list so we get their cases too.
+                my $append_sections = $tr->getChildSections($tropts->{'project_id'}, { 'id' => $section, 'suite_id' => $tropts->{'testsuite_id'} } );
+                @$append_sections = grep {my $sc = $_; !scalar(grep {$_ == $sc->{'id'}} @{$tropts->{'sections'}}) } @$append_sections; #de-dup in case the user added children to the list
+                @$append_sections = map { $_->{'id'} };
+                push(@{$tropts->{'sections'}},@$append_sections);
+
                 my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'testsuite_id'},{ 'section_id' => $section });
                 push(@$cases,@$section_cases) if (reftype($section_cases) || 'undef') eq 'ARRAY';
             }
