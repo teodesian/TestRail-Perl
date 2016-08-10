@@ -21,6 +21,16 @@ All the methods aside from the constructor should not die, but return a false va
 When the server is not responsive, expect a -500 response, and retry accordingly.
 I recommend using the excellent L<Attempt> module for this purpose.
 
+Also, all *ByName methods are vulnerable to duplicate naming issues.  Try not to use the same name for:
+
+    * projects
+    * testsuites within the same project
+    * sections within the same testsuite that are peers
+    * test cases
+    * test plans and runs outside of plans which are not completed
+
+To do so will result in the first of said item found being returned rather than an array of possibilities to choose from.
+
 =cut
 
 use 5.010;

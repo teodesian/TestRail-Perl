@@ -52,6 +52,19 @@ See the documentation for the constructor of L<Test::Rail::Parser> as to why you
 When running prove in multiple job mode (-j), or when breaking out test jobs into multiple prove processes, auto-spawn of plans & runs can race.
 Be sure to extend your harness to make sure these things are already created if you do either of these things.
 
+Also, all parameters expecting names are vulnerable to duplicate naming issues.  Try not to use the same name for:
+
+    * projects
+    * testsuites within the same project
+    * sections within the same testsuite that are peers
+    * test cases
+    * test plans and runs outside of plans which are not completed
+
+To do so will result in the first of said item found.
+This might result in the reuse of an existing run/plan unintentionally, or spawning runs within the wrong project/testsuite or with incorrect test sections.
+Similarly, duplicate named tests will result in one of the dupes never being run (as the first found is chosen).
+
+
 =head1 OVERRIDDEN METHODS
 
 =head2 load(parser)
