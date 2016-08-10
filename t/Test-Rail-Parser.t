@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 117;
+use Test::More 'tests' => 118;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 use Capture::Tiny qw{capture};
@@ -562,3 +562,16 @@ if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
+
+#Check configuration group spawn is done correctly
+undef $opts->{'tap'};
+$opts->{'source'} = 't/pass.test';
+$opts->{'project_id'} = 9;
+$opts->{'run'} = 'TestingSuite';
+$opts->{'plan'} = 'mah dubz plan';
+$opts->{'config_group'} = 'noSuchGroup';
+$opts->{'configs'}      = ['noSuchConfig'];
+$opts->{'sections'} = [];
+
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser runs all the way through when spawning configurations");

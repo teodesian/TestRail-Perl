@@ -5,6 +5,8 @@ Revision history for Perl module TestRail::API
     - Add testrail-results binary and TestRail::Utils::Find::getResults.
     - Add TestRail::API::getChildSections, and modify Test::Rail::Parser to recursively search passed sections when spawning runs
     - Change TestRail::API::getSections to cache the sections in a project.
+    - Add notices about problems with duplicate entries to POD.
+    - Add capability to auto-spawn configurations/groups to App::Prove::Plugin::TestRail and friends when configuration_group is passed
 
 0.036 2016-04-25 TEODESIAN
     - Fix using wrong perl during testsuite when running binaries

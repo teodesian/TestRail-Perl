@@ -1431,7 +1431,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"display_order":1,"system_name":"custom_step_results","name":"step_results","description":"Step by step results","is_active":1,"type_id":11,"configs":[{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[5,3],"is_global":1},"id":"43410543-edaf-44d2-91fc-58a6f9b3f743"},{"options":{"is_required":1,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[1],"is_global":1},"id":"0ab86184-0468-40d8-a385-a9b3a1ec41a4"},{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[10],"is_global":1},"id":"43ebdf1f-c9b9-4b91-a729-5c9f21252f00"}],"id":6,"label":"Step Results"}]';
+$VAR5 = '[{"display_order":1,"system_name":"custom_step_results","name":"step_results","description":"Step by step results","is_active":1,"type_id":11,"configs":[{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[5,3,9],"is_global":1},"id":"43410543-edaf-44d2-91fc-58a6f9b3f743"},{"options":{"is_required":1,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[1],"is_global":1},"id":"0ab86184-0468-40d8-a385-a9b3a1ec41a4"},{"options":{"is_required":0,"format":"markdown","has_actual":1,"has_expected":1},"context":{"project_ids":[10],"is_global":1},"id":"43ebdf1f-c9b9-4b91-a729-5c9f21252f00"}],"id":6,"label":"Step Results"}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -1937,6 +1937,18 @@ $VAR5 = '[
         ],
         "id": 2,
         "name": "Operating Systems",
+        "project_id": 1
+    },
+    {
+        "configs": [
+        {
+            "group_id": 3,
+            "id": 666,
+            "name": "noSuchConfig"
+        }
+        ],
+        "id": 3,
+        "name": "zippy",
         "project_id": 1
     }
 ]';
@@ -2965,6 +2977,34 @@ $VAR5 = '[{"id":6,"suite_id":5,"name":"Column A","description":null,"parent_id":
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_sections/9&suite_id=5';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'client-date' => 'Wed, 10 Aug 2016 03:07:52 GMT',
+                 'date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-length' => '835',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-peer' => '192.168.122.217:80',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":6,"suite_id":5,"name":"Column A","description":null,"parent_id":null,"display_order":1,"depth":0},{"id":8,"suite_id":5,"name":"zippy","description":null,"parent_id":6,"display_order":2,"depth":1},{"id":7,"suite_id":5,"name":"Column B","description":null,"parent_id":null,"display_order":3,"depth":0},{"id":9,"suite_id":5,"name":"zippy","description":null,"parent_id":7,"display_order":4,"depth":1},{"id":11,"suite_id":5,"name":"Recursing section","description":null,"parent_id":null,"display_order":5,"depth":0},{"id":12,"suite_id":5,"name":"child","description":null,"parent_id":11,"display_order":6,"depth":1},{"id":13,"suite_id":5,"name":"grandchild","description":null,"parent_id":12,"display_order":7,"depth":2},{"id":14,"suite_id":5,"name":"great-grandchild","description":null,"parent_id":13,"display_order":8,"depth":3}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
 
 {
 

@@ -40,8 +40,12 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
     encoding=UTF-8
+    configuration_group=Operating Systems
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
+
+If a configuration_group option is passed, it, and any configurations passed will be created automatically for you in the case they do not exist.
+
 Values passed in via query string will override values in \$HOME/.testrailrc.
 If your system has no concept of user homes, it will look in the current directory for .testrailrc.
 
@@ -59,6 +63,7 @@ Also, all parameters expecting names are vulnerable to duplicate naming issues. 
     * sections within the same testsuite that are peers
     * test cases
     * test plans and runs outside of plans which are not completed
+    * configurations & configuration groups
 
 To do so will result in the first of said item found.
 This might result in the reuse of an existing run/plan unintentionally, or spawning runs within the wrong project/testsuite or with incorrect test sections.
@@ -117,6 +122,7 @@ sub load {
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
+    $ENV{'TESTRIAL_CGROUP'}    = $params->{'configuration_group'};
     return $class;
 }
 

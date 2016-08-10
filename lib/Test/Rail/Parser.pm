@@ -150,6 +150,7 @@ sub new {
         'encoding'     => delete $opts->{'encoding'},
         'sections'     => delete $opts->{'sections'},
         'autoclose'    => delete $opts->{'autoclose'},
+        'config_group' => delete $opts->{'config_group'},
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'}
@@ -208,6 +209,22 @@ sub new {
 
     #Grab run
     my ($run,$plan,$config_ids);
+
+    # See if we have to create a configuration
+    my $configz2create = $tr->getConfigurations($tropts->{'project_id'});
+    @$configz2create = grep { my $c = $_; (grep { $_ eq $c->{'name'} } @{$tropts->{'configs'}}) } @$configz2create;
+    if (scalar(@$configz2create) && $tropts->{'config_group'}) {
+        my $cgroup = $tr->getConfigurationGroupByName($tropts->{project_id},$tropts->{'config_group'});
+        unless (ref($cgroup) eq 'HASH') {
+            print "# Adding Configuration Group $tropts->{config_group}...\n";
+            $cgroup = $tr->addConfigurationGroup($tropts->{project_id},$tropts->{'config_group'});
+        }
+        confess("Could neither find nor create the provided configuration group '$tropts->{config_group}'") unless ref($cgroup) eq 'HASH';
+        foreach my $cc (@$configz2create) {
+            print "# Adding Configuration $cc->{name}...\n";
+            $tr->addConfiguration($cgroup->{'id'}, $cc->{'name'});
+        }
+    }
 
     #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
     @$config_ids = $tr->translateConfigNamesToIds($tropts->{'project_id'},@{$tropts->{'configs'}});
