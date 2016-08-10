@@ -209,6 +209,18 @@ sub new {
     #Grab run
     my ($run,$plan,$config_ids);
 
+    # See if we have to create a configuration
+    my $configz2create = $tr->getConfigurations($tropts->{'project_id'});
+    @$configz2create = grep { my $c = $_; !(grep { $_ eq $c->{'name'} } @{$tropts->{'configs'}}) } @$configz2create;
+    if (scalar(@$configz2create) && $tropts->{'config_group'}) {
+        my $cgroup = $tr->getConfigurationGroupByName($tropts->{'config_group'});
+        $cgroup = $tr->addConfigurationGroup($project_id,$name) unless ref($cgroup) eq 'HASH';
+        confess("Could neither find nor create the provided configuration group '$tropts->{config_group}'") unless ref($cgroup) eq 'HASH';
+        foreach my $cc (@$configz2create) {
+            $tr->addConfiguration($cgroup->{'id'}, $cc);
+        }
+    }
+
     #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
     @$config_ids = $tr->translateConfigNamesToIds($tropts->{'project_id'},@{$tropts->{'configs'}});
     confess("Could not retrieve list of valid configurations for your project.") unless (reftype($config_ids) || 'undef') eq 'ARRAY';

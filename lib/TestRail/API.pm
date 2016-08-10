@@ -28,6 +28,7 @@ Also, all *ByName methods are vulnerable to duplicate naming issues.  Try not to
     * sections within the same testsuite that are peers
     * test cases
     * test plans and runs outside of plans which are not completed
+    * configurations
 
 To do so will result in the first of said item found being returned rather than an array of possibilities to choose from.
 
@@ -2260,6 +2261,25 @@ sub getConfigurationGroups {
 
     my $url = "index.php?/api/v2/get_configs/$project_id";
     return $self->_doRequest($url);
+}
+
+=head2 B<getConfigurationGroupByName(project_id,name)>
+
+Get the provided configuration group by name.
+
+Returns undef if the configuration group could not be found.
+
+=cut
+
+sub getConfigurationGroupByName {
+    state $check = compile(Object, Int, Str);
+    my ($self,$project_id,$name) = $check->(@_);
+
+    my $cgroups = $self->getConfigurationGroups($project_id);
+    return undef if ref($cgroups) ne 'ARRAY';
+    my @$cgroups = grep {$_->{'name'} ne $name} @$cgroups;
+    return undef unless scalar(@$cgroups);
+    return $cgroups->[0];
 }
 
 =head2 B<addConfigurationGroup(project_id,name)>

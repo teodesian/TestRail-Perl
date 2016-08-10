@@ -59,6 +59,7 @@ Also, all parameters expecting names are vulnerable to duplicate naming issues. 
     * sections within the same testsuite that are peers
     * test cases
     * test plans and runs outside of plans which are not completed
+    * configurations
 
 To do so will result in the first of said item found.
 This might result in the reuse of an existing run/plan unintentionally, or spawning runs within the wrong project/testsuite or with incorrect test sections.
