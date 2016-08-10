@@ -170,7 +170,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":9,"name":"CRUSH ALL HUMANS","announcement":"Robo-Signed Soviet 5 Year Project","show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":3,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/projects\\/overview\\/9"},{"id":10,"name":"TestProject","is_completed":false}]';
+$VAR5 = '[{"id":9,"name":"CRUSH ALL HUMANS","announcement":"Robo-Signed Soviet 5 Year Project","show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":3,"url":"http:\\/\\/testrail.local\\/\\/index.php?\\/projects\\/overview\\/9"},{"id":10,"name":"TestProject","is_completed":false},{"id":3,"name":"zippy","announcement":null,"show_announcement":false,"is_completed":false,"completed_on":null,"suite_mode":2,"url":"http:\\/\\/testrail.local\\/index.php?\\/projects\\/overview\\/3"}]';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
@@ -2907,6 +2907,68 @@ $VAR5 = '';
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
+
+########################
+# getChildSections mocks
+########################
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_suites/3';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-length' => '199',
+                 '::std_case' => {
+                                   'client-date' => 'Client-Date',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By'
+                                 },
+                 'client-date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)',
+                 'client-peer' => '192.168.122.217:80',
+                 'content-type' => 'application/json; charset=utf-8'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":5,"name":"Master","description":null,"project_id":3,"is_master":true,"is_baseline":false,"is_completed":false,"completed_on":null,"url":"http:\\/\\/testrail.local\\/index.php?\\/suites\\/view\\/5"}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'index.php?/api/v2/get_sections/3&suite_id=5';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 '::std_case' => {
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-peer' => 'Client-Peer',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-date' => 'Client-Date'
+                                 },
+                 'client-date' => 'Wed, 10 Aug 2016 03:07:52 GMT',
+                 'date' => 'Wed, 10 Aug 2016 03:07:51 GMT',
+                 'connection' => 'close',
+                 'x-powered-by' => 'PHP/5.5.9-1ubuntu4.14',
+                 'content-length' => '835',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'client-peer' => '192.168.122.217:80',
+                 'client-response-num' => 1,
+                 'server' => 'Apache/2.4.7 (Ubuntu)'
+               }, 'HTTP::Headers' );
+$VAR5 = '[{"id":6,"suite_id":5,"name":"Column A","description":null,"parent_id":null,"display_order":1,"depth":0},{"id":8,"suite_id":5,"name":"zippy","description":null,"parent_id":6,"display_order":2,"depth":1},{"id":7,"suite_id":5,"name":"Column B","description":null,"parent_id":null,"display_order":3,"depth":0},{"id":9,"suite_id":5,"name":"zippy","description":null,"parent_id":7,"display_order":4,"depth":1},{"id":11,"suite_id":5,"name":"Recursing section","description":null,"parent_id":null,"display_order":5,"depth":0},{"id":12,"suite_id":5,"name":"child","description":null,"parent_id":11,"display_order":6,"depth":1},{"id":13,"suite_id":5,"name":"grandchild","description":null,"parent_id":12,"display_order":7,"depth":2},{"id":14,"suite_id":5,"name":"great-grandchild","description":null,"parent_id":13,"display_order":8,"depth":3}]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+###########
+#Lock mocks
+###########
 
 sub lockMockStep0 {
 
