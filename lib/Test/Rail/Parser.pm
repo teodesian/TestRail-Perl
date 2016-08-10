@@ -255,7 +255,7 @@ sub new {
                 #Get the child sections, and append them to our section list so we get their cases too.
                 my $append_sections = $tr->getChildSections($tropts->{'project_id'}, { 'id' => $section, 'suite_id' => $tropts->{'testsuite_id'} } );
                 @$append_sections = grep {my $sc = $_; !scalar(grep {$_ == $sc->{'id'}} @{$tropts->{'sections'}}) } @$append_sections; #de-dup in case the user added children to the list
-                @$append_sections = map { $_->{'id'} };
+                @$append_sections = map { $_->{'id'} } @$append_sections;
                 push(@{$tropts->{'sections'}},@$append_sections);
 
                 my $section_cases = $tr->getCases($tropts->{'project_id'},$tropts->{'testsuite_id'},{ 'section_id' => $section });

@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 115;
+use Test::More 'tests' => 117;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 use Capture::Tiny qw{capture};
@@ -545,4 +545,20 @@ if (!$res) {
     is($tap->{'global_status'},5, "Test global result is FAIL on todo pass test w/ bailout");
     my $srs = $tap->{'tr_opts'}->{'result_custom_options'}->{'step_results'};
     is($srs->[-1]->{'content'},"Bail Out!.","Bailout noted in step results");
+}
+
+#Check section spawn recursion is done correctly
+undef $opts->{'tap'};
+$opts->{'source'} = 't/pass.test';
+$opts->{'testsuite_id'} = 5;
+$opts->{'project_id'} = 3;
+$opts->{'run'} = 'zippyRun';
+$opts->{'sections'} = ['Recursing section','grandchild'];
+
+$res = exception { $tap = Test::Rail::Parser->new($opts) };
+is($res,undef,"TR Parser runs all the way through when recursing sections");
+
+if (!$res) {
+    $tap->run();
+    is($tap->{'errors'},0,"No errors encountered uploading case results");
 }
