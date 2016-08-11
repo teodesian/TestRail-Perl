@@ -1,6 +1,6 @@
 Revision history for Perl module TestRail::API
 
-0.037 2016-04-?? TEODESIAN
+0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan
     - Add testrail-results binary and TestRail::Utils::Find::getResults.
     - Add TestRail::API::getChildSections, and modify Test::Rail::Parser to recursively search passed sections when spawning runs
