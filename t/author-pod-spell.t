@@ -104,6 +104,9 @@ getPlanSummary
 getRunSummary
 judgements
 bailoutCallback
+findResults
+cachefile
+getChildSections
 George
 Baugh
 teodesian

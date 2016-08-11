@@ -6,7 +6,7 @@ use warnings;
 
 use Test::More;
 
-plan tests => 14 + ($ENV{AUTHOR_TESTING} ? 1 : 0);
+plan tests => 15 + ($ENV{AUTHOR_TESTING} ? 1 : 0);
 
 my @module_files = (
     'App/Prove/Plugin/TestRail.pm',
@@ -24,6 +24,7 @@ my @scripts = (
     'bin/testrail-cases',
     'bin/testrail-lock',
     'bin/testrail-report',
+    'bin/testrail-results',
     'bin/testrail-runs',
     'bin/testrail-tests'
 );

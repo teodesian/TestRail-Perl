@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.036';
+$TestRail::API::VERSION = '0.037';
 
 use 5.010;
 
@@ -407,8 +407,13 @@ sub getSections {
     state $check = compile( Object, Int, Int );
     my ( $self, $project_id, $suite_id ) = $check->(@_);
 
-    return $self->_doRequest(
+    #Cache sections to reduce requests in tight loops
+    return $self->{'sections'}->{$project_id}
+      if $self->{'sections'}->{$project_id};
+    $self->{'sections'}->{$project_id} = $self->_doRequest(
         "index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+
+    return $self->{'sections'}->{$project_id};
 }
 
 sub getSectionByID {
@@ -428,6 +433,24 @@ sub getSectionByName {
         return $sec if $sec->{'name'} eq $section_name;
     }
     return 0;
+}
+
+sub getChildSections {
+    state $check = compile( Object, Int, HashRef );
+    my ( $self, $project_id, $section ) = $check->(@_);
+
+    my $sections_orig = $self->getSections( $project_id, $section->{suite_id} );
+    return []
+      if !$sections_orig || ( reftype($sections_orig) || 'undef' ) ne 'ARRAY';
+    my @sections =
+      grep { $_->{'parent_id'} ? $_->{'parent_id'} == $section->{'id'} : 0 }
+      @$sections_orig;
+    foreach my $sec (@sections) {
+        push( @sections,
+            grep { $_->{'parent_id'} ? $_->{'parent_id'} == $sec->{'id'} : 0 }
+              @$sections_orig );
+    }
+    return \@sections;
 }
 
 sub sectionNamesToIds {
@@ -1052,8 +1075,11 @@ sub getTestResultFieldByName {
 sub getPossibleTestStatuses {
     state $check = compile(Object);
     my ($self) = $check->(@_);
+    return $self->{'status_cache'} if $self->{'status_cache'};
 
-    return $self->_doRequest('index.php?/api/v2/get_statuses');
+    $self->{'status_cache'} =
+      $self->_doRequest('index.php?/api/v2/get_statuses');
+    return $self->{'status_cache'};
 }
 
 sub statusNamesToIds {
@@ -1156,6 +1182,17 @@ sub getConfigurationGroups {
     return $self->_doRequest($url);
 }
 
+sub getConfigurationGroupByName {
+    state $check = compile( Object, Int, Str );
+    my ( $self, $project_id, $name ) = $check->(@_);
+
+    my $cgroups = $self->getConfigurationGroups($project_id);
+    return 0 if ref($cgroups) ne 'ARRAY';
+    @$cgroups = grep { $_->{'name'} eq $name } @$cgroups;
+    return 0 unless scalar(@$cgroups);
+    return $cgroups->[0];
+}
+
 sub addConfigurationGroup {
     state $check = compile( Object, Int, Str );
     my ( $self, $project_id, $name ) = $check->(@_);
@@ -1251,14 +1288,14 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.036
+version 0.037
 
 =head1 SYNOPSIS
 
     use TestRail::API;
 
-    my ($username,$password,$host) = ('foo','bar','testlink.baz.foo');
-    my $tr = TestRail::API->new($username, $password, $host);
+    my ($username,$password,$host) = ('foo','bar','http://testrail.baz.foo');
+    my $tr = TestRail::API->new($host, $username, $password);
 
 =head1 DESCRIPTION
 
@@ -1270,6 +1307,17 @@ It is by no means exhaustively implementing every TestRail API function.
 All the methods aside from the constructor should not die, but return a false value upon failure.
 When the server is not responsive, expect a -500 response, and retry accordingly.
 I recommend using the excellent L<Attempt> module for this purpose.
+
+Also, all *ByName methods are vulnerable to duplicate naming issues.  Try not to use the same name for:
+
+    * projects
+    * testsuites within the same project
+    * sections within the same testsuite that are peers
+    * test cases
+    * test plans and runs outside of plans which are not completed
+    * configurations
+
+To do so will result in the first of said item found being returned rather than an array of possibilities to choose from.
 
 =head1 CONSTRUCTOR
 
@@ -1572,6 +1620,24 @@ Gets desired section.
 Returns section definition HASHREF.
 
     $tr->getSectionByName(1,2,'nugs');
+
+=head2 B<getChildSections ($project_id, section)>
+
+Gets desired section's child sections.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - parent project ID of section.
+
+=item HASHREF C<SECTION> - section definition HASHREF.
+
+=back
+
+Returns ARRAYREF of section definition HASHREF.  ARRAYREF is empty if there are none.
+
+Recursively searches for children, so the children of child sections will be returned as well.
+
+    $tr->getChildSections($section);
 
 =head2 sectionNamesToIds(project_id,suite_id,names)
 
@@ -2042,7 +2108,7 @@ The 'percentages' key has the same, but as a percentage of the total.
 
     $tr->getPlanSummary($plan_id);
 
-=head2 B<createRunInPlan (plan_id,suite_id,name,description,milestone_id,assigned_to_id,config_ids,case_ids)>
+=head2 B<createRunInPlan (plan_id,suite_id,name,milestone_id,assigned_to_id,config_ids,case_ids)>
 
 Create a run in a plan.
 
@@ -2236,6 +2302,8 @@ Gets all possible statuses a test can be set to.
 
 Returns ARRAYREF of status definition HASHREFs.
 
+Caches the result for the lifetime of the TestRail::API object.
+
 =head2 statusNamesToIds(names)
 
 Convenience method to translate a list of statuses to TestRail status IDs.
@@ -2354,6 +2422,12 @@ Gets the available configuration groups for a project, with their configurations
 =back
 
 Returns ARRAYREF of configuration group definition HASHREFs.
+
+=head2 B<getConfigurationGroupByName(project_id,name)>
+
+Get the provided configuration group by name.
+
+Returns false if the configuration group could not be found.
 
 =head2 B<addConfigurationGroup(project_id,name)>
 

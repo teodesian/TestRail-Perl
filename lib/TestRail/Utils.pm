@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.036';
+$TestRail::Utils::VERSION = '0.037';
 use strict;
 use warnings;
 
@@ -34,7 +34,7 @@ sub interrogateUser {
     my ( $options, @keys ) = @_;
     foreach my $key (@keys) {
         if ( !$options->{$key} ) {
-            print "Type the $key for your testLink install below:\n";
+            print "Type the $key for your TestRail install below:\n";
             $options->{$key} = TestRail::Utils::userInput();
             die "$key cannot be blank!" unless $options->{$key};
         }
@@ -199,7 +199,7 @@ TestRail::Utils - Utilities for the testrail command line functions, and their m
 
 =head1 VERSION
 
-version 0.036
+version 0.037
 
 =head1 SCRIPT HELPER FUNCTIONS
 

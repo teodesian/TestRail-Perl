@@ -2,7 +2,7 @@
 # PODNAME: App::Prove::Plugin::TestRail
 
 package App::Prove::Plugin::TestRail;
-$App::Prove::Plugin::TestRail::VERSION = '0.036';
+$App::Prove::Plugin::TestRail::VERSION = '0.037';
 use strict;
 use warnings;
 use utf8;
@@ -55,6 +55,7 @@ sub load {
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
+    $ENV{'TESTRIAL_CGROUP'}    = $params->{'configuration_group'};
     return $class;
 }
 
@@ -72,11 +73,11 @@ App::Prove::Plugin::TestRail - Upload your TAP results to TestRail in realtime
 
 =head1 VERSION
 
-version 0.036
+version 0.037
 
 =head1 SYNOPSIS
 
-`prove -PTestRail='apiurl=http://some.testlink.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
+`prove -PTestRail='apiurl=http://some.testrail.install/,user=someUser,password=somePassword,project=TestProject,run=TestRun,plan=TestPlan,configs=Config1:Config2:Config3,version=0.014' sometest.t`
 
 =head1 DESCRIPTION
 
@@ -102,8 +103,12 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     sections=section1:section2:section3: ... :sectionN
     autoclose=0
     encoding=UTF-8
+    configuration_group=Operating Systems
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
+
+If a configuration_group option is passed, it, and any configurations passed will be created automatically for you in the case they do not exist.
+
 Values passed in via query string will override values in \$HOME/.testrailrc.
 If your system has no concept of user homes, it will look in the current directory for .testrailrc.
 
@@ -113,6 +118,19 @@ See the documentation for the constructor of L<Test::Rail::Parser> as to why you
 
 When running prove in multiple job mode (-j), or when breaking out test jobs into multiple prove processes, auto-spawn of plans & runs can race.
 Be sure to extend your harness to make sure these things are already created if you do either of these things.
+
+Also, all parameters expecting names are vulnerable to duplicate naming issues.  Try not to use the same name for:
+
+    * projects
+    * testsuites within the same project
+    * sections within the same testsuite that are peers
+    * test cases
+    * test plans and runs outside of plans which are not completed
+    * configurations & configuration groups
+
+To do so will result in the first of said item found.
+This might result in the reuse of an existing run/plan unintentionally, or spawning runs within the wrong project/testsuite or with incorrect test sections.
+Similarly, duplicate named tests will result in one of the dupes never being run (as the first found is chosen).
 
 =head1 OVERRIDDEN METHODS
 

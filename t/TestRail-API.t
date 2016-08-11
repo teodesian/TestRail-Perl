@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 87;
+use Test::More tests => 88;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -230,6 +230,9 @@ is_deeply(\@config_ids,\@t_config_ids, "Can correctly translate Project names to
 
 my $grp = $tr->addConfigurationGroup($new_project->{'id'},"zippy");
 is($grp->{'name'},'zippy',"Can add configuration group successfully");
+
+my $fetchedgrp = $tr->getConfigurationGroupByName($new_project->{'id'},'zippy');
+is($fetchedgrp->{'id'},$grp->{'id'},"Can get configuration group by name");
 
 my $newgrp = $tr->editConfigurationGroup($grp->{'id'},"doodah");
 is($newgrp->{'name'},'doodah',"Can edit configuration group successfully");

@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.036';
+$Test::Rail::Parser::VERSION = '0.037';
 use strict;
 use warnings;
 use utf8;
@@ -48,6 +48,7 @@ sub new {
         'encoding'     => delete $opts->{'encoding'},
         'sections'     => delete $opts->{'sections'},
         'autoclose'    => delete $opts->{'autoclose'},
+        'config_group' => delete $opts->{'config_group'},
 
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
@@ -128,6 +129,31 @@ sub new {
     #Grab run
     my ( $run, $plan, $config_ids );
 
+    # See if we have to create a configuration
+    my $configz2create = $tr->getConfigurations( $tropts->{'project_id'} );
+    @$configz2create = grep {
+        my $c = $_;
+        ( grep { $_ eq $c->{'name'} } @{ $tropts->{'configs'} } )
+    } @$configz2create;
+    if ( scalar(@$configz2create) && $tropts->{'config_group'} ) {
+        my $cgroup =
+          $tr->getConfigurationGroupByName( $tropts->{project_id},
+            $tropts->{'config_group'} );
+        unless ( ref($cgroup) eq 'HASH' ) {
+            print "# Adding Configuration Group $tropts->{config_group}...\n";
+            $cgroup =
+              $tr->addConfigurationGroup( $tropts->{project_id},
+                $tropts->{'config_group'} );
+        }
+        confess(
+            "Could neither find nor create the provided configuration group '$tropts->{config_group}'"
+        ) unless ref($cgroup) eq 'HASH';
+        foreach my $cc (@$configz2create) {
+            print "# Adding Configuration $cc->{name}...\n";
+            $tr->addConfiguration( $cgroup->{'id'}, $cc->{'name'} );
+        }
+    }
+
     #check if configs passed are defined for project.  If we can't get all the IDs, something's hinky
     @$config_ids = $tr->translateConfigNamesToIds( $tropts->{'project_id'},
         @{ $tropts->{'configs'} } );
@@ -203,6 +229,24 @@ sub new {
                 @{ $tropts->{'sections'} }
             );
             foreach my $section ( @{ $tropts->{'sections'} } ) {
+
+                #Get the child sections, and append them to our section list so we get their cases too.
+                my $append_sections = $tr->getChildSections(
+                    $tropts->{'project_id'},
+                    {
+                        'id'       => $section,
+                        'suite_id' => $tropts->{'testsuite_id'}
+                    }
+                );
+                @$append_sections = grep {
+                    my $sc = $_;
+                    !scalar( grep { $_ == $sc->{'id'} }
+                          @{ $tropts->{'sections'} } )
+                  } @$append_sections
+                  ;    #de-dup in case the user added children to the list
+                @$append_sections = map { $_->{'id'} } @$append_sections;
+                push( @{ $tropts->{'sections'} }, @$append_sections );
+
                 my $section_cases = $tr->getCases(
                     $tropts->{'project_id'},
                     $tropts->{'testsuite_id'},
@@ -673,7 +717,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.036
+version 0.037
 
 =head1 DESCRIPTION
 

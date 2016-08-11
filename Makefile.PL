@@ -18,6 +18,7 @@ my %WriteMakefileArgs = (
     "bin/testrail-cases",
     "bin/testrail-lock",
     "bin/testrail-report",
+    "bin/testrail-results",
     "bin/testrail-runs",
     "bin/testrail-tests"
   ],
@@ -42,6 +43,7 @@ my %WriteMakefileArgs = (
     "POSIX" => 0,
     "Pod::Usage" => 0,
     "Scalar::Util" => 0,
+    "Statistics::Descriptive" => 0,
     "Sys::Hostname" => 0,
     "TAP::Harness" => 0,
     "TAP::Parser" => 0,
@@ -71,7 +73,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "blib" => "1.01"
   },
-  "VERSION" => "0.036",
+  "VERSION" => "0.037",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -105,6 +107,7 @@ my %FallbackPrereqs = (
   "POSIX" => 0,
   "Pod::Usage" => 0,
   "Scalar::Util" => 0,
+  "Statistics::Descriptive" => 0,
   "Sys::Hostname" => 0,
   "TAP::Harness" => 0,
   "TAP::Parser" => 0,
