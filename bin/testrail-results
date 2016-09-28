@@ -99,6 +99,7 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 use JSON::MaybeXS ();
 use Statistics::Descriptive;
+use List::MoreUtils qw{uniq};
 
 if (!caller()) {
     my ($out,$code) = run('args' => \@ARGV);
@@ -142,6 +143,7 @@ sub run {
     my $tr = TestRail::Utils::getHandle($opts);
     my $prior_search;
     my $prior_runs = [];
+    my $prior_plans = [];
     if ($opts->{'cachefile'}) {
         my $raw_text = '';
         open(my $fh, '<', $opts->{'cachefile'}) or die "Could not open $opts->{cachefile}";
@@ -152,10 +154,15 @@ sub run {
         $prior_search = JSON::MaybeXS::decode_json($raw_text);
         foreach my $key (keys(%$prior_search)) {
             push(@$prior_runs,@{$prior_search->{$key}->{'seen_runs'}});
+            push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
         }
+        $opts->{'plan_ids'} = $prior_plans;
     }
 
-    my $res = TestRail::Utils::Find::getResults($tr,$opts,$prior_runs,@{$params{'args'}});
+    my ($res,$seen_plans) = TestRail::Utils::Find::getResults($tr,$opts,$prior_runs,@{$params{'args'}});
+
+    #Make sure subsequent runs keep ignoring the prior plans
+    push(@$seen_plans,$prior_plans);
 
     my $statuses = $tr->getPossibleTestStatuses();
     my %status_map;
@@ -170,7 +177,7 @@ sub run {
         my $avg_elapsed = 0;
         my $median_runtime = 0;
         my $elapsetotals = [];
-        my $seen_runs    = [];
+        my $seen_runs    = $prior_runs;
 
         foreach my $casedef (@{$res->{$case}}) {
             push(@$seen_runs, $casedef->{run_id});
@@ -181,14 +188,16 @@ sub run {
                 push(@$elapsetotals,_elapsed2secs($result->{'elapsed'}));
             }
         }
+        @$seen_runs = uniq(@$seen_runs);
 
         my $pattern_output = '';
         $out_json->{$case}->{search_string} = $opts->{'pattern'};
         $pattern_output = " using search string '$opts->{pattern}'" if $opts->{'pattern'};
 
         $out .= "$case was present in $num_runs runs$pattern_output.\n";
-        $out_json->{$case}->{'num_runs'}  = $num_runs;
-        $out_json->{$case}->{'seen_runs'} = $seen_runs;
+        $out_json->{$case}->{'num_runs'}   = $num_runs;
+        $out_json->{$case}->{'seen_runs'}  = $seen_runs;
+        $out_json->{$case}->{'seen_plans'} = $seen_plans;
 
         #Collect time statistics
         my $timestats = Statistics::Descriptive::Full->new();

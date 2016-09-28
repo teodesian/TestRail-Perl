@@ -11,6 +11,7 @@ use Test::LWP::UserAgent::TestRailMock;
 
 use Test::More 'tests' => 22;
 use Capture::Tiny qw{capture_merged};
+use List::MoreUtils qw{uniq};
 
 no warnings qw{redefine once};
 *TestRail::API::getTests = sub {
