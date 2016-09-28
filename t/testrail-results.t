@@ -11,6 +11,7 @@ use Test::LWP::UserAgent::TestRailMock;
 
 use Test::More 'tests' => 22;
 use Capture::Tiny qw{capture_merged};
+use List::MoreUtils qw{uniq};
 
 no warnings qw{redefine once};
 *TestRail::API::getTests = sub {
@@ -73,7 +74,7 @@ like($out,qr/fake\.test was present in 10 runs/,"Gets correct # of runs with tes
 push(@args,'mah dubz plan', 't/fake.test');
 ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
 is($code, 0, "Exit code OK looking for results of fake.test");
-like($out,qr/fake\.test was present in 258 runs/,"Gets correct # of runs with test inside it when filtering by plan name");
+like($out,qr/fake\.test was present in 259 runs/,"Gets correct # of runs with test inside it when filtering by plan name");
 
 #check run filters
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --run FinalRun t/fake.test};

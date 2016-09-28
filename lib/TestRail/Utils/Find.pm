@@ -8,6 +8,7 @@ use warnings;
 
 use Carp qw{confess cluck};
 use Scalar::Util qw{blessed};
+use List::MoreUtils qw{uniq};
 
 use File::Find;
 use Cwd qw{abs_path};
@@ -320,12 +321,17 @@ Get results for tests by name, filtered by the provided options, and skipping an
 
 Probably should have called this findResults, but we all prefer to get results right?
 
+Returns ARRAYREF of results, and an ARRAYREF of seen plan IDs
+
 =cut
 
 sub getResults {
     my ($tr,$opts,$prior_runs,@cases) = @_;
     my $res = {};
     my $projects = $tr->getProjects();
+
+
+    my $prior_plans = [];
 
     #TODO obey status filtering
     #TODO obey result notes text grepping
@@ -335,21 +341,26 @@ sub getResults {
 
         #Translate plan names to ids
         my $plans = $tr->getPlans($project->{'id'}) || [];
+
+        #Filter out plans which do not match our filters to prevent a call to getPlanByID
+        if ($opts->{'plans'}) {
+            @$plans = grep { my $p = $_; grep { $p->{'name'} eq $_} @{$opts->{'plans'}} } @$plans;
+        }
+
+        #Filter out prior plans
+        if ($opts->{'plan_ids'}) {
+            @$plans = grep { my $p = $_; grep { $p->{'id'} eq $_} @{$opts->{'plan_ids'}} } @$plans;
+        }
+
         $opts->{'runs'} //= [];
-        my $plan_filters = [];
         foreach my $plan (@$plans) {
             $plan = $tr->getPlanByID($plan->{'id'});
             my $plan_runs = $tr->getChildRuns($plan);
             push(@$runs,@$plan_runs) if $plan_runs;
         }
 
-        if ($opts->{'plans'}) {
-            @$plan_filters = map { $_->{'id'} } grep { my $p = $_; grep { $p->{'name'} eq $_} @{$opts->{'plans'}} } @$plans;
-        }
-
         foreach my $run (@$runs) {
             next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
-            next if scalar(@$plan_filters) && !( grep { $run->{'plan_id'} ? $_ eq $run->{'plan_id'} : undef } @$plan_filters );
             next if grep { $run->{id} eq $_ } @$prior_runs;
             foreach my $case (@cases) {
                 my $c = $tr->getTestByName($run->{'id'},basename($case));
@@ -367,8 +378,13 @@ sub getResults {
                 push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
             }
         }
+
+        push(@$prior_plans, map {$_->{'id'}} @$plans);
     }
-    return $res;
+
+    @$prior_plans = uniq(@$prior_plans);
+
+    return ($res,$prior_plans);
 }
 
 1;
