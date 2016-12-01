@@ -52,6 +52,7 @@ use Type::Params qw( compile );
 use JSON::MaybeXS 1.001000 ();
 use HTTP::Request;
 use LWP::UserAgent;
+use HTTP::CookieJar::LWP;
 use Data::Validate::URI qw{is_uri};
 use List::Util 1.33;
 use Encode ();
@@ -109,8 +110,9 @@ sub new {
         tr_fields        => undef,
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
-        browser          => new LWP::UserAgent(
+        browser          => LWP::UserAgent->new(
             keep_alive => 10,
+            cookie_jar => HTTP::CookieJar::LWP->new(),
         ),
         do_post_redirect => $do_post_redirect,
         max_tries        => $max_tries // 1,
@@ -131,7 +133,7 @@ sub new {
         unless grep {$_ eq $self->{'encoding-nonaliased'}} (Encode->encodings(":all"));
 
     #Create default request to pass on to LWP::UserAgent
-    $self->{'default_request'} = new HTTP::Request();
+    $self->{'default_request'} = HTTP::Request->new();
     $self->{'default_request'}->authorization_basic($user,$pass);
 
     bless( $self, $class );
