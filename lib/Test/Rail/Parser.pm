@@ -359,7 +359,7 @@ sub unknownCallback {
     #XXX I'd love to just rely on the 'name' attr in App::Prove::State::Result::Test, but...
     #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
-    $self->{'file'} = $file if $file;
+    $self->{'file'} = $file if !$self->{'file'} && $file;
     return;
 }
 
