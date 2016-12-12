@@ -3,6 +3,7 @@ Revision history for Perl module TestRail::API
 0.038 2016-08-24 TEODESIAN
     - Optimize TestRail::Utils::Find::getResults and testrail-results
     - Add ability to follow POST redirects
+    - Don't print stack traces during constructor errors, this can leak auth info into logs
 
 0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan

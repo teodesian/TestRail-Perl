@@ -90,7 +90,7 @@ sub new {
     state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]]);
     my ($class,$apiurl,$user,$pass,$encoding,$debug, $do_post_redirect) = $check->(@_);
 
-    confess("Invalid URI passed to constructor") if !is_uri($apiurl);
+    die("Invalid URI passed to constructor") if !is_uri($apiurl);
     $debug //= 0;
 
     my $self = {
@@ -117,10 +117,10 @@ sub new {
 
     #Check chara encoding
     $self->{'encoding-nonaliased'} = Encode::resolve_alias($self->{'encoding'});
-    confess("Invalid encoding alias '".$self->{'encoding'}."' passed, see Encoding::Supported for a list of allowed encodings")
+    die("Invalid encoding alias '".$self->{'encoding'}."' passed, see Encoding::Supported for a list of allowed encodings")
         unless $self->{'encoding-nonaliased'};
 
-    confess("Invalid encoding '".$self->{'encoding-nonaliased'}."' passed, see Encoding::Supported for a list of allowed encodings")
+    die("Invalid encoding '".$self->{'encoding-nonaliased'}."' passed, see Encoding::Supported for a list of allowed encodings")
         unless grep {$_ eq $self->{'encoding-nonaliased'}} (Encode->encodings(":all"));
 
     #Create default request to pass on to LWP::UserAgent
@@ -134,14 +134,14 @@ sub new {
     my $res = $self->_doRequest('index.php?/api/v2/get_users');
     confess "Error: network unreachable" if !defined($res);
     if ( (reftype($res) || 'undef') ne 'ARRAY') {
-      confess "Unexpected return from _doRequest: $res" if !looks_like_number($res);
-      confess "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly." if $res == -500;
-      confess "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct" if $res == -403;
-      confess "Bad user credentials!" if $res == -401;
-      confess "HTTP error $res encountered while communicating with TestRail server.  Resolve issue and try again." if !$res;
-      confess "Unknown error occurred: $res";
+      die "Unexpected return from _doRequest: $res" if !looks_like_number($res);
+      die "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly." if $res == -500;
+      die "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct" if $res == -403;
+      die "Bad user credentials!" if $res == -401;
+      die "HTTP error ".abs($res)." encountered while communicating with TestRail server.  Resolve issue and try again." if $res < 0;
+      die "Unknown error occurred: $res";
     }
-    confess "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
+    die "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
     $self->{'user_cache'} = $res;
 
     return $self;
