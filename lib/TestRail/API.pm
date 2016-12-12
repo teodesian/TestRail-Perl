@@ -57,7 +57,7 @@ use Encode ();
 
 =head1 CONSTRUCTOR
 
-=head2 B<new (api_url, user, password, encoding, debug)>
+=head2 B<new (api_url, user, password, encoding, debug, do_post_redirect)>
 
 Creates new C<TestRail::API> object.
 
@@ -73,6 +73,8 @@ Creates new C<TestRail::API> object.
 
 =item BOOLEAN C<DEBUG> (optional) - Print the JSON responses from TL with your requests. Default false.
 
+=item BOOLEAN C<DO_POST_REDIRECT> (optional) - Follow redirects on POST requests (most add/edit/delete calls are POSTs).  Default false.
+
 =back
 
 Returns C<TestRail::API> object if login is successful.
@@ -86,7 +88,7 @@ Does not do above checks if debug is passed.
 
 sub new {
     state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]]);
-    my ($class,$apiurl,$user,$pass,$encoding,$debug) = $check->(@_);
+    my ($class,$apiurl,$user,$pass,$encoding,$debug, $do_post_redirect) = $check->(@_);
 
     confess("Invalid URI passed to constructor") if !is_uri($apiurl);
     $debug //= 0;
@@ -104,8 +106,14 @@ sub new {
         tr_fields        => undef,
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
-        browser          => new LWP::UserAgent()
+        browser          => new LWP::UserAgent(),
+        do_post_redirect => $do_post_redirect
     };
+
+    #Allow POST redirects
+    if ($self->{do_post_redirect}) {
+        push @{ $self->{'browser'}->requests_redirectable }, 'POST';
+    }
 
     #Check chara encoding
     $self->{'encoding-nonaliased'} = Encode::resolve_alias($self->{'encoding'});
