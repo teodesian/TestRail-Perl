@@ -5,6 +5,7 @@ Revision history for Perl module TestRail::API
     - Add ability to follow POST redirects
     - Don't print stack traces during constructor errors, this can leak auth info into logs
     - Don't override filename in TAP Parser if we already have it
+    - Fix issue where non-standard status overrides were not possible
 
 0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan

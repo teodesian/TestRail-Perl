@@ -192,12 +192,13 @@ sub new {
     confess("No status with internal name 'todo_fail' in TestRail!") unless scalar(@todof);
     confess("No status with internal name 'todo_pass' in TestRail!") unless scalar(@todop);
     confess("No status with internal name 'retest' in TestRail!") unless scalar(@retest);
+    #Map in all the statuses
+    foreach my $status (@{$tropts->{'statuses'}}) {
+        $tropts->{$status->{'name'}} = $status;
+    }
+    #Special aliases
     $tropts->{'ok'}        = $ok[0];
     $tropts->{'not_ok'}    = $not_ok[0];
-    $tropts->{'skip'}      = $skip[0];
-    $tropts->{'todo_fail'} = $todof[0];
-    $tropts->{'todo_pass'} = $todop[0];
-    $tropts->{'retest'}    = $retest[0];
 
     confess "testsuite and testsuite_id are mutually exclusive" if ( $tropts->{'testsuite_id'} && $tropts->{'testsuite'});
     #Grab testsuite by name if needed
