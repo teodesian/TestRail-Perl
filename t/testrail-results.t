@@ -9,7 +9,7 @@ require 'testrail-results';
 use lib $FindBin::Bin.'/lib';
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More 'tests' => 22;
+use Test::More 'tests' => 24;
 use Capture::Tiny qw{capture_merged};
 use List::MoreUtils qw{uniq};
 
@@ -93,6 +93,17 @@ unlike($out,qr/Failed: 515/,"Gets correct # & status of runs with test inside it
 ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
 is($code, 0, "Exit code OK looking for results of fake.test in json mode");
 like($out,qr/num_runs/,"Gets # of runs with test inside it in json mode");
+
+#check defect filters
+{
+    no warnings qw{redefine once};
+    local *TestRail::API::getTestByName = sub { return { 'id' => '666', 'run_id' => 123, 'elapsed' => 1 } };
+    local *TestRail::API::getTestResults = sub { return [{ 'defects' => ['YOLO-666'], 'status_id' => 2  }, { 'defects' => undef, 'status_id' => 1 }] };
+    @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --defect YOLO-666 t/skip.test };
+    ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
+    is($code, 0, "Exit code OK looking for defects of skip.test");
+    like($out,qr/YOLO-666/,"Gets # of runs with defects inside it");
+}
 
 #For making the test data to test the caching
 #open(my $fh, '>', "t/data/faketest_cache.json");

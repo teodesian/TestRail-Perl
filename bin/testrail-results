@@ -126,6 +126,7 @@ sub run {
         'r|run=s@'        => \$opts->{'runs'},
         'e|encoding=s'    => \$opts->{'encoding'},
         'g|grep=s'        => \$opts->{'pattern'},
+        'd|defect=s@'     => \$opts->{'defects'},
         'c|cachefile=s'   => \$opts->{'cachefile'},
         'json'            => \$opts->{'json'},
         'h|help'          => \$opts->{'help'},
@@ -173,6 +174,7 @@ sub run {
         $out .= "#############################\n";
         my $num_runs = 0;
         my $casetotals = {};
+        my $defects = [];
         my $total_elapsed = 0;
         my $avg_elapsed = 0;
         my $median_runtime = 0;
@@ -185,10 +187,12 @@ sub run {
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result (@{$casedef->{results}}) {
                 $casetotals->{$result->{status_id}}++;
+                push(@$defects, @{$result->{defects}}) if $result->{defects};
                 push(@$elapsetotals,_elapsed2secs($result->{'elapsed'}));
             }
         }
         @$seen_runs = uniq(@$seen_runs);
+        @$defects   = uniq(@$defects);
 
         my $pattern_output = '';
         $out_json->{$case}->{search_string} = $opts->{'pattern'};
@@ -222,6 +226,9 @@ sub run {
             $out .= "$status_map{$status}: $casetotals->{$status}\n";
             $out_json->{$case}->{$status_map{$status}} = $casetotals->{$status};
         }
+
+        $out .= "\nDefects related to case:\n".join(',',@$defects)."\n" if @$defects;
+
     }
 
     if ($opts->{'json'}) {

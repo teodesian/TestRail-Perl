@@ -8,6 +8,7 @@ use warnings;
 
 use Carp qw{confess cluck};
 use Scalar::Util qw{blessed};
+use List::Util qw{any};
 use List::MoreUtils qw{uniq};
 
 use File::Find;
@@ -330,6 +331,22 @@ Probably should have called this findResults, but we all prefer to get results r
 
 Returns ARRAYREF of results, and an ARRAYREF of seen plan IDs
 
+Valid Options:
+
+=over 4
+
+=item B<plans> - ARRAYREF of plan names to check.
+
+=item B<plan_ids> - ARRAYREF of plan IDs to check.
+
+=item B<runs> - ARRAYREF of runs names to check.
+
+=item B<pattern> - Pattern to filter case results on.
+
+=item B<defects> - ARRAYREF of defects of which at least one must be present in a result.
+
+=back
+
 =cut
 
 sub getResults {
@@ -351,12 +368,12 @@ sub getResults {
 
         #Filter out plans which do not match our filters to prevent a call to getPlanByID
         if ($opts->{'plans'}) {
-            @$plans = grep { my $p = $_; grep { $p->{'name'} eq $_} @{$opts->{'plans'}} } @$plans;
+            @$plans = grep { my $p = $_; any { $p->{'name'} eq $_ } @{$opts->{'plans'}} } @$plans;
         }
 
         #Filter out prior plans
         if ($opts->{'plan_ids'}) {
-            @$plans = grep { my $p = $_; grep { $p->{'id'} eq $_} @{$opts->{'plan_ids'}} } @$plans;
+            @$plans = grep { my $p = $_; any { $p->{'id'} eq $_ } @{$opts->{'plan_ids'}} } @$plans;
         }
 
         $opts->{'runs'} //= [];
@@ -365,10 +382,10 @@ sub getResults {
             my $plan_runs = $tr->getChildRuns($plan);
             push(@$runs,@$plan_runs) if $plan_runs;
         }
-
         foreach my $run (@$runs) {
             next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
             next if grep { $run->{id} eq $_ } @$prior_runs;
+
             foreach my $case (@cases) {
                 my $c = $tr->getTestByName($run->{'id'},basename($case));
                 next unless ref $c eq 'HASH';
@@ -380,6 +397,17 @@ sub getResults {
                 if ($opts->{'pattern'}) {
                     my $pattern = $opts->{pattern};
                     @{$c->{results}} = grep { my $comment = $_->{comment} || ''; $comment =~ m/$pattern/i } @{$c->{results}};
+                }
+
+                #Filter by the provided case IDs, if any
+                if (ref($opts->{'defects'}) eq 'ARRAY' && scalar(@{$opts->{defects}})) {
+                    @{$c->{results}} = grep {
+                        my $defects = $_->{defects};
+                        any {
+                            my $df_case = $_;
+                            any { $df_case eq $_ } @{$opts->{defects}};
+                        } @$defects
+                    } @{$c->{results}};
                 }
 
                 push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
