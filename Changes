@@ -9,6 +9,7 @@ Revision history for Perl module TestRail::API
     - Add finder callback to TestRail::Utils::FindTests
     - Add testsuite_id filter to TestRail::API::getChildRunByName
     - Add defect metrics to testrail-results
+    - Add version metrics to testrail-results
 
 0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan

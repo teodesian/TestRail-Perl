@@ -410,6 +410,15 @@ sub getResults {
                     } @{$c->{results}};
                 }
 
+                #Filter by the provided versions, if any
+                if (ref($opts->{'versions'}) eq 'ARRAY' && scalar(@{$opts->{versions}})) {
+                    @{$c->{results}} = grep {
+                        my $version = $_->{version};
+                        any { $version eq $_ } @{$opts->{versions}};
+                    } @{$c->{results}};
+                }
+
+
                 push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
             }
         }

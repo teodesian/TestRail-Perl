@@ -9,7 +9,7 @@ require 'testrail-results';
 use lib $FindBin::Bin.'/lib';
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More 'tests' => 24;
+use Test::More 'tests' => 26;
 use Capture::Tiny qw{capture_merged};
 use List::MoreUtils qw{uniq};
 
@@ -94,15 +94,21 @@ unlike($out,qr/Failed: 515/,"Gets correct # & status of runs with test inside it
 is($code, 0, "Exit code OK looking for results of fake.test in json mode");
 like($out,qr/num_runs/,"Gets # of runs with test inside it in json mode");
 
-#check defect filters
+#check defect & version filters
 {
     no warnings qw{redefine once};
     local *TestRail::API::getTestByName = sub { return { 'id' => '666', 'run_id' => 123, 'elapsed' => 1 } };
-    local *TestRail::API::getTestResults = sub { return [{ 'defects' => ['YOLO-666'], 'status_id' => 2  }, { 'defects' => undef, 'status_id' => 1 }] };
+    local *TestRail::API::getTestResults = sub { return [{ 'defects' => ['YOLO-666'], 'status_id' => 2, 'version' => 666  }, { 'defects' => undef, 'status_id' => 1, 'version' => 333 }] };
     @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --defect YOLO-666 t/skip.test };
     ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
     is($code, 0, "Exit code OK looking for defects of skip.test");
     like($out,qr/YOLO-666/,"Gets # of runs with defects inside it");
+
+    @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --version 333 t/skip.test };
+    ($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
+    is($code, 0, "Exit code OK looking for version 333 for skip.test");
+    like($out,qr/333/,"Gets # of runs with version 333 inside it");
+
 }
 
 #For making the test data to test the caching
