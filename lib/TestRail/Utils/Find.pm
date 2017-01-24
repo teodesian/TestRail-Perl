@@ -179,6 +179,8 @@ Given an ARRAY of tests, find tests meeting your criteria (or not) in the specif
 
 =item STRING C<EXTENSION> (optional) - Only return files ending with the provided text (e.g. .t, .test, .pl, .pm)
 
+=item CODE  C<FINDER> (optional) - Use the provided sub to get the list of files on disk.  Provides the directory & extension based on above options as arguments.  Must return list of tests.
+
 =back
 
 =item ARRAY C<CASES> - Array of cases to translate to pathnames based on above options.
@@ -205,10 +207,15 @@ sub findTests {
         my @tmpArr = ();
         my $dir = ($opts->{'match'} || $opts->{'orphans'}) ? ($opts->{'match'} || $opts->{'orphans'}) : $opts->{'no-match'};
         confess "No such directory '$dir'" if ! -d $dir;
-        if (!$opts->{'no-recurse'}) {
-            File::Find::find( sub { push(@realtests,$File::Find::name) if -f && m/\Q$ext\E$/ }, $dir );
+
+        if (ref($opts->{finder}) eq 'CODE') {
+            @realtests = $opts->{finder}->($dir,$ext)
         } else {
-            @realtests = glob("$dir/*$ext");
+            if (!$opts->{'no-recurse'}) {
+                File::Find::find( sub { push(@realtests,$File::Find::name) if -f && m/\Q$ext\E$/ }, $dir );
+            } else {
+                @realtests = glob("$dir/*$ext");
+            }
         }
         foreach my $case (@cases) {
             foreach my $path (@realtests) {

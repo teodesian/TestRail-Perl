@@ -4,7 +4,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
-use Test::More 'tests' => 52;
+use Test::More 'tests' => 53;
 use Test::Fatal;
 use Test::Deep;
 use File::Basename qw{dirname};
@@ -173,6 +173,9 @@ delete $opts->{'match'};
 ($cases) = TestRail::Utils::Find::getTests($opts,$tr);
 @tests = TestRail::Utils::Find::findTests($opts,@$cases);
 is(scalar(@tests),0,"Correct number of cases shown (match, plan run, failed)");
+
+#Test FindTests' finder sub
+like(exception { TestRail::Utils::Find::findTests({'match' => '.', 'finder' => sub { return die('got here') } }) }, qr/got here/i, "FindTests callback can fire correctly");
 
 $opts = {
     'project' => 'TestProject',
