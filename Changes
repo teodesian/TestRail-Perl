@@ -7,6 +7,7 @@ Revision history for Perl module TestRail::API
     - Don't override filename in TAP Parser if we already have it
     - Fix issue where non-standard status overrides were not possible
     - Add finder callback to TestRail::Utils::FindTests
+    - Add testsuite_id filter to TestRail::API::getChildRunByName
 
 0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan

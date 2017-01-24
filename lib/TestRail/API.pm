@@ -1399,7 +1399,7 @@ sub getChildRuns {
     return $plans;
 }
 
-=head2 B<getChildRunByName(plan,name,configurations)>
+=head2 B<getChildRunByName(plan,name,configurations,testsuite_id)>
 
 =over 4
 
@@ -1408,6 +1408,8 @@ sub getChildRuns {
 =item STRING C<NAME> - Name of run to search for within plan.
 
 =item ARRAYREF C<CONFIGURATIONS> (optional) - Names of configurations to filter runs by.
+
+=item INTEGER C<TESTSUITE_ID> (optional) - Filter by the provided Testsuite ID.  Helpful for when child runs have duplicate names, but are from differing testsuites.
 
 =back
 
@@ -1419,10 +1421,11 @@ Will throw a fatal error if one or more of the configurations passed does not ex
 =cut
 
 sub getChildRunByName {
-    state $check = compile(Object, HashRef, Str, Optional[Maybe[ArrayRef[Str]]]);
-    my ($self,$plan,$name,$configurations) = $check->(@_);
+    state $check = compile(Object, HashRef, Str, Optional[Maybe[ArrayRef[Str]]], Optional[Maybe[Int]]);
+    my ($self,$plan,$name,$configurations,$testsuite_id) = $check->(@_);
 
     my $runs = $self->getChildRuns($plan);
+    @$runs = grep {$_->{suite_id} == $testsuite_id}  @$runs if $testsuite_id;
     return 0 if !$runs;
 
     my @pconfigs = ();

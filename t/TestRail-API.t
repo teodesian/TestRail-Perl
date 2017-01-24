@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 88;
+use Test::More tests => 89;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -155,7 +155,8 @@ is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan b
 #Get runs per plan, create runs in plan
 my $prun = $new_plan->{'entries'}->[0]->{'runs'}->[0];
 is($tr->getRunByID($prun->{'id'})->{'name'},"Executing the great plan","Can get child run of plan by ID");
-is($tr->getChildRunByName($new_plan,"Executing the great plan")->{'id'},$prun->{'id'},"Can find child run of plan by name");
+is($tr->getChildRunByName($new_plan,"Executing the great plan", [], 9)->{'id'},$prun->{'id'},"Can find child run of plan by name filtering by testsuite");
+is($tr->getChildRunByName($new_plan,"Executing the great plan", [], 8),0,"Can't find child run of plan by name filtering by (bad) testsuite");
 
 SKIP: {
     skip("Cannot create configurations programattically in the API like in mocks",2) if !$is_mock;
