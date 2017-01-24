@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.037';
+$TestRail::API::VERSION = '0.038';
 
 use 5.010;
 
@@ -30,36 +30,43 @@ sub new {
         Optional [ Maybe [Str] ],
         Optional [ Maybe [Bool] ]
     );
-    my ( $class, $apiurl, $user, $pass, $encoding, $debug ) = $check->(@_);
+    my ( $class, $apiurl, $user, $pass, $encoding, $debug, $do_post_redirect )
+      = $check->(@_);
 
-    confess("Invalid URI passed to constructor") if !is_uri($apiurl);
+    die("Invalid URI passed to constructor") if !is_uri($apiurl);
     $debug //= 0;
 
     my $self = {
-        user            => $user,
-        pass            => $pass,
-        apiurl          => $apiurl,
-        debug           => $debug,
-        encoding        => $encoding || 'UTF-8',
-        testtree        => [],
-        flattree        => [],
-        user_cache      => [],
-        configurations  => {},
-        tr_fields       => undef,
-        default_request => undef,
-        global_limit    => 250,                   #Discovered by experimentation
-        browser         => new LWP::UserAgent()
+        user             => $user,
+        pass             => $pass,
+        apiurl           => $apiurl,
+        debug            => $debug,
+        encoding         => $encoding || 'UTF-8',
+        testtree         => [],
+        flattree         => [],
+        user_cache       => [],
+        configurations   => {},
+        tr_fields        => undef,
+        default_request  => undef,
+        global_limit     => 250,                  #Discovered by experimentation
+        browser          => new LWP::UserAgent(),
+        do_post_redirect => $do_post_redirect
     };
+
+    #Allow POST redirects
+    if ( $self->{do_post_redirect} ) {
+        push @{ $self->{'browser'}->requests_redirectable }, 'POST';
+    }
 
     #Check chara encoding
     $self->{'encoding-nonaliased'} =
       Encode::resolve_alias( $self->{'encoding'} );
-    confess("Invalid encoding alias '"
+    die(    "Invalid encoding alias '"
           . $self->{'encoding'}
           . "' passed, see Encoding::Supported for a list of allowed encodings"
     ) unless $self->{'encoding-nonaliased'};
 
-    confess("Invalid encoding '"
+    die(    "Invalid encoding '"
           . $self->{'encoding-nonaliased'}
           . "' passed, see Encoding::Supported for a list of allowed encodings"
       )
@@ -77,21 +84,22 @@ sub new {
     my $res = $self->_doRequest('index.php?/api/v2/get_users');
     confess "Error: network unreachable" if !defined($res);
     if ( ( reftype($res) || 'undef' ) ne 'ARRAY' ) {
-        confess "Unexpected return from _doRequest: $res"
+        die "Unexpected return from _doRequest: $res"
           if !looks_like_number($res);
-        confess
+        die
           "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly."
           if $res == -500;
-        confess
+        die
           "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct"
           if $res == -403;
-        confess "Bad user credentials!" if $res == -401;
-        confess
-          "HTTP error $res encountered while communicating with TestRail server.  Resolve issue and try again."
-          if !$res;
-        confess "Unknown error occurred: $res";
+        die "Bad user credentials!" if $res == -401;
+        die "HTTP error "
+          . abs($res)
+          . " encountered while communicating with TestRail server.  Resolve issue and try again."
+          if $res < 0;
+        die "Unknown error occurred: $res";
     }
-    confess
+    die
       "No users detected on TestRail Install!  Check that your API is functioning correctly."
       if !scalar(@$res);
     $self->{'user_cache'} = $res;
@@ -753,11 +761,14 @@ sub getChildRuns {
 }
 
 sub getChildRunByName {
-    state $check =
-      compile( Object, HashRef, Str, Optional [ Maybe [ ArrayRef [Str] ] ] );
-    my ( $self, $plan, $name, $configurations ) = $check->(@_);
+    state $check = compile( Object, HashRef, Str,
+        Optional [ Maybe [ ArrayRef [Str] ] ],
+        Optional [ Maybe [Int] ]
+    );
+    my ( $self, $plan, $name, $configurations, $testsuite_id ) = $check->(@_);
 
     my $runs = $self->getChildRuns($plan);
+    @$runs = grep { $_->{suite_id} == $testsuite_id } @$runs if $testsuite_id;
     return 0 if !$runs;
 
     my @pconfigs = ();
@@ -1288,7 +1299,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.037
+version 0.038
 
 =head1 SYNOPSIS
 
@@ -1321,7 +1332,7 @@ To do so will result in the first of said item found being returned rather than 
 
 =head1 CONSTRUCTOR
 
-=head2 B<new (api_url, user, password, encoding, debug)>
+=head2 B<new (api_url, user, password, encoding, debug, do_post_redirect)>
 
 Creates new C<TestRail::API> object.
 
@@ -1336,6 +1347,8 @@ Creates new C<TestRail::API> object.
 =item STRING C<ENCODING> - The character encoding used by the caller.  Defaults to 'UTF-8', see L<Encode::Supported> and  for supported encodings.
 
 =item BOOLEAN C<DEBUG> (optional) - Print the JSON responses from TL with your requests. Default false.
+
+=item BOOLEAN C<DO_POST_REDIRECT> (optional) - Follow redirects on POST requests (most add/edit/delete calls are POSTs).  Default false.
 
 =back
 
@@ -1967,7 +1980,7 @@ Extract the child runs from a plan.  Convenient, as the structure of this hash i
 
 Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract the data.
 
-=head2 B<getChildRunByName(plan,name,configurations)>
+=head2 B<getChildRunByName(plan,name,configurations,testsuite_id)>
 
 =over 4
 
@@ -1976,6 +1989,8 @@ Returns ARRAYREF of run definition HASHREFs.  Returns 0 upon failure to extract 
 =item STRING C<NAME> - Name of run to search for within plan.
 
 =item ARRAYREF C<CONFIGURATIONS> (optional) - Names of configurations to filter runs by.
+
+=item INTEGER C<TESTSUITE_ID> (optional) - Filter by the provided Testsuite ID.  Helpful for when child runs have duplicate names, but are from differing testsuites.
 
 =back
 
@@ -2598,7 +2613,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by George S. Baugh.
+This software is copyright (c) 2017 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

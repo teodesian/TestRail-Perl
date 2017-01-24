@@ -2,12 +2,14 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.037';
+$TestRail::Utils::Find::VERSION = '0.038';
 use strict;
 use warnings;
 
 use Carp qw{confess cluck};
 use Scalar::Util qw{blessed};
+use List::Util qw{any};
+use List::MoreUtils qw{uniq};
 
 use File::Find;
 use Cwd qw{abs_path};
@@ -140,17 +142,23 @@ sub findTests {
           ? ( $opts->{'match'} || $opts->{'orphans'} )
           : $opts->{'no-match'};
         confess "No such directory '$dir'" if !-d $dir;
-        if ( !$opts->{'no-recurse'} ) {
-            File::Find::find(
-                sub {
-                    push( @realtests, $File::Find::name )
-                      if -f && m/\Q$ext\E$/;
-                },
-                $dir
-            );
+
+        if ( ref( $opts->{finder} ) eq 'CODE' ) {
+            @realtests = $opts->{finder}->( $dir, $ext );
         }
         else {
-            @realtests = glob("$dir/*$ext");
+            if ( !$opts->{'no-recurse'} ) {
+                File::Find::find(
+                    sub {
+                        push( @realtests, $File::Find::name )
+                          if -f && m/\Q$ext\E$/;
+                    },
+                    $dir
+                );
+            }
+            else {
+                @realtests = glob("$dir/*$ext");
+            }
         }
         foreach my $case (@cases) {
             foreach my $path (@realtests) {
@@ -264,6 +272,8 @@ sub getResults {
     my $res      = {};
     my $projects = $tr->getProjects();
 
+    my $prior_plans = [];
+
     #TODO obey status filtering
     #TODO obey result notes text grepping
     foreach my $project (@$projects) {
@@ -274,30 +284,35 @@ sub getResults {
 
         #Translate plan names to ids
         my $plans = $tr->getPlans( $project->{'id'} ) || [];
+
+        #Filter out plans which do not match our filters to prevent a call to getPlanByID
+        if ( $opts->{'plans'} ) {
+            @$plans = grep {
+                my $p = $_;
+                any { $p->{'name'} eq $_ } @{ $opts->{'plans'} }
+            } @$plans;
+        }
+
+        #Filter out prior plans
+        if ( $opts->{'plan_ids'} ) {
+            @$plans = grep {
+                my $p = $_;
+                any { $p->{'id'} eq $_ } @{ $opts->{'plan_ids'} }
+            } @$plans;
+        }
+
         $opts->{'runs'} //= [];
-        my $plan_filters = [];
         foreach my $plan (@$plans) {
             $plan = $tr->getPlanByID( $plan->{'id'} );
             my $plan_runs = $tr->getChildRuns($plan);
             push( @$runs, @$plan_runs ) if $plan_runs;
         }
-
-        if ( $opts->{'plans'} ) {
-            @$plan_filters = map { $_->{'id'} } grep {
-                my $p = $_;
-                grep { $p->{'name'} eq $_ } @{ $opts->{'plans'} }
-            } @$plans;
-        }
-
         foreach my $run (@$runs) {
             next
               if scalar( @{ $opts->{runs} } )
               && !( grep { $_ eq $run->{'name'} } @{ $opts->{'runs'} } );
-            next
-              if scalar(@$plan_filters)
-              && !( grep { $run->{'plan_id'} ? $_ eq $run->{'plan_id'} : undef }
-                @$plan_filters );
             next if grep { $run->{id} eq $_ } @$prior_runs;
+
             foreach my $case (@cases) {
                 my $c = $tr->getTestByName( $run->{'id'}, basename($case) );
                 next unless ref $c eq 'HASH';
@@ -315,13 +330,42 @@ sub getResults {
                     } @{ $c->{results} };
                 }
 
+                #Filter by the provided case IDs, if any
+                if ( ref( $opts->{'defects'} ) eq 'ARRAY'
+                    && scalar( @{ $opts->{defects} } ) )
+                {
+                    @{ $c->{results} } = grep {
+                        my $defects = $_->{defects};
+                        any {
+                            my $df_case = $_;
+                            any { $df_case eq $_ } @{ $opts->{defects} };
+                        }
+                        @$defects
+                    } @{ $c->{results} };
+                }
+
+                #Filter by the provided versions, if any
+                if ( ref( $opts->{'versions'} ) eq 'ARRAY'
+                    && scalar( @{ $opts->{versions} } ) )
+                {
+                    @{ $c->{results} } = grep {
+                        my $version = $_->{version};
+                        any { $version eq $_ } @{ $opts->{versions} };
+                    } @{ $c->{results} };
+                }
+
                 push( @{ $res->{$case} }, $c )
                   if scalar( @{ $c->{results} } )
                   ;    #Make sure they weren't filtered out
             }
         }
+
+        push( @$prior_plans, map { $_->{'id'} } @$plans );
     }
-    return $res;
+
+    @$prior_plans = uniq(@$prior_plans);
+
+    return ( $res, $prior_plans );
 }
 
 1;
@@ -338,7 +382,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.037
+version 0.038
 
 =head1 DESCRIPTION
 
@@ -411,6 +455,8 @@ Given an ARRAY of tests, find tests meeting your criteria (or not) in the specif
 
 =item STRING C<EXTENSION> (optional) - Only return files ending with the provided text (e.g. .t, .test, .pl, .pm)
 
+=item CODE  C<FINDER> (optional) - Use the provided sub to get the list of files on disk.  Provides the directory & extension based on above options as arguments.  Must return list of tests.
+
 =back
 
 =item ARRAY C<CASES> - Array of cases to translate to pathnames based on above options.
@@ -441,6 +487,24 @@ Get results for tests by name, filtered by the provided options, and skipping an
 
 Probably should have called this findResults, but we all prefer to get results right?
 
+Returns ARRAYREF of results, and an ARRAYREF of seen plan IDs
+
+Valid Options:
+
+=over 4
+
+=item B<plans> - ARRAYREF of plan names to check.
+
+=item B<plan_ids> - ARRAYREF of plan IDs to check.
+
+=item B<runs> - ARRAYREF of runs names to check.
+
+=item B<pattern> - Pattern to filter case results on.
+
+=item B<defects> - ARRAYREF of defects of which at least one must be present in a result.
+
+=back
+
 =head1 SPECIAL THANKS
 
 Thanks to cPanel Inc, for graciously funding the creation of this module.
@@ -456,7 +520,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by George S. Baugh.
+This software is copyright (c) 2017 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.037';
+$Test::Rail::Parser::VERSION = '0.038';
 use strict;
 use warnings;
 use utf8;
@@ -107,12 +107,15 @@ sub new {
       unless scalar(@todop);
     confess("No status with internal name 'retest' in TestRail!")
       unless scalar(@retest);
-    $tropts->{'ok'}        = $ok[0];
-    $tropts->{'not_ok'}    = $not_ok[0];
-    $tropts->{'skip'}      = $skip[0];
-    $tropts->{'todo_fail'} = $todof[0];
-    $tropts->{'todo_pass'} = $todop[0];
-    $tropts->{'retest'}    = $retest[0];
+
+    #Map in all the statuses
+    foreach my $status ( @{ $tropts->{'statuses'} } ) {
+        $tropts->{ $status->{'name'} } = $status;
+    }
+
+    #Special aliases
+    $tropts->{'ok'}     = $ok[0];
+    $tropts->{'not_ok'} = $not_ok[0];
 
     confess "testsuite and testsuite_id are mutually exclusive"
       if ( $tropts->{'testsuite_id'} && $tropts->{'testsuite'} );
@@ -362,7 +365,7 @@ sub unknownCallback {
     #XXX I'd love to just rely on the 'name' attr in App::Prove::State::Result::Test, but...
     #try to pick out the filename if we are running this on TAP in files, where App::Prove is uninvolved
     my $file = TestRail::Utils::getFilenameFromTapLine($line);
-    $self->{'file'} = $file if $file;
+    $self->{'file'} = $file if !$self->{'file'} && $file;
     return;
 }
 
@@ -717,7 +720,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.037
+version 0.038
 
 =head1 DESCRIPTION
 
@@ -872,7 +875,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by George S. Baugh.
+This software is copyright (c) 2017 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

@@ -1,6 +1,17 @@
 Revision history for Perl module TestRail::API
 
-0.037 2016-04-?? TEODESIAN
+0.038 2017-01-23 TEODESIAN
+    - Optimize TestRail::Utils::Find::getResults and testrail-results
+    - Add ability to follow POST redirects
+    - Don't print stack traces during constructor errors, this can leak auth info into logs
+    - Don't override filename in TAP Parser if we already have it
+    - Fix issue where non-standard status overrides were not possible
+    - Add finder callback to TestRail::Utils::FindTests
+    - Add testsuite_id filter to TestRail::API::getChildRunByName
+    - Add defect metrics to testrail-results
+    - Add version metrics to testrail-results
+
+0.037 2016-08-10 TEODESIAN
     - Fix incorrect POD for TestRail::API::createRunInPlan
     - Add testrail-results binary and TestRail::Utils::Find::getResults.
     - Add TestRail::API::getChildSections, and modify Test::Rail::Parser to recursively search passed sections when spawning runs

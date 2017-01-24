@@ -2,7 +2,7 @@
 # PODNAME: TestRail::Utils
 
 package TestRail::Utils;
-$TestRail::Utils::VERSION = '0.037';
+$TestRail::Utils::VERSION = '0.038';
 use strict;
 use warnings;
 
@@ -199,7 +199,7 @@ TestRail::Utils - Utilities for the testrail command line functions, and their m
 
 =head1 VERSION
 
-version 0.037
+version 0.038
 
 =head1 SCRIPT HELPER FUNCTIONS
 
@@ -273,7 +273,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by George S. Baugh.
+This software is copyright (c) 2017 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

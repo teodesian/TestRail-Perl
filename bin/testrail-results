@@ -3,7 +3,7 @@
 # PODNAME: TestRail::Bin::Results
 
 package TestRail::Bin::Results;
-$TestRail::Bin::Results::VERSION = '0.037';
+$TestRail::Bin::Results::VERSION = '0.038';
 use strict;
 use warnings;
 use utf8;
@@ -16,6 +16,7 @@ use Getopt::Long qw{GetOptionsFromArray};
 use File::HomeDir qw{my_home};
 use JSON::MaybeXS ();
 use Statistics::Descriptive;
+use List::MoreUtils qw{uniq};
 
 if ( !caller() ) {
     my ( $out, $code ) = run( 'args' => \@ARGV );
@@ -43,6 +44,8 @@ sub run {
         'r|run=s@'      => \$opts->{'runs'},
         'e|encoding=s'  => \$opts->{'encoding'},
         'g|grep=s'      => \$opts->{'pattern'},
+        'd|defect=s@'   => \$opts->{'defects'},
+        'v|version=s@'  => \$opts->{'versions'},
         'c|cachefile=s' => \$opts->{'cachefile'},
         'json'          => \$opts->{'json'},
         'h|help'        => \$opts->{'help'},
@@ -60,7 +63,8 @@ sub run {
 
     my $tr = TestRail::Utils::getHandle($opts);
     my $prior_search;
-    my $prior_runs = [];
+    my $prior_runs  = [];
+    my $prior_plans = [];
     if ( $opts->{'cachefile'} ) {
         my $raw_text = '';
         open( my $fh, '<', $opts->{'cachefile'} )
@@ -71,12 +75,18 @@ sub run {
         close($fh);
         $prior_search = JSON::MaybeXS::decode_json($raw_text);
         foreach my $key ( keys(%$prior_search) ) {
-            push( @$prior_runs, @{ $prior_search->{$key}->{'seen_runs'} } );
+            push( @$prior_runs,  @{ $prior_search->{$key}->{'seen_runs'} } );
+            push( @$prior_plans, @{ $prior_search->{$key}->{'seen_plans'} } );
         }
+        $opts->{'plan_ids'} = $prior_plans;
     }
 
-    my $res = TestRail::Utils::Find::getResults( $tr, $opts, $prior_runs,
+    my ( $res, $seen_plans ) =
+      TestRail::Utils::Find::getResults( $tr, $opts, $prior_runs,
         @{ $params{'args'} } );
+
+    #Make sure subsequent runs keep ignoring the prior plans
+    push( @$seen_plans, @$prior_plans );
 
     my $statuses = $tr->getPossibleTestStatuses();
     my %status_map;
@@ -86,13 +96,15 @@ sub run {
     my ( $out, $out_json ) = ( '', {} );
     foreach my $case ( keys(%$res) ) {
         $out .= "#############################\n";
-        my $num_runs       = 0;
-        my $casetotals     = {};
-        my $total_elapsed  = 0;
-        my $avg_elapsed    = 0;
-        my $median_runtime = 0;
-        my $elapsetotals   = [];
-        my $seen_runs      = [];
+        my $num_runs           = 0;
+        my $casetotals         = {};
+        my $versions_by_status = {};
+        my $defects            = [];
+        my $total_elapsed      = 0;
+        my $avg_elapsed        = 0;
+        my $median_runtime     = 0;
+        my $elapsetotals       = [];
+        my $seen_runs          = $prior_runs;
 
         foreach my $casedef ( @{ $res->{$case} } ) {
             push( @$seen_runs, $casedef->{run_id} );
@@ -101,8 +113,21 @@ sub run {
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result ( @{ $casedef->{results} } ) {
                 $casetotals->{ $result->{status_id} }++;
+                $versions_by_status->{ $result->{status_id} } //= [];
+                push(
+                    @{ $versions_by_status->{ $result->{status_id} } },
+                    $result->{version}
+                ) if $result->{version};
+                push( @$defects, @{ $result->{defects} } )
+                  if $result->{defects};
                 push( @$elapsetotals, _elapsed2secs( $result->{'elapsed'} ) );
             }
+        }
+        @$seen_runs = uniq(@$seen_runs);
+        @$defects   = uniq(@$defects);
+        foreach my $st ( keys(%$versions_by_status) ) {
+            @{ $versions_by_status->{$st} } =
+              uniq( @{ $versions_by_status->{$st} } );
         }
 
         my $pattern_output = '';
@@ -111,8 +136,9 @@ sub run {
           if $opts->{'pattern'};
 
         $out .= "$case was present in $num_runs runs$pattern_output.\n";
-        $out_json->{$case}->{'num_runs'}  = $num_runs;
-        $out_json->{$case}->{'seen_runs'} = $seen_runs;
+        $out_json->{$case}->{'num_runs'}   = $num_runs;
+        $out_json->{$case}->{'seen_runs'}  = $seen_runs;
+        $out_json->{$case}->{'seen_plans'} = $seen_plans;
 
         #Collect time statistics
         my $timestats = Statistics::Descriptive::Full->new();
@@ -146,6 +172,17 @@ sub run {
             $out_json->{$case}->{ $status_map{$status} } =
               $casetotals->{$status};
         }
+
+        foreach my $status ( keys(%$versions_by_status) ) {
+            $out .= "Versions $status_map{$status} in:\n"
+              . join( ',', @{ $versions_by_status->{$status} } ) . "\n";
+        }
+        $out_json->{$case}->{versions_by_status} = $versions_by_status;
+
+        $out .= "\nDefects related to case:\n" . join( ',', @$defects ) . "\n"
+          if @$defects;
+        $out_json->{$case}->{defects} = $defects;
+
     }
 
     if ( $opts->{'json'} ) {
@@ -180,7 +217,7 @@ TestRail::Bin::Results - List results for specified test(s).
 
 =head1 VERSION
 
-version 0.037
+version 0.038
 
 =head1 SYNOPSIS
 
@@ -243,6 +280,10 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -g --grep    : Restrict results printed to those matching the provided pattern. Great for looking for specific failure conditions.
 
+-v --version : Restrict results printed to those tested on the provided version(s).  May be passed multiple times.
+
+-d --defect  : Restrict results printed to those related to the provided defect(s).  May be passed multiple times.
+
 -c --cachefile : Load the provided file as a place to pick up your search from.
 
 --json       : Print results as a JSON serialization.
@@ -278,7 +319,7 @@ and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by George S. Baugh.
+This software is copyright (c) 2017 by George S. Baugh.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
