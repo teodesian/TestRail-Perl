@@ -3305,7 +3305,7 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 {
 
-$VAR1 = 'index.php?/api/v2/get_results_for_run/22';
+$VAR1 = 'index.php?/api/v2/get_results_for_run/22&limit=250';
 $VAR2 = '200';
 $VAR3 = 'OK';
 $VAR4 = bless( {
@@ -3379,7 +3379,6 @@ $VAR5 = '[
 $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }
-
 
 ###########
 #Lock mocks

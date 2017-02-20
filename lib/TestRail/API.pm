@@ -1389,7 +1389,33 @@ you will need to use getTestResults.
 sub getRunResults {
     state $check = compile(Object, Int);
     my ($self,$run_id) = $check->(@_);
-    return $self->_doRequest("index.php?/api/v2/get_results_for_run/$run_id",'GET');
+
+    my $initial_results = $self->getRunResultsPaginated($run_id,$self->{'global_limit'},undef);
+    return $initial_results unless (reftype($initial_results) || 'undef') eq 'ARRAY';
+    my $results = [];
+    push(@$results,@$initial_results);
+    my $offset = 1;
+    while (scalar(@$initial_results) == $self->{'global_limit'}) {
+        $initial_results = $self->getPlansPaginated($run_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        push(@$results,@$initial_results);
+        $offset++;
+    }
+    return $results;
+}
+
+=head2 B<getRunResultsPaginated(run_id,limit,offset)
+
+=cut
+
+sub getRunResultsPaginated {
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
+    my ($self,$run_id,$limit,$offset) = $check->(@_);
+
+    confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
+    my $apiurl = "index.php?/api/v2/get_results_for_run/$run_id";
+    $apiurl .= "&offset=$offset" if defined($offset);
+    $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
+    return $self->_doRequest($apiurl);
 }
 
 =head1 RUN AS CHILD OF PLAN METHODS
