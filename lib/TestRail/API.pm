@@ -87,7 +87,7 @@ Does not do above checks if debug is passed.
 =cut
 
 sub new {
-    state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]]);
+    state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]], Optional[Maybe[Bool]]);
     my ($class,$apiurl,$user,$pass,$encoding,$debug, $do_post_redirect) = $check->(@_);
 
     die("Invalid URI passed to constructor") if !is_uri($apiurl);

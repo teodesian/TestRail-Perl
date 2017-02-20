@@ -32,7 +32,7 @@ SKIP: {
 SKIP: {
     skip("Testing authentication not supported with mock",2) if ($is_mock);
 
-    like(exception {TestRail::API->new($apiurl,'lies','moreLies',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
+    like(exception {TestRail::API->new($apiurl,'lies','moreLies',undef,0,0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
     like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
 }
 
