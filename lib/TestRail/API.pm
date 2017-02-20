@@ -106,7 +106,9 @@ sub new {
         tr_fields        => undef,
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
-        browser          => new LWP::UserAgent(),
+        browser          => new LWP::UserAgent(
+            keep_alive => 1,
+        ),
         do_post_redirect => $do_post_redirect
     };
 

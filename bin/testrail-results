@@ -133,6 +133,8 @@ sub run {
         'd|defect=s@'     => \$opts->{'defects'},
         'v|version=s@'    => \$opts->{'versions'},
         'c|cachefile=s'   => \$opts->{'cachefile'},
+        'f|fast'          => \$opts->{'fast'},
+        't|testsuite'     => \$opts->{'testsuite'},
         'json'            => \$opts->{'json'},
         'h|help'          => \$opts->{'help'},
     );
@@ -163,6 +165,12 @@ sub run {
             push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
         }
         $opts->{'plan_ids'} = $prior_plans;
+    }
+
+    if ($opts->{'fast'}) {
+        my $project = $tr->getProjectByName($opts->{project});
+        $opts->{testsuite} = $tr->getTestsuiteByName($project->{id},$opts->{testsuite});
+        confess("Could not determine the relevant testsuite!") unless ref($opts->{testsuite}) eq 'HASH';
     }
 
     my ($res,$seen_plans) = TestRail::Utils::Find::getResults($tr,$opts,$prior_runs,@{$params{'args'}});

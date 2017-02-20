@@ -345,6 +345,8 @@ Valid Options:
 
 =item B<defects> - ARRAYREF of defects of which at least one must be present in a result.
 
+=item B<fast> - Whether to get only the latest result from the test in your run(s).  This can significantly speed up operations.
+
 =back
 
 =cut
