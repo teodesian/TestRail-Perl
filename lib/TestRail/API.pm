@@ -1370,6 +1370,28 @@ sub getRunSummary {
 
 }
 
+=head2 B<getRunResults(run_id)>
+
+Returns array of hashrefs describing the results of the run.
+
+Warning: This only returns the most recent results of a run.
+If you want to know about the tortured journey a test may have taken to get to it's final status,
+you will need to use getTestResults.
+
+=over 4
+
+=item INTEGER C<RUN_ID> - Relevant Run's ID.
+
+=back
+
+=cut
+
+sub getRunResults {
+    state $check = compile(Object, Int);
+    my ($self,$run_id) = $check->(@_);
+    return $self->_doRequest("index.php?/api/v2/get_results_for_run/$run_id",'GET');
+}
+
 =head1 RUN AS CHILD OF PLAN METHODS
 
 =head2 B<getChildRuns(plan)>

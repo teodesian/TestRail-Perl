@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 89;
+use Test::More tests => 90;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -217,6 +217,10 @@ my ($summary) = $tr->getRunSummary(@$runs); #I only care about the first one
 isnt($summary->{'run_status'},undef,"Can get run statuses correctly");
 is($summary->{'run_status'}->{'Passed'},int(!$is_mock),"Gets # of passed cases correctly");
 is($summary->{'run_status'}->{'Untested'},int($is_mock),"Gets # of untested cases correctly");
+
+#Get run results
+my $results = $tr->getRunResults($new_run->{'id'});
+is(scalar(@$results),3,"Correct # of results returned by getRunResults");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});
