@@ -1398,7 +1398,7 @@ sub getRunResults {
     push(@$results,@$initial_results);
     my $offset = 1;
     while (scalar(@$initial_results) == $self->{'global_limit'}) {
-        $initial_results = $self->getPlansPaginated($run_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        $initial_results = $self->getRunResultsPaginated($run_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
         push(@$results,@$initial_results);
         $offset++;
     }
