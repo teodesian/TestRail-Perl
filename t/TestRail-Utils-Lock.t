@@ -54,9 +54,14 @@ is($ret,0,"Verify that no tests are locked, as they either are of the wrong type
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep4();
 
 #Simulate lock collision
+$tr->{tests_cache} = {};
 my ($lockStatusID) = $tr->statusNamesToIds('locked');
 my ($project,$plan,$run) = TestRail::Utils::getRunInformation($tr,$opts);
-capture { $ret = TestRail::Utils::Lock::lockTest($tr->getTestByName($run->{'id'},'lockme.test'),$lockStatusID,'race.bannon',$tr) };
+capture {
+    $ret = TestRail::Utils::Lock::lockTest(
+        $tr->getTestByName($run->{'id'},'lockme.test'),$lockStatusID,'race.bannon',$tr
+    )
+};
 is($ret ,0,"False returned when race condition is simulated");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep5();
 

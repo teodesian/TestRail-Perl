@@ -67,9 +67,13 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -d --defect  : Restrict results printed to those related to the provided defect(s).  May be passed multiple times.
 
--c --cachefile : Load the provided file as a place to pick up your search from.
+-c --cachefile : Load the provided file as a place to pick up your search from.  May be passed multiple times.
+
+-f --fast : Reduce the number of required HTTP requests at the cost of historical data (previous statuses in runs).  Speeds up gathering a great deal when checking many tests.
 
 --json       : Print results as a JSON serialization.
+
+--perfile : Output JSON summary data per file to the provided directory when in json mode
 
 =back
 
@@ -104,6 +108,7 @@ use File::HomeDir qw{my_home};
 use JSON::MaybeXS ();
 use Statistics::Descriptive;
 use List::MoreUtils qw{uniq};
+use File::Basename qw{basename};
 
 if (!caller()) {
     my ($out,$code) = run('args' => \@ARGV);
@@ -132,15 +137,16 @@ sub run {
         'g|grep=s'        => \$opts->{'pattern'},
         'd|defect=s@'     => \$opts->{'defects'},
         'v|version=s@'    => \$opts->{'versions'},
-        'c|cachefile=s'   => \$opts->{'cachefile'},
+        'c|cachefile=s@'  => \$opts->{'cachefile'},
+        'f|fast'          => \$opts->{'fast'},
         'json'            => \$opts->{'json'},
+        'perfile=s'       => \$opts->{'perfile'},
         'h|help'          => \$opts->{'help'},
     );
 
     if ($opts->{help}) { return ('',TestRail::Utils::help()); }
 
     die("No tests passed") unless scalar(@{$params{'args'}});
-    die("Prior search file passed does not exist") if $opts->{'cachefile'} && !( -e $opts->{'cachefile'});
 
     $opts->{'browser'} = $params{'browser'};
 
@@ -151,21 +157,27 @@ sub run {
     my $prior_runs = [];
     my $prior_plans = [];
     if ($opts->{'cachefile'}) {
-        my $raw_text = '';
-        open(my $fh, '<', $opts->{'cachefile'}) or die "Could not open $opts->{cachefile}";
-        while (<$fh>) {
-            $raw_text .= $_;
+        foreach my $cf (@{$opts->{cachefile}}) {
+            die("Prior search file '$cf' passed does not exist") if $cf && !( -e $cf);
+            my $raw_text = '';
+            open(my $fh, '<', $cf) or die "Could not open $cf";
+            while (<$fh>) {
+                $raw_text .= $_;
+            }
+            close($fh);
+            $prior_search = JSON::MaybeXS::decode_json($raw_text);
+            foreach my $key (keys(%$prior_search)) {
+                push(@$prior_runs, @{$prior_search->{$key}->{'seen_runs'}});
+                push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
+            }
+            @$prior_plans = uniq(@$prior_plans);
+            @$prior_runs  = uniq(@$prior_runs);
+            $opts->{'plan_ids'} = $prior_plans;
+            $opts->{'run_ids'}  = $prior_runs;
         }
-        close($fh);
-        $prior_search = JSON::MaybeXS::decode_json($raw_text);
-        foreach my $key (keys(%$prior_search)) {
-            push(@$prior_runs,@{$prior_search->{$key}->{'seen_runs'}});
-            push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
-        }
-        $opts->{'plan_ids'} = $prior_plans;
     }
 
-    my ($res,$seen_plans) = TestRail::Utils::Find::getResults($tr,$opts,$prior_runs,@{$params{'args'}});
+    my ($res,$seen_plans,$seen_runs) = TestRail::Utils::Find::getResults($tr,$opts,@{$params{'args'}});
 
     #Make sure subsequent runs keep ignoring the prior plans
     push(@$seen_plans,@$prior_plans);
@@ -185,10 +197,8 @@ sub run {
         my $avg_elapsed = 0;
         my $median_runtime = 0;
         my $elapsetotals = [];
-        my $seen_runs    = $prior_runs;
 
         foreach my $casedef (@{$res->{$case}}) {
-            push(@$seen_runs, $casedef->{run_id});
             $num_runs++;
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result (@{$casedef->{results}}) {
@@ -198,11 +208,11 @@ sub run {
                     $versions_by_status->{$result->{status_id}} //= [];
                     push(@{$versions_by_status->{$result->{status_id}}},$result->{version}) if $result->{version};
                 }
-                push(@$defects, $result->{defects}) if $result->{defects};
+                push(@$defects, $result->{defects})    if $result->{defects} && ref($result->{defects}) ne 'ARRAY';
+                push(@$defects, @{$result->{defects}}) if $result->{defects} && ref($result->{defects}) eq 'ARRAY';
                 push(@$elapsetotals,_elapsed2secs($result->{'elapsed'}));
             }
         }
-        @$seen_runs = uniq(@$seen_runs);
         @$defects   = uniq(@$defects);
         foreach my $st (keys(%$versions_by_status)) {
             @{$versions_by_status->{$st}} = uniq(@{$versions_by_status->{$st}});
@@ -253,7 +263,17 @@ sub run {
 
     if ($opts->{'json'}) {
         my $coder = JSON::MaybeXS->new;
-        return ($coder->encode($out_json),0);
+        return ($coder->encode($out_json),0) unless $opts->{'perfile'};
+
+        die("no such directory $opts->{perfile}") unless -d $opts->{perfile};
+
+        foreach my $test (keys(%$out_json)) {
+            my $tn = basename($test);
+            open( my $fh, '>', "$opts->{perfile}/$tn.json") or die "could not open $opts->{perfile}/$tn.json";
+            print $fh $coder->encode({ $test => $out_json->{$test} });
+            close $fh;
+        }
+        return('',0);
     }
 
     $out .= "#############################";

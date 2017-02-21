@@ -219,8 +219,8 @@ is($summary->{'run_status'}->{'Passed'},int(!$is_mock),"Gets # of passed cases c
 is($summary->{'run_status'}->{'Untested'},int($is_mock),"Gets # of untested cases correctly");
 
 #Get run results
-my $results = $tr->getRunResults($new_run->{'id'});
-is(scalar(@$results),3,"Correct # of results returned by getRunResults");
+my $run_results = $tr->getRunResults($new_run->{'id'});
+is(scalar(@$run_results),3,"Correct # of results returned by getRunResults");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});
