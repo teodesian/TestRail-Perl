@@ -5,6 +5,7 @@ Revision history for Perl module TestRail::API
     - Add getRunResults, getRunResultsPaginated Methods in TestRail::API
     - Cache connections by default for speedups
     - Cache getTests() for getTestByName()
+    - Fix warnings when testrail-results encounters 'assigned' results
 
 0.038 2017-01-23 TEODESIAN
     - Optimize TestRail::Utils::Find::getResults and testrail-results

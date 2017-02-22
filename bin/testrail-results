@@ -192,9 +192,12 @@ sub run {
             $num_runs++;
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result (@{$casedef->{results}}) {
-                $casetotals->{$result->{status_id}}++;
-                $versions_by_status->{$result->{status_id}} //= [];
-                push(@{$versions_by_status->{$result->{status_id}}},$result->{version}) if $result->{version};
+                if (defined $result->{status_id}) {
+                    #Assignment is handled as creating a new result with an undef status id
+                    $casetotals->{$result->{status_id}}++;
+                    $versions_by_status->{$result->{status_id}} //= [];
+                    push(@{$versions_by_status->{$result->{status_id}}},$result->{version}) if $result->{version};
+                }
                 push(@$defects, $result->{defects}) if $result->{defects};
                 push(@$elapsetotals,_elapsed2secs($result->{'elapsed'}));
             }
