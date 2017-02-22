@@ -1982,12 +1982,21 @@ sub getTests {
     $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
     my $results = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
     @$results = grep {my $aid = $_->{'assignedto_id'}; grep {defined($aid) && $aid == $_} @$assignedto_ids} @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
+
+    #Cache stuff for getTestByName
+    $self->{tests_cache} //= {};
+    $self->{tests_cache}->{$run_id} = $results;
+
     return $results;
 }
 
 =head2 B<getTestByName (run_id,name)>
 
 Gets specified test by name.
+
+This is done by getting the list of all tests in the run and then picking out the relevant test.
+As such, for efficiency the list of tests is cached.
+The cache may be refreshed, or restricted by running getTests (with optional restrictions, such as assignedto_ids, etc).
 
 =over 4
 
@@ -2007,7 +2016,10 @@ sub getTestByName {
     state $check = compile(Object, Int, Str);
     my ($self,$run_id,$name) = $check->(@_);
 
-    my $tests = $self->getTests($run_id);
+    $self->{tests_cache} //= {};
+    my $tests = $self->{tests_cache}->{$run_id};
+
+    $tests = $self->getTests($run_id) if !$tests;
     return -500 if !$tests || (reftype($tests) || 'undef') ne 'ARRAY';
     foreach my $test (@$tests) {
         return $test if $test->{'title'} eq $name;
