@@ -1405,7 +1405,7 @@ sub getRunResults {
     return $results;
 }
 
-=head2 B<getRunResultsPaginated(run_id,limit,offset)
+=head2 B<getRunResultsPaginated(run_id,limit,offset)>
 
 =cut
 
