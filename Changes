@@ -1,11 +1,13 @@
 Revision history for Perl module TestRail::API
 
-0.039 2017-02-20 TEODESIAN
+0.039 2017-02-22 TEODESIAN
     - Fix issue where follow_post_redirect could not be passed to constructor
     - Add getRunResults, getRunResultsPaginated Methods in TestRail::API
     - Cache connections by default for speedups
     - Cache getTests() for getTestByName()
     - Fix warnings when testrail-results encounters 'assigned' results
+    - make --cachefile a multi argument in testrail-results
+    - add the --perfile argument to testrail-results
 
 0.038 2017-01-23 TEODESIAN
     - Optimize TestRail::Utils::Find::getResults and testrail-results
