@@ -15,6 +15,9 @@ use File::Find;
 use Cwd qw{abs_path};
 use File::Basename qw{basename};
 
+use Hash::Merge qw{merge};
+use MCE::Loop;
+
 use TestRail::Utils;
 
 =head1 DESCRIPTION
@@ -360,6 +363,7 @@ sub getResults {
 
     my (@seenRunIds,@seenPlanIds);
 
+    my @results;
     #TODO obey status filtering
     #TODO obey result notes text grepping
     foreach my $project (@$projects) {
@@ -398,44 +402,58 @@ sub getResults {
             push(@$runs,@$plan_runs) if $plan_runs;
         }
 
-        foreach my $run (@$runs) {
-            next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
+        MCE::Loop::init {
+            max_workers => 'auto',
+            chunk_size  => 'auto'
+        };
 
-            if ($opts->{fast}) {
-                my @csz = @cases;
-                @csz = grep { ref($_) eq 'HASH' } map {
-                    my $cname = basename($_);
-                    my $c = $tr->getTestByName($run->{id},$cname);
-                    $c->{name} = $cname if $c;
-                    $c
-                } @csz;
-                next unless scalar(@csz);
+        push (@results, mce_loop {
+            my $runz = $_;
+            my $res = {};
+            foreach my $run (@$runz) {
+                next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
 
-                my $results = $tr->getRunResults($run->{id});
-                foreach my $c (@csz) {
-                    $res->{$c->{name}} //= [];
-                    my $cres = first { $c->{id} == $_->{test_id} } @$results;
-                    next unless $cres;
+                if ($opts->{fast}) {
+                    my @csz = @cases;
+                    @csz = grep { ref($_) eq 'HASH' } map {
+                        my $cname = basename($_);
+                        my $c = $tr->getTestByName($run->{id},$cname);
+                        $c->{name} = $cname if $c;
+                        $c
+                    } @csz;
+                    next unless scalar(@csz);
 
-                    $c->{results} = [$cres];
+                    my $results = $tr->getRunResults($run->{id});
+                    foreach my $c (@csz) {
+                        $res->{$c->{name}} //= [];
+                        my $cres = first { $c->{id} == $_->{test_id} } @$results;
+                        return unless $cres;
+
+                        $c->{results} = [$cres];
+                        $c = _filterResults($opts,$c);
+
+                        push(@{$res->{$c->{name}}}, $c) if scalar(@{$c->{results}});
+                    }
+                    next;
+                }
+
+                foreach my $case (@cases) {
+                    my $c = $tr->getTestByName($run->{'id'},basename($case));
+                    next unless ref $c eq 'HASH';
+
+                    $res->{$case} //= [];
+                    $c->{results} = $tr->getTestResults($c->{'id'},$tr->{'global_limit'},0);
                     $c = _filterResults($opts,$c);
 
-                    push(@{$res->{$c->{name}}}, $c) if scalar(@{$c->{results}});
+                    push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
                 }
-                next;
             }
+            return MCE->gather(MCE->chunk_id,$res);
+        } @$runs);
+    }
 
-            foreach my $case (@cases) {
-                my $c = $tr->getTestByName($run->{'id'},basename($case));
-                next unless ref $c eq 'HASH';
-
-                $res->{$case} //= [];
-                $c->{results} = $tr->getTestResults($c->{'id'},$tr->{'global_limit'},0);
-                $c = _filterResults($opts,$c);
-
-                push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
-            }
-        }
+    foreach my $result (@results) {
+        $res = merge($res,$result);
     }
 
     return ($res,\@seenPlanIds,\@seenRunIds);

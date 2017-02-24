@@ -107,7 +107,7 @@ sub new {
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
         browser          => new LWP::UserAgent(
-            keep_alive => 1,
+            keep_alive => 10,
         ),
         do_post_redirect => $do_post_redirect
     };
