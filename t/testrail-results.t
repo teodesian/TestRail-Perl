@@ -9,7 +9,7 @@ require 'testrail-results';
 use lib $FindBin::Bin.'/lib';
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More 'tests' => 31;
+use Test::More 'tests' => 33;
 use Capture::Tiny qw{capture_merged};
 use List::MoreUtils qw{uniq};
 use Test::Fatal;
@@ -107,6 +107,13 @@ like($out,qr/num_runs/,"Gets # of runs with test inside it in json mode");
 is($code, 0, "Exit code OK looking for results of fake.test in json mode");
 chomp $out;
 is($out,"{}","Caching mode works");
+
+#Check merged mode
+@args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --json --merged --cachefile t/data/faketest_cache.json t/fake.test };
+($out,$code) = TestRail::Bin::Results::run('browser' => $Test::LWP::UserAgent::TestRailMock::mockObject, 'args' => \@args);
+is($code, 0, "Exit code OK looking for results of fake.test in json mode");
+chomp $out;
+like($out,qr/fake.test/,"Caching mode includes prior data in output with --merged mode");
 
 #check pertest mode
 @args = qw{--apiurl http://testrail.local --user test@fake.fake --password fake --json --perfile bogus.dir t/fake.test };

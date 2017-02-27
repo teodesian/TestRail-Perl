@@ -73,6 +73,8 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 --json       : Print results as a JSON serialization.
 
+-m --merged : In merge the output with the cached data provided (if any).
+
 --perfile : Output JSON summary data per file to the provided directory when in json mode
 
 =back
@@ -141,6 +143,7 @@ sub run {
         'f|fast'          => \$opts->{'fast'},
         'json'            => \$opts->{'json'},
         'perfile=s'       => \$opts->{'perfile'},
+        'm|merged'        => \$opts->{'merged'},
         'h|help'          => \$opts->{'help'},
     );
 
@@ -156,6 +159,7 @@ sub run {
     my $prior_search;
     my $prior_runs = [];
     my $prior_plans = [];
+    my $prior_hash = {};
     if ($opts->{'cachefile'}) {
         foreach my $cf (@{$opts->{cachefile}}) {
             die("Prior search file '$cf' passed does not exist") if $cf && !( -e $cf);
@@ -167,6 +171,13 @@ sub run {
             close($fh);
             $prior_search = JSON::MaybeXS::decode_json($raw_text);
             foreach my $key (keys(%$prior_search)) {
+                my $str_str = $prior_search->{search_string} // '';
+                my $str_pat = $opts->{pattern} // '';
+                if ( $str_str ne $str_pat) {
+                    print "Cached data in $cf has search pattern mismatch, skipping...\n";
+                    next;
+                }
+                $prior_hash->{$key} = $prior_search->{$key} if $opts->{merged};
                 push(@$prior_runs, @{$prior_search->{$key}->{'seen_runs'}});
                 push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
             }
@@ -186,7 +197,10 @@ sub run {
     my %status_map;
     @status_map{map {$_->{'id'}} @$statuses} = map {$_->{'label'}} @$statuses;
 
-    my ($out,$out_json) = ('',{});
+    my $out = '';
+    my $out_json = $prior_hash;
+
+
     foreach my $case (keys(%$res)) {
         $out .= "#############################\n";
         my $num_runs = 0;
@@ -197,6 +211,7 @@ sub run {
         my $avg_elapsed = 0;
         my $median_runtime = 0;
         my $elapsetotals = [];
+        $out_json->{$case} //= {};
 
         foreach my $casedef (@{$res->{$case}}) {
             $num_runs++;
@@ -216,6 +231,18 @@ sub run {
         @$defects   = uniq(@$defects);
         foreach my $st (keys(%$versions_by_status)) {
             @{$versions_by_status->{$st}} = uniq(@{$versions_by_status->{$st}});
+            $out_json->{$case}->{versions_by_status}->{$st} //= [];
+        }
+
+
+        #Initialize out_json correctly
+        $out_json->{$case}->{num_runs}     //= 0;
+        $out_json->{$case}->{seen_runs}    //= [];
+        $out_json->{$case}->{seen_plans}   //= [];
+        $out_json->{$case}->{elapsetotals} //= [];
+        $out_json->{$case}->{defects}      //= [];
+        foreach my $status (keys(%status_map)) {
+            $out_json->{$case}->{$status_map{$status}} //= 0;
         }
 
         my $pattern_output = '';
@@ -223,13 +250,14 @@ sub run {
         $pattern_output = " using search string '$opts->{pattern}'" if $opts->{'pattern'};
 
         $out .= "$case was present in $num_runs runs$pattern_output.\n";
-        $out_json->{$case}->{'num_runs'}   = $num_runs;
-        $out_json->{$case}->{'seen_runs'}  = $seen_runs;
-        $out_json->{$case}->{'seen_plans'} = $seen_plans;
+        $out_json->{$case}->{'num_runs'}   += $num_runs;
+        push(@{$out_json->{$case}->{'seen_runs'}}, @$seen_runs);
+        push(@{$out_json->{$case}->{'seen_plans'}}, @$seen_plans);
 
         #Collect time statistics
+        push(@{$out_json->{$case}->{elapsetotals}},@$elapsetotals);
         my $timestats = Statistics::Descriptive::Full->new();
-        $timestats->add_data(@$elapsetotals);
+        $timestats->add_data(@{$out_json->{$case}->{elapsetotals}});
 
         $out_json->{$case}->{total_elapsed}   = $timestats->sum() || 0;
         $out .= "Total time spent running this test: $out_json->{$case}->{total_elapsed} seconds\n";
@@ -248,16 +276,18 @@ sub run {
 
         foreach my $status (keys(%$casetotals)) {
             $out .= "$status_map{$status}: $casetotals->{$status}\n";
-            $out_json->{$case}->{$status_map{$status}} = $casetotals->{$status};
+            $out_json->{$case}->{$status_map{$status}} += $casetotals->{$status};
         }
 
         foreach my $status (keys(%$versions_by_status)) {
             $out .= "Versions $status_map{$status} in:\n".join(',',@{$versions_by_status->{$status}})."\n";
+            push(@{$out_json->{$case}->{versions_by_status}->{$status}}, @{$versions_by_status->{$status}});
+            @{$out_json->{$case}->{versions_by_status}->{$status}} = uniq(@{$out_json->{$case}->{versions_by_status}->{$status}});
         }
-        $out_json->{$case}->{versions_by_status} = $versions_by_status;
 
         $out .= "\nDefects related to case:\n".join(',',@$defects)."\n" if @$defects;
-        $out_json->{$case}->{defects} = $defects;
+        push(@{$out_json->{$case}->{defects}}, @$defects);
+        @{$out_json->{$case}->{defects}} = uniq(@{$out_json->{$case}->{defects}});
 
     }
 
