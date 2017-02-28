@@ -402,6 +402,10 @@ sub getResults {
             push(@$runs,@$plan_runs) if $plan_runs;
         }
 
+        my $configs = $tr->getConfigurations($project->{id});
+        my %config_map;
+        @config_map{map {$_->{'id'}} @$configs} = map {$_->{'name'}} @$configs;
+
         MCE::Loop::init {
             max_workers => 'auto',
             chunk_size  => 'auto'
@@ -411,6 +415,7 @@ sub getResults {
             my $runz = $_;
             my $res = {};
             foreach my $run (@$runz) {
+                my @run_configs = map { $config_map{$_} } @{$run->{config_ids}};
                 next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
 
                 if ($opts->{fast}) {
@@ -418,6 +423,7 @@ sub getResults {
                     @csz = grep { ref($_) eq 'HASH' } map {
                         my $cname = basename($_);
                         my $c = $tr->getTestByName($run->{id},$cname);
+                        $c->{config_ids} = \@run_configs;
                         $c->{name} = $cname if $c;
                         $c
                     } @csz;
@@ -443,6 +449,7 @@ sub getResults {
 
                     $res->{$case} //= [];
                     $c->{results} = $tr->getTestResults($c->{'id'},$tr->{'global_limit'},0);
+                    $c->{config_ids} = \@run_configs;
                     $c = _filterResults($opts,$c);
 
                     push(@{$res->{$case}}, $c) if scalar(@{$c->{results}}); #Make sure they weren't filtered out
