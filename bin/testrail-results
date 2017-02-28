@@ -93,6 +93,25 @@ All options specified thereby are overridden by passing the command-line switche
 
 =back
 
+=head1 NOTES
+
+One of the primary purposes of this script is to create CPANTesters style matrices per version/platform.
+In --json mode, the 'versions_by_status' attribute will return a data structure looking like so:
+
+=over 4
+
+=item platform_ids: a comma separated value of the platform IDs the test was run on (sorted to prevent order oddities).  This value is a hash key.
+
+=over 4
+
+=item versions: the direct version string reported.  This key corresponds to an array value holding hashrefs with status IDs pointing towards result links, sorted by ID.
+
+=back
+
+=back
+
+The consumer of this should be able to render a color-coded table, much like CPANTesters does.
+
 =cut
 
 package TestRail::Bin::Results;
@@ -207,6 +226,7 @@ sub run {
         my $casetotals = {};
         my $versions_by_status = {};
         my $defects = [];
+        my $seen_versions = [];
         my $total_elapsed = 0;
         my $avg_elapsed = 0;
         my $median_runtime = 0;
@@ -215,25 +235,39 @@ sub run {
 
         foreach my $casedef (@{$res->{$case}}) {
             $num_runs++;
+            my $cplatform = 'default';
+            $cplatform = join(',',sort @{$casedef->{config_ids}}) if ref($casedef->{config_ids}) eq 'ARRAY' && scalar(@{$casedef->{config_ids}});
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result (@{$casedef->{results}}) {
                 if (defined $result->{status_id}) {
                     #Assignment is handled as creating a new result with an undef status id
                     $casetotals->{$result->{status_id}}++;
-                    $versions_by_status->{$result->{status_id}} //= [];
-                    push(@{$versions_by_status->{$result->{status_id}}},$result->{version}) if $result->{version};
+                    $versions_by_status->{$cplatform} //= {};
+                    if ($result->{version} ) {
+                        push(@$seen_versions,$result->{version});
+                        $versions_by_status->{$cplatform}->{$result->{version}} //= [];
+                        push(@{$versions_by_status->{$cplatform}->{$result->{version}}}, {$status_map{$result->{status_id}} => "$tr->{apiurl}/index.php?/tests/view/$casedef->{id}"});
+                    }
                 }
                 push(@$defects, $result->{defects})    if $result->{defects} && ref($result->{defects}) ne 'ARRAY';
                 push(@$defects, @{$result->{defects}}) if $result->{defects} && ref($result->{defects}) eq 'ARRAY';
                 push(@$elapsetotals,_elapsed2secs($result->{'elapsed'}));
             }
         }
-        @$defects   = uniq(@$defects);
-        foreach my $st (keys(%$versions_by_status)) {
-            @{$versions_by_status->{$st}} = uniq(@{$versions_by_status->{$st}});
-            $out_json->{$case}->{versions_by_status}->{$st} //= [];
-        }
 
+        #Ensure versions_by_status has an entry per platform for every single version seen
+        @$seen_versions = uniq(@$seen_versions);
+
+        @$defects   = uniq(@$defects);
+        foreach my $plt (keys(%$versions_by_status)) {
+            $out_json->{$case}->{versions_by_status}->{$plt} //= {};
+            foreach my $ver (keys(%{$versions_by_status->{$plt}})) {
+                @{$versions_by_status->{$plt}->{$ver}} =  sort { (keys(%$a))[0] cmp (keys(%$b))[0] } @{$versions_by_status->{$plt}->{$ver}};
+            }
+            foreach my $v (@$seen_versions) {
+                $out_json->{$case}->{versions_by_status}->{$plt}->{$v} //= [];
+            }
+        }
 
         #Initialize out_json correctly
         $out_json->{$case}->{num_runs}     //= 0;
@@ -279,10 +313,12 @@ sub run {
             $out_json->{$case}->{$status_map{$status}} += $casetotals->{$status};
         }
 
-        foreach my $status (keys(%$versions_by_status)) {
-            $out .= "Versions $status_map{$status} in:\n".join(',',@{$versions_by_status->{$status}})."\n";
-            push(@{$out_json->{$case}->{versions_by_status}->{$status}}, @{$versions_by_status->{$status}});
-            @{$out_json->{$case}->{versions_by_status}->{$status}} = uniq(@{$out_json->{$case}->{versions_by_status}->{$status}});
+        foreach my $platform (keys(%$versions_by_status)) {
+            foreach my $version (keys(%{$versions_by_status->{$platform}})) {
+                $out .= "Version $version in platform IDs ($platform) had statuses :\n".join(',',@{$versions_by_status->{$platform}->{$version}})."\n";
+                push(@{$out_json->{$case}->{versions_by_status}->{$platform}->{$version}}, @{$versions_by_status->{$platform}->{$version}});
+                @{$out_json->{$case}->{versions_by_status}->{$platform}->{$version}} = uniq(@{$out_json->{$case}->{versions_by_status}->{$platform}->{$version}});
+            }
         }
 
         $out .= "\nDefects related to case:\n".join(',',@$defects)."\n" if @$defects;
@@ -293,6 +329,7 @@ sub run {
 
     if ($opts->{'json'}) {
         my $coder = JSON::MaybeXS->new;
+        $coder->canonical(1);
         return ($coder->encode($out_json),0) unless $opts->{'perfile'};
 
         die("no such directory $opts->{perfile}") unless -d $opts->{perfile};
