@@ -415,7 +415,8 @@ sub getResults {
             my $runz = $_;
             my $res = {};
             foreach my $run (@$runz) {
-                my @run_configs = map { $config_map{$_} } @{$run->{config_ids}};
+                #Translate config ids to names, also remove any gone configs
+                my @run_configs = grep { defined $_ } map { $config_map{$_} } @{$run->{config_ids}};
                 next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
 
                 if ($opts->{fast}) {
