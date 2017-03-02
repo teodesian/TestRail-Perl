@@ -179,6 +179,7 @@ sub run {
     my $prior_runs = [];
     my $prior_plans = [];
     my $prior_hash = {};
+    my @prior_versions;
     if ($opts->{'cachefile'}) {
         foreach my $cf (@{$opts->{cachefile}}) {
             die("Prior search file '$cf' passed does not exist") if $cf && !( -e $cf);
@@ -197,6 +198,14 @@ sub run {
                     next;
                 }
                 $prior_hash->{$key} = $prior_search->{$key} if $opts->{merged};
+
+                #Ensure that we have all versions represented for every test watched in case we add platforms
+                foreach my $plt (keys(%{$prior_hash->{$key}->{versions_by_status}})) {
+                    foreach my $v (keys(%{$prior_hash->{$key}->{versions_by_status}->{$plt}}) ) {
+                        push(@prior_versions,$v);
+                    }
+                }
+
                 push(@$prior_runs, @{$prior_search->{$key}->{'seen_runs'}});
                 push(@$prior_plans,@{$prior_search->{$key}->{'seen_plans'}});
             }
@@ -256,10 +265,12 @@ sub run {
         }
 
         #Ensure versions_by_status has an entry per platform for every single version seen
-        @$seen_versions = uniq(@$seen_versions);
+        @$seen_versions = uniq((@$seen_versions,@prior_versions));
+
+        my @all_platforms = uniq((keys(%{$out_json->{$case}->{versions_by_status}}),keys(%$versions_by_status)));
 
         @$defects   = uniq(@$defects);
-        foreach my $plt (keys(%$versions_by_status)) {
+        foreach my $plt (@all_platforms) {
             $out_json->{$case}->{versions_by_status}->{$plt} //= {};
             foreach my $ver (keys(%{$versions_by_status->{$plt}})) {
                 @{$versions_by_status->{$plt}->{$ver}} =  sort { (keys(%$a))[0] cmp (keys(%$b))[0] } @{$versions_by_status->{$plt}->{$ver}};
