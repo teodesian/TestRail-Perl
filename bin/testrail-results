@@ -201,6 +201,7 @@ sub run {
 
                 #Ensure that we have all versions represented for every test watched in case we add platforms
                 foreach my $plt (keys(%{$prior_hash->{$key}->{versions_by_status}})) {
+                    delete $prior_hash->{$key}->{versions_by_status}->{$plt} if !$plt;
                     foreach my $v (keys(%{$prior_hash->{$key}->{versions_by_status}->{$plt}}) ) {
                         push(@prior_versions,$v);
                     }
@@ -246,6 +247,7 @@ sub run {
             $num_runs++;
             my $cplatform = 'default';
             $cplatform = join(',',sort @{$casedef->{config_ids}}) if ref($casedef->{config_ids}) eq 'ARRAY' && scalar(@{$casedef->{config_ids}});
+            $cplatform ||= 'default'; #XXX catch blank platform info, this can happen in some plans apparently
             #$out .= "Found case '$case' in run $casedef->{run_id}\n";
             foreach my $result (@{$casedef->{results}}) {
                 if (defined $result->{status_id}) {
@@ -267,7 +269,7 @@ sub run {
         #Ensure versions_by_status has an entry per platform for every single version seen
         @$seen_versions = uniq((@$seen_versions,@prior_versions));
 
-        my @all_platforms = uniq((keys(%{$out_json->{$case}->{versions_by_status}}),keys(%$versions_by_status)));
+        my @all_platforms = grep { $_ } uniq((keys(%{$out_json->{$case}->{versions_by_status}}),keys(%$versions_by_status)));
 
         @$defects   = uniq(@$defects);
         foreach my $plt (@all_platforms) {
