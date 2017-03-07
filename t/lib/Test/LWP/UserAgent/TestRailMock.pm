@@ -3303,6 +3303,82 @@ $mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4,
 
 }
 
+{
+
+$VAR1 = 'index.php?/api/v2/get_results_for_run/22&limit=250';
+$VAR2 = '200';
+$VAR3 = 'OK';
+$VAR4 = bless( {
+                 'client-ssl-socket-class' => 'IO::Socket::SSL',
+                 'connection' => 'close',
+                 'client-response-num' => 1,
+                 'client-peer' => '192.168.122.217:80',
+                 '::std_case' => {
+                                   'client-peer' => 'Client-Peer',
+                                   'client-date' => 'Client-Date',
+                                   'x-powered-by' => 'X-Powered-By',
+                                   'client-response-num' => 'Client-Response-Num',
+                                   'client-ssl-socket-class' => 'Client-SSL-Socket-Class',
+                                   'client-transfer-encoding' => 'Client-Transfer-Encoding',
+                                   'client-ssl-cert-issuer' => 'Client-SSL-Cert-Issuer',
+                                   'client-ssl-cipher' => 'Client-SSL-Cipher',
+                                   'client-ssl-cert-subject' => 'Client-SSL-Cert-Subject',
+                                   'strict-transport-security' => 'Strict-Transport-Security'
+                                 },
+                 'x-powered-by' => 'PHP/5.6.26',
+                 'client-date' => 'Mon, 20 Feb 2017 17:10:10 GMT',
+                 'strict-transport-security' => 'max-age=63072000;',
+                 'date' => 'Mon, 20 Feb 2017 17:07:58 GMT',
+                 'content-type' => 'application/json; charset=utf-8',
+                 'server' => 'Apache/2.2.15 (CentOS)',
+                 'client-ssl-cipher' => 'ECDHE-RSA-AES128-GCM-SHA256',
+                 'client-transfer-encoding' => [
+                                                 'chunked'
+                                               ]
+               }, 'HTTP::Headers' );
+$VAR5 = '[
+          {
+            "assignedto_id":1,
+            "created_by":22,
+            "comment":"Zippy",
+            "test_id":1,
+            "defects":[],
+            "id":12345,
+            "created_on":1480726605,
+            "version":"333",
+            "status_id":2,
+            "custom_step_results":0,
+            "elapsed":123
+          },
+          {
+            "assignedto_id":1,
+            "created_by":22,
+            "comment":"Zippy",
+            "test_id":2,
+            "defects":[],
+            "id":12346,
+            "created_on":1480726605,
+            "version":"333",
+            "status_id":2,
+            "custom_step_results":0,
+            "elapsed":123
+          },
+          {
+            "assignedto_id":1,
+            "created_by":22,
+            "comment":"Zippy",
+            "test_id":3,
+            "defects":[],
+            "id":12347,
+            "created_on":1480726605,
+            "version":"333",
+            "status_id":2,
+            "custom_step_results":0,
+            "elapsed":123
+          }]';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
 
 ###########
 #Lock mocks

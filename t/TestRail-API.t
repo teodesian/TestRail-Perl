@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 89;
+use Test::More tests => 90;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -32,7 +32,7 @@ SKIP: {
 SKIP: {
     skip("Testing authentication not supported with mock",2) if ($is_mock);
 
-    like(exception {TestRail::API->new($apiurl,'lies','moreLies',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
+    like(exception {TestRail::API->new($apiurl,'lies','moreLies',undef,0,0); }, qr/Bad user credentials/i,"Bogus Testrail User rejected");
     like(exception {TestRail::API->new($apiurl,$login,'m043L13s                      ',undef,0); }, qr/Bad user credentials/i,"Bogus Testrail Password rejected");
 }
 
@@ -217,6 +217,10 @@ my ($summary) = $tr->getRunSummary(@$runs); #I only care about the first one
 isnt($summary->{'run_status'},undef,"Can get run statuses correctly");
 is($summary->{'run_status'}->{'Passed'},int(!$is_mock),"Gets # of passed cases correctly");
 is($summary->{'run_status'}->{'Untested'},int($is_mock),"Gets # of untested cases correctly");
+
+#Get run results
+my $run_results = $tr->getRunResults($new_run->{'id'});
+is(scalar(@$run_results),3,"Correct # of results returned by getRunResults");
 
 #Test configuration methods
 my $configs = $tr->getConfigurations($new_project->{'id'});

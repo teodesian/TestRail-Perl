@@ -2,18 +2,21 @@
 # ABSTRACT: Find runs and tests according to user specifications.
 
 package TestRail::Utils::Find;
-$TestRail::Utils::Find::VERSION = '0.038';
+$TestRail::Utils::Find::VERSION = '0.039';
 use strict;
 use warnings;
 
 use Carp qw{confess cluck};
 use Scalar::Util qw{blessed};
-use List::Util qw{any};
+use List::Util qw{any first};
 use List::MoreUtils qw{uniq};
 
 use File::Find;
 use Cwd qw{abs_path};
 use File::Basename qw{basename};
+
+use Hash::Merge qw{merge};
+use MCE::Loop;
 
 use TestRail::Utils;
 
@@ -268,11 +271,13 @@ sub findCases {
 }
 
 sub getResults {
-    my ( $tr, $opts, $prior_runs, @cases ) = @_;
+    my ( $tr, $opts, @cases ) = @_;
     my $res      = {};
     my $projects = $tr->getProjects();
 
-    my $prior_plans = [];
+    my ( @seenRunIds, @seenPlanIds );
+
+    my @results;
 
     #TODO obey status filtering
     #TODO obey result notes text grepping
@@ -281,9 +286,11 @@ sub getResults {
           if $opts->{projects}
           && !( grep { $_ eq $project->{'name'} } @{ $opts->{'projects'} } );
         my $runs = $tr->getRuns( $project->{'id'} );
+        push( @seenRunIds, map { $_->{id} } @$runs );
 
         #Translate plan names to ids
         my $plans = $tr->getPlans( $project->{'id'} ) || [];
+        push( @seenPlanIds, map { $_->{id} } @$plans );
 
         #Filter out plans which do not match our filters to prevent a call to getPlanByID
         if ( $opts->{'plans'} ) {
@@ -293,12 +300,28 @@ sub getResults {
             } @$plans;
         }
 
+        #Filter out runs which do not match our filters
+        if ( $opts->{'runs'} ) {
+            @$runs = grep {
+                my $r = $_;
+                any { $r->{'name'} eq $_ } @{ $opts->{'runs'} }
+            } @$runs;
+        }
+
         #Filter out prior plans
         if ( $opts->{'plan_ids'} ) {
             @$plans = grep {
                 my $p = $_;
-                any { $p->{'id'} eq $_ } @{ $opts->{'plan_ids'} }
+                !any { $p->{'id'} eq $_ } @{ $opts->{'plan_ids'} }
             } @$plans;
+        }
+
+        #Filter out prior runs
+        if ( $opts->{'run_ids'} ) {
+            @$runs = grep {
+                my $r = $_;
+                !any { $r->{'id'} eq $_ } @{ $opts->{'run_ids'} }
+            } @$runs;
         }
 
         $opts->{'runs'} //= [];
@@ -307,65 +330,126 @@ sub getResults {
             my $plan_runs = $tr->getChildRuns($plan);
             push( @$runs, @$plan_runs ) if $plan_runs;
         }
-        foreach my $run (@$runs) {
-            next
-              if scalar( @{ $opts->{runs} } )
-              && !( grep { $_ eq $run->{'name'} } @{ $opts->{'runs'} } );
-            next if grep { $run->{id} eq $_ } @$prior_runs;
 
-            foreach my $case (@cases) {
-                my $c = $tr->getTestByName( $run->{'id'}, basename($case) );
-                next unless ref $c eq 'HASH';
+        my $configs = $tr->getConfigurations( $project->{id} );
+        my %config_map;
+        @config_map{ map { $_->{'id'} } @$configs } =
+          map { $_->{'name'} } @$configs;
 
-                $res->{$case} //= [];
-                $c->{results} =
-                  $tr->getTestResults( $c->{'id'}, $tr->{'global_limit'}, 0 );
+        MCE::Loop::init {
+            max_workers => 'auto',
+            chunk_size  => 'auto'
+        };
 
-                #Filter by provided pattern, if any
-                if ( $opts->{'pattern'} ) {
-                    my $pattern = $opts->{pattern};
-                    @{ $c->{results} } = grep {
-                        my $comment = $_->{comment} || '';
-                        $comment =~ m/$pattern/i
-                    } @{ $c->{results} };
-                }
+        push(
+            @results,
+            mce_loop {
+                my $runz = $_;
+                my $res  = {};
+                foreach my $run (@$runz) {
 
-                #Filter by the provided case IDs, if any
-                if ( ref( $opts->{'defects'} ) eq 'ARRAY'
-                    && scalar( @{ $opts->{defects} } ) )
-                {
-                    @{ $c->{results} } = grep {
-                        my $defects = $_->{defects};
-                        any {
-                            my $df_case = $_;
-                            any { $df_case eq $_ } @{ $opts->{defects} };
+                    #Translate config ids to names, also remove any gone configs
+                    my @run_configs =
+                      grep { defined $_ }
+                      map  { $config_map{$_} } @{ $run->{config_ids} };
+                    next
+                      if scalar( @{ $opts->{runs} } )
+                      && !( grep { $_ eq $run->{'name'} }
+                        @{ $opts->{'runs'} } );
+
+                    if ( $opts->{fast} ) {
+                        my @csz = @cases;
+                        @csz = grep { ref($_) eq 'HASH' } map {
+                            my $cname = basename($_);
+                            my $c = $tr->getTestByName( $run->{id}, $cname );
+                            $c->{config_ids} = \@run_configs;
+                            $c->{name} = $cname if $c;
+                            $c
+                        } @csz;
+                        next unless scalar(@csz);
+
+                        my $results = $tr->getRunResults( $run->{id} );
+                        foreach my $c (@csz) {
+                            $res->{ $c->{name} } //= [];
+                            my $cres =
+                              first { $c->{id} == $_->{test_id} } @$results;
+                            return unless $cres;
+
+                            $c->{results} = [$cres];
+                            $c = _filterResults( $opts, $c );
+
+                            push( @{ $res->{ $c->{name} } }, $c )
+                              if scalar( @{ $c->{results} } );
                         }
-                        @$defects
-                    } @{ $c->{results} };
-                }
+                        next;
+                    }
 
-                #Filter by the provided versions, if any
-                if ( ref( $opts->{'versions'} ) eq 'ARRAY'
-                    && scalar( @{ $opts->{versions} } ) )
-                {
-                    @{ $c->{results} } = grep {
-                        my $version = $_->{version};
-                        any { $version eq $_ } @{ $opts->{versions} };
-                    } @{ $c->{results} };
-                }
+                    foreach my $case (@cases) {
+                        my $c =
+                          $tr->getTestByName( $run->{'id'}, basename($case) );
+                        next unless ref $c eq 'HASH';
 
-                push( @{ $res->{$case} }, $c )
-                  if scalar( @{ $c->{results} } )
-                  ;    #Make sure they weren't filtered out
+                        $res->{$case} //= [];
+                        $c->{results} =
+                          $tr->getTestResults( $c->{'id'},
+                            $tr->{'global_limit'}, 0 );
+                        $c->{config_ids} = \@run_configs;
+                        $c = _filterResults( $opts, $c );
+
+                        push( @{ $res->{$case} }, $c )
+                          if scalar( @{ $c->{results} } )
+                          ;    #Make sure they weren't filtered out
+                    }
+                }
+                return MCE->gather( MCE->chunk_id, $res );
             }
-        }
-
-        push( @$prior_plans, map { $_->{'id'} } @$plans );
+            @$runs
+        );
     }
 
-    @$prior_plans = uniq(@$prior_plans);
+    foreach my $result (@results) {
+        $res = merge( $res, $result );
+    }
 
-    return ( $res, $prior_plans );
+    return ( $res, \@seenPlanIds, \@seenRunIds );
+}
+
+sub _filterResults {
+    my ( $opts, $c ) = @_;
+
+    #Filter by provided pattern, if any
+    if ( $opts->{'pattern'} ) {
+        my $pattern = $opts->{pattern};
+        @{ $c->{results} } =
+          grep { my $comment = $_->{comment} || ''; $comment =~ m/$pattern/i }
+          @{ $c->{results} };
+    }
+
+    #Filter by the provided case IDs, if any
+    if ( ref( $opts->{'defects'} ) eq 'ARRAY'
+        && scalar( @{ $opts->{defects} } ) )
+    {
+        @{ $c->{results} } = grep {
+            my $defects = $_->{defects};
+            any {
+                my $df_case = $_;
+                any { $df_case eq $_ } @{ $opts->{defects} };
+            }
+            @$defects
+        } @{ $c->{results} };
+    }
+
+    #Filter by the provided versions, if any
+    if ( ref( $opts->{'versions'} ) eq 'ARRAY'
+        && scalar( @{ $opts->{versions} } ) )
+    {
+        @{ $c->{results} } = grep {
+            my $version = $_->{version};
+            any { $version eq $_ } @{ $opts->{versions} };
+        } @{ $c->{results} };
+    }
+
+    return $c;
 }
 
 1;
@@ -382,7 +466,7 @@ TestRail::Utils::Find - Find runs and tests according to user specifications.
 
 =head1 VERSION
 
-version 0.038
+version 0.039
 
 =head1 DESCRIPTION
 
@@ -481,7 +565,7 @@ Option hash keys for input are 'no-missing', 'orphans', and 'update'.
 
 Returns HASHREF.
 
-=head2 getResults(options, $prior_runs, @cases)
+=head2 getResults(options, @cases)
 
 Get results for tests by name, filtered by the provided options, and skipping any runs found in the provided ARRAYREF of run IDs.
 
@@ -495,13 +579,17 @@ Valid Options:
 
 =item B<plans> - ARRAYREF of plan names to check.
 
-=item B<plan_ids> - ARRAYREF of plan IDs to check.
-
 =item B<runs> - ARRAYREF of runs names to check.
+
+=item B<plan_ids> - ARRAYREF of plan IDs to NOT check.
+
+=item B<run_ids> - ARRAYREF of run IDs to NOT check.
 
 =item B<pattern> - Pattern to filter case results on.
 
 =item B<defects> - ARRAYREF of defects of which at least one must be present in a result.
+
+=item B<fast> - Whether to get only the latest result from the test in your run(s).  This can significantly speed up operations when gathering metrics for large numbers of tests.
 
 =back
 

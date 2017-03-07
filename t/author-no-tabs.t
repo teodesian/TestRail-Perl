@@ -59,6 +59,7 @@ my @files = (
     't/pass.test',
     't/release-cpan-changes.t',
     't/release-kwalitee.t',
+    't/release-meta-json.t',
     't/release-minimum-version.t',
     't/release-mojibake.t',
     't/release-pod-linkcheck.t',

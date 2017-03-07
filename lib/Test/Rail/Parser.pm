@@ -2,7 +2,7 @@
 # PODNAME: Test::Rail::Parser
 
 package Test::Rail::Parser;
-$Test::Rail::Parser::VERSION = '0.038';
+$Test::Rail::Parser::VERSION = '0.039';
 use strict;
 use warnings;
 use utf8;
@@ -720,7 +720,7 @@ Test::Rail::Parser - Upload your TAP results to TestRail
 
 =head1 VERSION
 
-version 0.038
+version 0.039
 
 =head1 DESCRIPTION
 

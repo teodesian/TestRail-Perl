@@ -2,7 +2,7 @@
 # PODNAME: TestRail::API
 
 package TestRail::API;
-$TestRail::API::VERSION = '0.038';
+$TestRail::API::VERSION = '0.039';
 
 use 5.010;
 
@@ -28,6 +28,7 @@ use Encode ();
 sub new {
     state $check = compile( ClassName, Str, Str, Str,
         Optional [ Maybe [Str] ],
+        Optional [ Maybe [Bool] ],
         Optional [ Maybe [Bool] ]
     );
     my ( $class, $apiurl, $user, $pass, $encoding, $debug, $do_post_redirect )
@@ -37,19 +38,21 @@ sub new {
     $debug //= 0;
 
     my $self = {
-        user             => $user,
-        pass             => $pass,
-        apiurl           => $apiurl,
-        debug            => $debug,
-        encoding         => $encoding || 'UTF-8',
-        testtree         => [],
-        flattree         => [],
-        user_cache       => [],
-        configurations   => {},
-        tr_fields        => undef,
-        default_request  => undef,
-        global_limit     => 250,                  #Discovered by experimentation
-        browser          => new LWP::UserAgent(),
+        user            => $user,
+        pass            => $pass,
+        apiurl          => $apiurl,
+        debug           => $debug,
+        encoding        => $encoding || 'UTF-8',
+        testtree        => [],
+        flattree        => [],
+        user_cache      => [],
+        configurations  => {},
+        tr_fields       => undef,
+        default_request => undef,
+        global_limit    => 250,                   #Discovered by experimentation
+        browser         => new LWP::UserAgent(
+            keep_alive => 10,
+        ),
         do_post_redirect => $do_post_redirect
     };
 
@@ -743,6 +746,43 @@ sub getRunSummary {
 
 }
 
+sub getRunResults {
+    state $check = compile( Object, Int );
+    my ( $self, $run_id ) = $check->(@_);
+
+    my $initial_results =
+      $self->getRunResultsPaginated( $run_id, $self->{'global_limit'}, undef );
+    return $initial_results
+      unless ( reftype($initial_results) || 'undef' ) eq 'ARRAY';
+    my $results = [];
+    push( @$results, @$initial_results );
+    my $offset = 1;
+    while ( scalar(@$initial_results) == $self->{'global_limit'} ) {
+        $initial_results = $self->getRunResultsPaginated(
+            $run_id,
+            $self->{'global_limit'},
+            ( $self->{'global_limit'} * $offset )
+        );
+        push( @$results, @$initial_results );
+        $offset++;
+    }
+    return $results;
+}
+
+sub getRunResultsPaginated {
+    state $check = compile( Object, Int, Optional [ Maybe [Int] ],
+        Optional [ Maybe [Int] ] );
+    my ( $self, $run_id, $limit, $offset ) = $check->(@_);
+
+    confess( "Limit greater than " . $self->{'global_limit'} )
+      if $limit > $self->{'global_limit'};
+    my $apiurl = "index.php?/api/v2/get_results_for_run/$run_id";
+    $apiurl .= "&offset=$offset" if defined($offset);
+    $apiurl .= "&limit=$limit"
+      if $limit;    #You have problems if you want 0 results
+    return $self->_doRequest($apiurl);
+}
+
 sub getChildRuns {
     state $check = compile( Object, HashRef );
     my ( $self, $plan ) = $check->(@_);
@@ -1025,6 +1065,11 @@ sub getTests {
         my $aid = $_->{'assignedto_id'};
         grep { defined($aid) && $aid == $_ } @$assignedto_ids
     } @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
+
+    #Cache stuff for getTestByName
+    $self->{tests_cache} //= {};
+    $self->{tests_cache}->{$run_id} = $results;
+
     return $results;
 }
 
@@ -1032,7 +1077,10 @@ sub getTestByName {
     state $check = compile( Object, Int, Str );
     my ( $self, $run_id, $name ) = $check->(@_);
 
-    my $tests = $self->getTests($run_id);
+    $self->{tests_cache} //= {};
+    my $tests = $self->{tests_cache}->{$run_id};
+
+    $tests = $self->getTests($run_id) if !$tests;
     return -500 if !$tests || ( reftype($tests) || 'undef' ) ne 'ARRAY';
     foreach my $test (@$tests) {
         return $test if $test->{'title'} eq $name;
@@ -1299,7 +1347,7 @@ TestRail::API - Provides an interface to TestRail's REST api via HTTP
 
 =head1 VERSION
 
-version 0.038
+version 0.039
 
 =head1 SYNOPSIS
 
@@ -1966,6 +2014,22 @@ Returns ARRAY of run HASHREFs with the added key 'run_status' holding a hashref 
 
     $tr->getRunSummary($run,$run2);
 
+=head2 B<getRunResults(run_id)>
+
+Returns array of hashrefs describing the results of the run.
+
+Warning: This only returns the most recent results of a run.
+If you want to know about the tortured journey a test may have taken to get to it's final status,
+you will need to use getTestResults.
+
+=over 4
+
+=item INTEGER C<RUN_ID> - Relevant Run's ID.
+
+=back
+
+=head2 B<getRunResultsPaginated(run_id,limit,offset)>
+
 =head1 RUN AS CHILD OF PLAN METHODS
 
 =head2 B<getChildRuns(plan)>
@@ -2264,6 +2328,10 @@ Returns ARRAYREF of test definition HASHREFs.
 =head2 B<getTestByName (run_id,name)>
 
 Gets specified test by name.
+
+This is done by getting the list of all tests in the run and then picking out the relevant test.
+As such, for efficiency the list of tests is cached.
+The cache may be refreshed, or restricted by running getTests (with optional restrictions, such as assignedto_ids, etc).
 
 =over 4
 
@@ -2600,11 +2668,21 @@ Thanks to cPanel Inc, for graciously funding the creation of this module.
 
 George S. Baugh <teodesian@cpan.org>
 
-=head1 CONTRIBUTOR
+=head1 CONTRIBUTORS
 
-=for stopwords Neil Bowers
+=for stopwords Mohammad S Anwar Neil Bowers
+
+=over 4
+
+=item *
+
+Mohammad S Anwar <mohammad.anwar@yahoo.com>
+
+=item *
 
 Neil Bowers <neil@bowers.com>
+
+=back
 
 =head1 SOURCE
 
