@@ -200,10 +200,12 @@ sub run {
                 $prior_hash->{$key} = $prior_search->{$key} if $opts->{merged};
 
                 #Ensure that we have all versions represented for every test watched in case we add platforms
-                foreach my $plt (keys(%{$prior_hash->{$key}->{versions_by_status}})) {
-                    delete $prior_hash->{$key}->{versions_by_status}->{$plt} if !$plt;
-                    foreach my $v (keys(%{$prior_hash->{$key}->{versions_by_status}->{$plt}}) ) {
-                        push(@prior_versions,$v);
+                if (exists $prior_hash->{$key}) {
+                    foreach my $plt (keys(%{$prior_hash->{$key}->{versions_by_status}})) {
+                        delete $prior_hash->{$key}->{versions_by_status}->{$plt} if !$plt;
+                        foreach my $v (keys(%{$prior_hash->{$key}->{versions_by_status}->{$plt}}) ) {
+                            push(@prior_versions,$v);
+                        }
                     }
                 }
 
