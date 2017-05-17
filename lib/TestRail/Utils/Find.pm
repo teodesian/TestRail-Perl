@@ -370,6 +370,9 @@ sub getResults {
     foreach my $project (@$projects) {
         next if $opts->{projects} && !( grep { $_ eq $project->{'name'} } @{$opts->{'projects'}} );
         my $runs = $tr->getRuns($project->{'id'});
+        #XXX No runs, or temporary error to ignore
+        next unless ref($runs) eq 'ARRAY';
+
         push(@seenRunIds, map { $_->{id} } @$runs);
 
         #Translate plan names to ids
@@ -414,12 +417,18 @@ sub getResults {
 
         push (@results, mce_loop {
             my $runz = $_;
+            #XXX it appears as though some versions of MCE do not have uniform passing convention
+            $runz = [$runz] if ref($runz) ne 'ARRAY';
+
             my $res = {};
             foreach my $run (@$runz) {
+
+                #XXX super bad bug in some versions of MCE, apparently causes data loss, or is duping jobs with incomplete info!
+                next if !$run->{id};
+
                 #Translate config ids to names, also remove any gone configs
                 my @run_configs = grep { defined $_ } map { $config_map{$_} } @{$run->{config_ids}};
                 next if scalar(@{$opts->{runs}}) && !( grep { $_ eq $run->{'name'} } @{$opts->{'runs'}} );
-
                 if ($opts->{fast}) {
                     my @csz = @cases;
                     @csz = grep { ref($_) eq 'HASH' } map {
@@ -459,6 +468,7 @@ sub getResults {
             }
             return MCE->gather(MCE->chunk_id,$res);
         } @$runs);
+
     }
 
     foreach my $result (@results) {
