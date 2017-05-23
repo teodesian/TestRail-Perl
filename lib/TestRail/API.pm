@@ -1573,7 +1573,7 @@ sub deletePlan {
     return $self->_doRequest("index.php?/api/v2/delete_plan/$plan_id",'POST');
 }
 
-=head2 B<getPlans (project_id)>
+=head2 B<getPlans (project_id,filters)>
 
 Gets all test plans in specified project.
 Like getRuns, must make multiple HTTP requests when the number of results exceeds 250.
@@ -1581,6 +1581,8 @@ Like getRuns, must make multiple HTTP requests when the number of results exceed
 =over 4
 
 =item INTEGER C<PROJECT ID> - ID of parent project.
+
+=item HASHREF C<FILTERS> - (optional) dictionary of filters, with keys corresponding to the documented filters for get_plans (other than limit/offset).
 
 =back
 
@@ -1591,11 +1593,27 @@ Returns ARRAYREF of all plan definition HASHREFs in a project.
 Does not contain any information about child test runs.
 Use getPlanByID or getPlanByName if you want that, in particular if you are interested in using getChildRunByName.
 
+Possible filters:
+
+=over 4
+
+=item created_after (UNIX timestamp)
+
+=item created_before (UNIX timestamp)
+
+=item created_by (csv of ints) IDs of users plans were created by
+
+=item is_completed (bool)
+
+=item milestone_id (csv of ints) IDs of milestone assigned to plans
+
+=back
+
 =cut
 
 sub getPlans {
-    state $check = compile(Object, Int);
-    my ($self,$project_id) = $check->(@_);
+    state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
+    my ($self,$project_id, $filters) = $check->(@_);
 
     my $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},0);
     return $initial_plans unless (reftype($initial_plans) || 'undef') eq 'ARRAY';
@@ -1603,14 +1621,14 @@ sub getPlans {
     push(@$plans,@$initial_plans);
     my $offset = 1;
     while (scalar(@$initial_plans) == $self->{'global_limit'}) {
-        $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset),$filters);
         push(@$plans,@$initial_plans);
         $offset++;
     }
     return $plans;
 }
 
-=head2 B<getPlansPaginated (project_id,limit,offset)>
+=head2 B<getPlansPaginated (project_id,limit,offset,filters)>
 
 Get some plans for specified project.
 
@@ -1622,6 +1640,8 @@ Get some plans for specified project.
 
 =item INTEGER C<OFFSET> - Page of plans to return.
 
+=item HASHREF C<FILTERS> - (optional) other filters to apply to the requests.  See getPlans for more information.
+
 =back
 
 Returns ARRAYREF of plan definition HASHREFs.
@@ -1631,13 +1651,17 @@ Returns ARRAYREF of plan definition HASHREFs.
 =cut
 
 sub getPlansPaginated {
-    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
-    my ($self,$project_id,$limit,$offset) = $check->(@_);
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]], Optional[Maybe[HashRef]]);
+    my ($self,$project_id,$limit,$offset, $filters) = $check->(@_);
+    $filters //= {};
 
     confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
     my $apiurl = "index.php?/api/v2/get_plans/$project_id";
     $apiurl .= "&offset=$offset" if defined($offset);
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
+    foreach my $key (keys(%$filters)) {
+        $apiurl .= "&$key=$filters->{$key}";
+    }
     return $self->_doRequest($apiurl);
 }
 

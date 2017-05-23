@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 90;
+use Test::More tests => 91;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -149,6 +149,7 @@ my $new_plan = $tr->createPlan($new_project->{'id'},$plan_name,"Soviet 5-year ag
 is($new_plan->{'name'},$plan_name,"Can create new plan");
 
 ok($tr->getPlans($new_project->{'id'}),"Can get list of plans");
+ok($tr->getPlans($new_project->{'id'},{ is_completed => 1, milestone_id => 3}),"Can get list of plans, filtered by milestone ID & completion status");
 my $namePlan = $tr->getPlanByName($new_project->{'id'},$plan_name);
 is($namePlan->{'name'},$plan_name,"Can get plan by name");
 is($tr->getPlanByID($new_plan->{'id'})->{'id'},$new_plan->{'id'},"Can get plan by ID");
