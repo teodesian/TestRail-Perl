@@ -245,7 +245,7 @@ sub getUsers {
     my $res = $self->_doRequest('index.php?/api/v2/get_users');
     return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
     $self->{'user_cache'} = $res;
-    return $res;
+    return clone($res);
 }
 
 =head2 B<getUserByID(id)>
@@ -256,6 +256,8 @@ sub getUsers {
 
 Get user definition hash by ID, Name or Email.
 Returns user def HASHREF.
+
+For efficiency's sake, these methods cache the result of getUsers until you explicitly run it again.
 
 =cut
 
@@ -837,13 +839,13 @@ Returns ARRAYREF of case type definition HASHREFs.
 sub getCaseTypes {
     state $check = compile(Object);
     my ($self) = $check->(@_);
-    return $self->{'type_cache'} if defined($self->{'type_cache'});
+    return clone($self->{'type_cache'}) if defined($self->{'type_cache'});
 
     my $types = $self->_doRequest("index.php?/api/v2/get_case_types");
     return -500 if !$types || (reftype($types) || 'undef') ne 'ARRAY';
     $self->{'type_cache'} = $types;
 
-    return $types;
+    return clone $types;
 }
 
 =head2 B<getCaseTypeByName (name)>
@@ -2011,7 +2013,7 @@ sub getTests {
     $self->{tests_cache} //= {};
     $self->{tests_cache}->{$run_id} = $results;
 
-    return $results;
+    return clone($results);
 }
 
 =head2 B<getTestByName (run_id,name)>
@@ -2144,7 +2146,7 @@ sub getPossibleTestStatuses {
     return $self->{'status_cache'} if $self->{'status_cache'};
 
     $self->{'status_cache'} = $self->_doRequest('index.php?/api/v2/get_statuses');
-    return $self->{'status_cache'};
+    return clone $self->{'status_cache'};
 }
 
 =head2 statusNamesToIds(names)
