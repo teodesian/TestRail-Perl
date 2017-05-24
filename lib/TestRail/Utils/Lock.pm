@@ -59,10 +59,6 @@ sub pickAndLockTest {
     # Filter by match options
     @$cases = TestRail::Utils::Find::findTests( $opts, @$cases );
 
-    use Data::Dumper;
-    print STDERR "FILTERED:\n";
-    print STDERR Dumper($cases);
-
     my ( $title, $test );
     while (@$cases) {
         $test = shift @$cases;

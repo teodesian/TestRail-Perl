@@ -167,7 +167,12 @@ sub findTests {
             foreach my $path (@realtests) {
 
                 #XXX Not quite as accurate as simply comparing the title to the basename of the path, but much faster
-                next unless index( $path, $case->{'title'} ) > 0;
+                #next unless index( $path, $case->{'title'} ) > 0;
+                if ($case->{title} eq 'lockme.test') {
+                    print STDERR "OLD CHECK: ".basename($path)." eq $case->{title}\n";
+                    print STDERR "NEW CHECK:".index( $path, $case->{'title'} )." > 0\n";
+                }
+                next unless basename($path) eq $case->{title};
                 $case->{'path'} = $path;
                 push( @tmpArr, $case );
                 last;
