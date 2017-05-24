@@ -36,9 +36,6 @@ sub pickAndLockTest {
     my ( $lock_status_id, $untested_id, $retest_id ) = @$status_ids;
 
     my $cases = $tr->getTests( $run->{'id'} );
-    use Data::Dumper;
-    print STDERR "UNFILTERED:\n";
-    print STDERR Dumper($cases);
 
     #Filter by case types
     if ( $opts->{'case-types'} ) {
