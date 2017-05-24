@@ -223,8 +223,9 @@ sub findTests {
         }
         foreach my $case (@cases) {
             foreach my $path (@realtests) {
-                #XXX Not quite as accurate as simply comparing the title to the basename of the path, but much faster
+                #Filter obviously bogus stuff first to not incur basename() cost except for when we're right, or have a name that contains this name
                 next unless index($path,$case->{'title'}) > 0;
+                next unless basename($path) eq $case->{title};
                 $case->{'path'} = $path;
                 push(@tmpArr, $case);
                 last;
