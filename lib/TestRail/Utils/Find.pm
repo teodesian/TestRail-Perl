@@ -488,7 +488,7 @@ version 0.040
 =head2 findRuns
 
 Find runs based on the options HASHREF provided.
-See the documentation for L<testrail-runs>, as the long argument names there correspond to hash keys.
+See the documentation for L<TestRail::Bin::Runs>, as the long argument names there correspond to hash keys.
 
 The primary routine of testrail-runs.
 

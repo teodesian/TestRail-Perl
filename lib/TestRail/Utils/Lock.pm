@@ -60,8 +60,7 @@ sub pickAndLockTest {
     @$cases = TestRail::Utils::Find::findTests( $opts, @$cases );
 
     my ( $title, $test );
-    use Data::Dumper;
-    print Dumper($cases);
+    diag explain $cases;
     while (@$cases) {
         $test = shift @$cases;
         $title = lockTest( $test, $lock_status_id, $opts->{'hostname'}, $tr );
@@ -166,7 +165,7 @@ testrail-lock's primary routine.
 
 =over 4
 
-=item HASHREF C<OPTIONS> - valid keys/values correspond to the long names of arguments taken by L<testrail-lock>.
+=item HASHREF C<OPTIONS> - valid keys/values correspond to the long names of arguments taken by L<TestRail::Bin::Lock>.
 
 =item TestRail::API C<HANDLE> - Instance of TestRail::API, in the case where the caller already has a valid object.
 
