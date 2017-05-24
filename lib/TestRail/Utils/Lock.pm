@@ -60,7 +60,8 @@ sub pickAndLockTest {
     @$cases = TestRail::Utils::Find::findTests( $opts, @$cases );
 
     my ( $title, $test );
-    diag explain $cases;
+    use Data::Dumper;
+    print STDERR Dumper($cases);
     while (@$cases) {
         $test = shift @$cases;
         $title = lockTest( $test, $lock_status_id, $opts->{'hostname'}, $tr );
