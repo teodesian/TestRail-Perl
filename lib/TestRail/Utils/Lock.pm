@@ -37,7 +37,7 @@ sub pickAndLockTest {
 
     my $cases = $tr->getTests( $run->{'id'} );
     use Data::Dumper;
-    print STDERR "UNFILTERED:\n"
+    print STDERR "UNFILTERED:\n";
     print STDERR Dumper($cases);
 
     #Filter by case types
@@ -63,7 +63,7 @@ sub pickAndLockTest {
     @$cases = TestRail::Utils::Find::findTests( $opts, @$cases );
 
     use Data::Dumper;
-    print STDERR "FILTERED:\n"
+    print STDERR "FILTERED:\n";
     print STDERR Dumper($cases);
 
     my ( $title, $test );
