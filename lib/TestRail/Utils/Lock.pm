@@ -60,6 +60,8 @@ sub pickAndLockTest {
     @$cases = TestRail::Utils::Find::findTests( $opts, @$cases );
 
     my ( $title, $test );
+    use Data::Dumper;
+    print Dumper($cases);
     while (@$cases) {
         $test = shift @$cases;
         $title = lockTest( $test, $lock_status_id, $opts->{'hostname'}, $tr );
@@ -126,7 +128,8 @@ sub lockTest {
       ? $test->{'full_title'}
       : $test->{'title'}
       if $next_one;
-    return -1;
+    return 0;
+
 }
 
 1;
