@@ -126,8 +126,7 @@ sub lockTest {
       ? $test->{'full_title'}
       : $test->{'title'}
       if $next_one;
-    return 0;
-
+    return -1;
 }
 
 1;
@@ -164,7 +163,7 @@ testrail-lock's primary routine.
 
 =over 4
 
-=item HASHREF C<OPTIONS> - valid keys/values correspond to the long names of arguments taken by L<TestRail::Bin::Lock>.
+=item HASHREF C<OPTIONS> - valid keys/values correspond to the long names of arguments taken by L<testrail-lock>.
 
 =item TestRail::API C<HANDLE> - Instance of TestRail::API, in the case where the caller already has a valid object.
 

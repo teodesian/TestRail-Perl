@@ -166,12 +166,8 @@ sub findTests {
         foreach my $case (@cases) {
             foreach my $path (@realtests) {
 
-                #XXX Not quite as accurate as simply comparing the title to the basename of the path, but much faster
-                #next unless index( $path, $case->{'title'} ) > 0;
-                if ($case->{title} eq 'lockme.test') {
-                    print STDERR "OLD CHECK: ".basename($path)." eq $case->{title}\n";
-                    print STDERR "NEW CHECK:".index( $path, $case->{'title'} )." > 0\n";
-                }
+                #Filter obviously bogus stuff first to not incur basename() cost except for when we're right, or have a name that contains this name
+                next unless index( $path, $case->{'title'} ) > 0;
                 next unless basename($path) eq $case->{title};
                 $case->{'path'} = $path;
                 push( @tmpArr, $case );
@@ -493,7 +489,7 @@ version 0.040
 =head2 findRuns
 
 Find runs based on the options HASHREF provided.
-See the documentation for L<TestRail::Bin::Runs>, as the long argument names there correspond to hash keys.
+See the documentation for L<testrail-runs>, as the long argument names there correspond to hash keys.
 
 The primary routine of testrail-runs.
 

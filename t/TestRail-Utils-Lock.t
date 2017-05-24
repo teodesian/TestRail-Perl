@@ -20,7 +20,7 @@ my $opts = {
     'run'        => 'lockRun',
     'case-types' => ['Automated'],
     'lockname'   => 'locked',
-    'match'      => "$FindBin::Bin",
+    'match'      => "$FindBin::Bin/lib",
     'no-recurse' => 1,
     'hostname'   => hostname(),
     'mock'       => 1
@@ -37,7 +37,6 @@ capture { $ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr) };
 is($ret,0,"Verify that no tests are locked in match mode, as they all are in a subdir, and recurse is off");
 delete $opts->{'no-recurse'};
 
-diag `ls '$FindBin::Bin/lock_data'`;
 $ret = TestRail::Utils::Lock::pickAndLockTest($opts,$tr);
 is(basename( $ret->{'path'} ), 'lockmealso.test' , "Verify the highest priority test is chosen first");
 $tr->{'browser'} = Test::LWP::UserAgent::TestRailMock::lockMockStep1();
