@@ -468,7 +468,7 @@ sub getResults {
                 }
             }
             return MCE->gather(MCE->chunk_id,$res);
-        } @$runs);
+        } $runs);
 
     }
 
