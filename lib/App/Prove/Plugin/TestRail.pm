@@ -41,6 +41,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     autoclose=0
     encoding=UTF-8
     configuration_group=Operating Systems
+    test_bad_status=blocked
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 
@@ -123,6 +124,7 @@ sub load {
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
     $ENV{'TESTRIAL_CGROUP'}    = $params->{'configuration_group'};
+    $ENV{'TESTRAIL_TBAD'}      = $params->{'test_bad_status'};
     return $class;
 }
 

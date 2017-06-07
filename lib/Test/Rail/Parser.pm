@@ -74,9 +74,11 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<sections> - ARRAYREF (optional): Restrict a spawned run to cases in these particular sections.
 
-=item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'untested' or 'retest', go ahead and close the run.  Default false.
+=item B<autoclose> - BOOLEAN (optional): If no cases in the run/plan are marked 'Untested' or 'Retest', go ahead and close the run.  Default false.
 
 =item B<encoding> - STRING (optional): Character encoding of TAP to be parsed and the various inputs parameters for the parser.  Defaults to UTF-8, see L<Encode::Supported> for a list of supported encodings.
+
+=item B<test_bad_status> - STRING (optional): 'internal' name of whatever status you want to mark compile failures & no plan + no assertion tests.
 
 =back
 
@@ -88,14 +90,16 @@ This module also attempts to calculate the elapsed time to run each test if it i
 
 The constructor will terminate if the statuses 'pass', 'fail', 'retest', 'skip', 'todo_pass', and 'todo_fail' are not registered as result internal names in your TestRail install.
 
+The purpose of the retest status is somewhat special, as there is no way to set a test back to 'untested' in TestRail, and we use this to allow automation to pick back up if
+something needs re-work for whatever reason.
+
 The global status of the case will be set according to the following rules:
 
     1. If there are no issues whatsoever besides TODO failing tests & skips, mark as PASS
     2. If there are any non-skipped or TODOed fails OR a bad plan (extra/missing tests), mark as FAIL
     3. If there are only SKIPs (e.g. plan => skip_all), mark as SKIP
     4. If the only issues with the test are TODO tests that pass, mark as TODO PASS (to denote these TODOs for removal).
-    5. If no tests are run at all, mark as 'retest'.  This is making the assumption that such failures are due to test environment being setup improperly;
-       which can be remediated and retested.
+    5. If no tests are run at all, and no plan made (such as a compile failure), the cases will be marked as failures unless you provide a test_bad status name in your testrailrc.
 
 Step results will always be whatever status is relevant to the particular step.
 
@@ -154,7 +158,8 @@ sub new {
         'config_group' => delete $opts->{'config_group'},
         #Stubs for extension by subclassers
         'result_options'        => delete $opts->{'result_options'},
-        'result_custom_options' => delete $opts->{'result_custom_options'}
+        'result_custom_options' => delete $opts->{'result_custom_options'},
+        'test_bad_status'       => delete $opts->{'test_bad_status'},
     };
 
     confess("plan passed, but no run passed!") if !$tropts->{'run'} && $tropts->{'plan'};
@@ -187,12 +192,15 @@ sub new {
     my @todof  = grep {$_->{'name'} eq 'todo_fail'} @{$tropts->{'statuses'}};
     my @todop  = grep {$_->{'name'} eq 'todo_pass'} @{$tropts->{'statuses'}};
     my @retest = grep {$_->{'name'} eq 'retest'} @{$tropts->{'statuses'}};
+    my @tbad;
+    @tbad   = grep {$_->{'name'} eq $tropts->{test_bad_status} } @{$tropts->{'statuses'}} if $tropts->{test_bad_status};
     confess("No status with internal name 'passed' in TestRail!") unless scalar(@ok);
     confess("No status with internal name 'failed' in TestRail!") unless scalar(@not_ok);
     confess("No status with internal name 'skip' in TestRail!") unless scalar(@skip);
     confess("No status with internal name 'todo_fail' in TestRail!") unless scalar(@todof);
     confess("No status with internal name 'todo_pass' in TestRail!") unless scalar(@todop);
     confess("No status with internal name 'retest' in TestRail!") unless scalar(@retest);
+    confess("No status with internal name '$tropts->{test_bad_status}' in TestRail!") unless scalar(@tbad) || !$tropts->{test_bad_status};
     #Map in all the statuses
     foreach my $status (@{$tropts->{'statuses'}}) {
         $tropts->{$status->{'name'}} = $status;
@@ -527,7 +535,9 @@ sub EOFCallback {
     my $status = $self->{'tr_opts'}->{'ok'}->{'id'};
     my $todo_failed = $self->todo() - $self->todo_passed();
     $status = $self->{'tr_opts'}->{'not_ok'}->{'id'}    if $self->has_problems();
-    $status = $self->{'tr_opts'}->{'retest'}->{'id'}    if !$self->tests_run(); #No tests were run, env fail
+    if (!$self->tests_run() && !$self->is_good_plan() && $self->{'tr_opts'}->{test_bad_status}) { #No tests were run, no plan, code is probably bad so allow custom marking
+        $status = $self->{'tr_opts'}->{$self->{'tr_opts'}->{test_bad_status}}->{'id'};
+    }
     $status = $self->{'tr_opts'}->{'todo_pass'}->{'id'} if $self->todo_passed() && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO pass, mark as TODOP
     $status = $self->{'tr_opts'}->{'todo_fail'}->{'id'} if $todo_failed && !$self->failed() && $self->is_good_plan(); #If no fails, but a TODO fail, prefer TODOF to TODOP
     $status = $self->{'tr_opts'}->{'skip'}->{'id'}      if $self->skip_all(); #Skip all, whee

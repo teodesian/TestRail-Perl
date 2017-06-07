@@ -51,12 +51,13 @@ sub make_parser {
     $args->{'run'}      = $ENV{'TESTRAIL_RUN'};
     $args->{'plan'}     = $ENV{'TESTRAIL_PLAN'};
     @configs = split(/:/,$ENV{'TESTRAIL_CONFIGS'}) if $ENV{'TESTRAIL_CONFIGS'};
-    $args->{'configs'}        = \@configs if scalar(@configs);
-    $args->{'result_options'} = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
-    $args->{'step_results'}   = $ENV{'TESTRAIL_STEPS'};
-    $args->{'testsuite_id'}   = $ENV{'TESTRAIL_SPAWN'};
-    $args->{'testsuite'}      = $ENV{'TESTRAIL_TESTSUITE'};
-    $args->{'config_group'}   = $ENV{'TESTRAIL_CGROUP'};
+    $args->{'configs'}         = \@configs if scalar(@configs);
+    $args->{'result_options'}  = {'version' => $ENV{'TESTRAIL_VERSION'}} if $ENV{'TESTRAIL_VERSION'};
+    $args->{'step_results'}    = $ENV{'TESTRAIL_STEPS'};
+    $args->{'testsuite_id'}    = $ENV{'TESTRAIL_SPAWN'};
+    $args->{'testsuite'}       = $ENV{'TESTRAIL_TESTSUITE'};
+    $args->{'config_group'}    = $ENV{'TESTRAIL_CGROUP'};
+    $args->{'test_bad_status'} = $ENV{'TESTRAIL_TBAD'};
 
     @sections = split(/:/,$ENV{'TESTRAIL_SECTIONS'}) if $ENV{'TESTRAIL_SECTIONS'};
     $args->{'sections'}  = \@sections if scalar(@sections);
