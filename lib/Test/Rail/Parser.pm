@@ -130,7 +130,8 @@ sub new {
         'comment' => \&commentCallback,
         'unknown' => \&unknownCallback,
         'bailout' => \&bailoutCallback,
-        'EOF'     => \&EOFCallback
+        'EOF'     => \&EOFCallback,
+        'plan'    => \&planCallback,
     };
 
     my $tropts = {
@@ -562,6 +563,18 @@ sub EOFCallback {
     undef $self->{'tr_opts'} unless $self->{'tr_opts'}->{'debug'};
 
     return $cres;
+}
+
+=head2 planCallback
+
+Used to record test planning messages.
+
+=cut
+
+sub planCallback {
+    my ($plan) = @_;
+    my $self = $plan->{'parser'};
+    $self->{raw_output} .= $plan->as_string;
 }
 
 sub _set_result {

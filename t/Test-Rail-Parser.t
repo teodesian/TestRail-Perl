@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 118;
+use Test::More 'tests' => 119;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 use Capture::Tiny qw{capture};
@@ -180,6 +180,7 @@ isa_ok($tap,"Test::Rail::Parser");
 if (!$res) {
     $tap->run();
     is($tap->{'errors'},0,"No errors encountered uploading case results");
+    like( $tap->{raw_output}, qr/cause I can/i, "SKIP_ALL reason recorded"); diag $tap->{raw_output};
     is($tap->{'global_status'},6, "Test global result is SKIP on skip all");
 }
 
