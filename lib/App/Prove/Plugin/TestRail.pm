@@ -123,7 +123,7 @@ sub load {
     $ENV{'TESTRAIL_SECTIONS'}  = $params->{sections};
     $ENV{'TESTRAIL_AUTOCLOSE'} = $params->{autoclose};
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
-    $ENV{'TESTRIAL_CGROUP'}    = $params->{'configuration_group'};
+    $ENV{'TESTRAIL_CGROUP'}    = $params->{'configuration_group'};
     $ENV{'TESTRAIL_TBAD'}      = $params->{'test_bad_status'};
     return $class;
 }
