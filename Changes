@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.042 2018-04-30 TEODESIAN
+    - Fix uninitialized value warning when no plan is emitted
+
 0.041 2017-06-06 TEODESIAN
     - Fix MCE usage issue with confusion based on array -> hash inputs in TestRail::Utils::Find
     - Fix issue where Test plans were not recorded in the raw output of a case.

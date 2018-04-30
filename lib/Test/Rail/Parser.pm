@@ -584,7 +584,7 @@ Used to record test planning messages.
 sub planCallback {
     my ($plan) = @_;
     my $self = $plan->{'parser'};
-    $self->{raw_output} .= $plan->as_string;
+    $self->{raw_output} .= $plan->as_string if $plan->as_string;
 }
 
 sub _set_result {
