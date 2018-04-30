@@ -17,7 +17,7 @@ It is by no means exhaustively implementing every TestRail API function.
 
 =head1 IMPORTANT
 
-All the methods aside from the constructor should not die, but return a false value upon failure.
+All the methods aside from the constructor should not die, but return a false value upon failure (see exceptions below).
 When the server is not responsive, expect a -500 response, and retry accordingly.
 I recommend using the excellent L<Attempt> module for this purpose.
 
@@ -31,6 +31,8 @@ Also, all *ByName methods are vulnerable to duplicate naming issues.  Try not to
     * configurations
 
 To do so will result in the first of said item found being returned rather than an array of possibilities to choose from.
+
+There are two exceptions to this, in the case of 401 and 403 responses, as these failing generally mean your program has no chance of success anyways.
 
 =cut
 
@@ -204,11 +206,14 @@ sub _doRequest {
 
     return $response if !defined($response); #worst case
     if ($response->code == 403) {
-        cluck "ERROR: Access Denied.";
-        return -403;
+        confess "ERROR 403: Access Denied: ".$response->content;
     }
+    if ($response->code == 401) {
+        confess "ERROR 401: Authentication failed: ".$response->content;
+    }
+
     if ($response->code != 200) {
-        cluck "ERROR: Arguments Bad: ".$response->content;
+        cluck "ERROR: Arguments Bad? (got code ".$response->code."): ".$response->content;
         return -int($response->code);
     }
 

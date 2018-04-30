@@ -6,11 +6,12 @@ use lib "$FindBin::Bin/lib";
 
 #Test things we can only mock, because the API doesn't support them.
 
-use Test::More 'tests' => 14;
+use Test::More 'tests' => 16;
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Scalar::Util qw{reftype};
 use Capture::Tiny qw{capture};
+use Test::Fatal;
 
 my $browser = $Test::LWP::UserAgent::TestRailMock::mockObject;
 my $tr = TestRail::API->new('http://hokum.bogus','fake','fake',undef,1);
@@ -51,3 +52,17 @@ is($res,-404,"Can't close plan that doesn't exist");
 # Test case type method
 my $ct = $tr->getCaseTypeByName("Automated");
 is($ct->{'id'},1,"Can get case type by name");
+
+#Test #142
+$tr = TestRail::API->new('http://locked.out','fake','fake',undef,1);
+$tr->{'browser'} = $browser;
+$tr->{'debug'} = 0;
+
+like( exception { $tr->getUsers() } , qr/stay out you red menace/i, "API dies on bad auth");
+
+$tr = TestRail::API->new('http://locked.out/worse','fake','fake',undef,1);
+$tr->{'browser'} = $browser;
+$tr->{'debug'} = 0;
+
+like( exception { $tr->getUsers() } , qr/could not find pants/i, "API dies on no auth or auth backend failure");
+

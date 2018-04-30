@@ -38,6 +38,44 @@ my ($VAR1,$VAR2,$VAR3,$VAR4,$VAR5);
 
 {
 
+$VAR1 = 'http://locked.out/index.php?/api/v2/get_users';
+$VAR2 = 403;
+$VAR3 = 'Stay out you red menace';
+$VAR4 = bless( {
+                 'client-warning' => 'Internal response',
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
+                 'content-type' => 'text/plain',
+                 '::std_case' => {
+                                   'client-warning' => 'Client-Warning',
+                                   'client-date' => 'Client-Date'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = 'Stay out you red menace';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
+$VAR1 = 'http://locked.out/worse/index.php?/api/v2/get_users';
+$VAR2 = 401;
+$VAR3 = 'Could not find pants with both hands';
+$VAR4 = bless( {
+                 'client-warning' => 'Internal response',
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
+                 'content-type' => 'text/plain',
+                 '::std_case' => {
+                                   'client-warning' => 'Client-Warning',
+                                   'client-date' => 'Client-Date'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = 'Could not find pants with both hands';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
 $VAR1 = 'http://hokum.bogus/index.php?/api/v2/get_users';
 $VAR2 = 500;
 $VAR3 = 'Can\'t connect to hokum.bogus:80 (Bad hostname)';
