@@ -76,7 +76,7 @@ Creates new C<TestRail::API> object.
 
 =item BOOLEAN C<DO_POST_REDIRECT> (optional) - Follow redirects on POST requests (most add/edit/delete calls are POSTs).  Default false.
 
-=item INTEGER C<MAX_TRIES> (optional) - Try requests up to X number of times if they fail with anything other than 401/403.  Useful with flaky external auth, or timeout issues.  Default 1.
+=item INTEGER C<MAX_TRIES> (optional) - Try requests up to X number of times if they fail with anything other than 401/403.  Useful with flaky external authenticators, or timeout issues.  Default 1.
 
 =back
 

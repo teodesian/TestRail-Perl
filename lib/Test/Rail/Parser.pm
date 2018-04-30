@@ -597,7 +597,7 @@ sub _set_result {
 
     print "# Test elapsed: ".$options->{'elapsed'}."\n" if $options->{'elapsed'};
 
-    print "# Attempting to find case by title '".$test_name." in run $run_id'...\n";
+    print "# Attempting to find case by title '".$test_name."' in run $run_id...\n";
     $tc = $self->{'tr_opts'}->{'testrail'}->getTestByName($run_id,$test_name);
     if (!defined($tc) || (reftype($tc) || 'undef') ne 'HASH') {
         cluck("ERROR: Could not find test case: $tc");
