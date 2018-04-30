@@ -62,6 +62,8 @@ This should provide sufficient uniqueness to get any run using names.
     --section [section_name] : When spawning, restrict the cases used in the provided testsuite ID to these sections.
       Option may be passed multiple times to specify multiple sections.
 
+    --num_tries [X] : Number of times to attempt an API request.  Default 1.
+
 =head3 CONFIG OPTIONS
 
 In your $HOME (or the current directory, if your system has no concept of a home directory), put a file called .testrailrc with key=value
@@ -147,6 +149,7 @@ sub run {
         'section=s@'     => \$opts{sections},
         'autoclose'      => \$opts{autoclose},
         'e|encoding=s'   => \$opts{encoding},
+        'max_tries=i'    => \$opts{max_tries},
         'help'           => \$opts{help},
     );
 
@@ -195,6 +198,7 @@ sub run {
             'sections'       => $opts{sections},
             'autoclose'      => $opts{autoclose},
             'encoding'       => $opts{encoding},
+            'max_tries'      => $opts{max_tries},
             'merge'          => 1
         });
         $tap->run();

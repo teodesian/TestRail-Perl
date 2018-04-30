@@ -80,6 +80,8 @@ Get the TAP Parser ready to talk to TestRail, and register a bunch of callbacks 
 
 =item B<test_bad_status> - STRING (optional): 'internal' name of whatever status you want to mark compile failures & no plan + no assertion tests.
 
+=item B<max_tries> - INTEGER (optional): number of times to try failing requests.  Defaults to 1 (don't re-try).
+
 =back
 
 =back
@@ -160,12 +162,14 @@ sub new {
         'result_options'        => delete $opts->{'result_options'},
         'result_custom_options' => delete $opts->{'result_custom_options'},
         'test_bad_status'       => delete $opts->{'test_bad_status'},
+        'max_tries'             => delete $opts->{'max_tries'} || 1,
     };
 
     confess("plan passed, but no run passed!") if !$tropts->{'run'} && $tropts->{'plan'};
 
     #Allow natural confessing from constructor
-    my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'encoding'},$tropts->{'debug'});
+    #Force-on POST redirects for maximum compatibility
+    my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'encoding'},$tropts->{'debug'},1,$tropts->{max_tries});
     $tropts->{'testrail'} = $tr;
     $tr->{'browser'} = $tropts->{'browser'} if defined($tropts->{'browser'}); #allow mocks
     $tr->{'debug'} = 0; #Always suppress in production

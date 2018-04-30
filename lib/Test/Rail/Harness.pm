@@ -58,6 +58,7 @@ sub make_parser {
     $args->{'testsuite'}       = $ENV{'TESTRAIL_TESTSUITE'};
     $args->{'config_group'}    = $ENV{'TESTRAIL_CGROUP'};
     $args->{'test_bad_status'} = $ENV{'TESTRAIL_TBAD'};
+    $args->{'max_tries'}       = $ENV{'TESTRAIL_MAX_TRIES'};
 
     @sections = split(/:/,$ENV{'TESTRAIL_SECTIONS'}) if $ENV{'TESTRAIL_SECTIONS'};
     $args->{'sections'}  = \@sections if scalar(@sections);

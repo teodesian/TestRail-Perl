@@ -38,6 +38,25 @@ my ($VAR1,$VAR2,$VAR3,$VAR4,$VAR5);
 
 {
 
+$VAR1 = 'http://bork.bork/index.php?/api/v2/get_users';
+$VAR2 = 500;
+$VAR3 = 'Server petrified in hot grits';
+$VAR4 = bless( {
+                 'client-warning' => 'Internal response',
+                 'client-date' => 'Tue, 23 Dec 2014 20:02:08 GMT',
+                 'content-type' => 'text/plain',
+                 '::std_case' => {
+                                   'client-warning' => 'Client-Warning',
+                                   'client-date' => 'Client-Date'
+                                 }
+               }, 'HTTP::Headers' );
+$VAR5 = 'Server petrified in hot grits';
+$mockObject->map_response(qr/\Q$VAR1\E/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
+
+}
+
+{
+
 $VAR1 = 'http://locked.out/index.php?/api/v2/get_users';
 $VAR2 = 403;
 $VAR3 = 'Stay out you red menace';
@@ -1332,7 +1351,7 @@ $VAR4 = bless( {
                  'content-type' => 'application/json; charset=utf-8',
                  'server' => 'Apache/2.4.7 (Ubuntu)'
                }, 'HTTP::Headers' );
-$VAR5 = '[{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"fake.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skip.test"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"}]';
+$VAR5 = '[{"id": 2534324, "title":"NoSuchTest.t"}, {"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"fake.test","type_id":6,"priority_id":4,"estimate":null,"estimate_forecast":null,"refs":null,"milestone_id":null,"custom_preconds":null,"custom_steps":null,"custom_expected":null},{"id":15,"case_id":8,"status_id":3,"assignedto_id":null,"run_id":22,"title":"skip.test"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"NOT SO SEARED AFTER ARR"},{"id":15,"case_id":8,"status_id":3,"assignedto_id":1,"run_id":22,"title":"skipall.test"}]';
 $mockObject->map_response(qr/\Q$VAR1\E$/,HTTP::Response->new($VAR2, $VAR3, $VAR4, $VAR5));
 
 }

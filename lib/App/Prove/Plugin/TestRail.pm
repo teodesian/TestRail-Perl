@@ -42,6 +42,7 @@ If \$HOME/.testrailrc exists, it will be parsed for any of these values in a new
     encoding=UTF-8
     configuration_group=Operating Systems
     test_bad_status=blocked
+    max_tries=3
 
 Note that passing configurations as filters for runs inside of plans are separated by colons.
 
@@ -125,6 +126,7 @@ sub load {
     $ENV{'TESTRAIL_ENCODING'}  = $params->{encoding};
     $ENV{'TESTRAIL_CGROUP'}    = $params->{'configuration_group'};
     $ENV{'TESTRAIL_TBAD'}      = $params->{'test_bad_status'};
+    $ENV{'TESTRAIL_MAX_TRIES'} = $params->{'max_tries'};
     return $class;
 }
 
