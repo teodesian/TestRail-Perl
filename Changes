@@ -1,7 +1,7 @@
 Revision history for Perl module TestRail::API
 
 0.042 2018-04-30 TEODESIAN
-    - Fix uninitialized value warning when no plan is emitted
+    - Fix uninitialized value warning when no plan (or steps) are emitted
     - Die on HTTP 401/403, we likely will never recover from this
     - Add ability to re-try failed requests in TestRail::API, App::Prove::Plugin::TestRail and testrail-report
 
