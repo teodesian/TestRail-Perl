@@ -10,7 +10,7 @@ use Scalar::Util qw{reftype};
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 use Test::Rail::Parser;
-use Test::More 'tests' => 125;
+use Test::More 'tests' => 126;
 use Test::Fatal qw{exception};
 use Test::Deep qw{cmp_deeply};
 use Capture::Tiny qw{capture capture_stderr};
@@ -604,3 +604,13 @@ $opts->{'tap'} = $fcontents;
 #Issue 143
 my $warns = capture_stderr { $tap = Test::Rail::Parser->new($opts) };
 is($warns, '', "No warnings parsing TAP with undef plans");
+
+#Issue 140
+$fcontents = "
+todo_pass.test ..
+";
+undef $opts->{'source'};
+$opts->{'tap'} = $fcontents;
+
+$warns = capture_stderr { $tap = Test::Rail::Parser->new($opts) };
+is($warns, '', "No warnings parsing TAP with NOTESTS");

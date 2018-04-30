@@ -550,7 +550,7 @@ sub EOFCallback {
     $status = $self->{'global_status'} if $self->{'global_status'};
 
     #Notify user about bad plan a bit better, supposing we haven't bailed
-    if (!$self->is_good_plan()  && !$self->{'is_bailout'}) {
+    if (!$self->is_good_plan()  && !$self->{'is_bailout'} && defined $self->tests_run && defined $self->tests_planned ) {
         $self->{'raw_output'} .= "\n# ERROR: Bad plan.  You ran ".$self->tests_run." tests, but planned ".$self->tests_planned.".";
         if ($self->{'tr_opts'}->{'step_results'}) {
             my $sr_sys_name = $self->{'tr_opts'}->{'step_results'}->{'name'};
