@@ -19,6 +19,7 @@ use Capture::Tiny qw{capture capture_stderr};
 my $apiurl = $ENV{'TESTRAIL_API_URL'};
 my $login  = $ENV{'TESTRAIL_USER'};
 my $pw     = $ENV{'TESTRAIL_PASSWORD'};
+my $step_results = $ENV{'TESTRAIL_STEP_RESULTS'};
 my $is_mock = (!$apiurl && !$login && !$pw);
 
 ($apiurl,$login,$pw) = ('http://testrail.local','teodesian@cpan.org','fake') if $is_mock;
@@ -51,6 +52,7 @@ my $opts = {
     'run'                 => 'TestingSuite',
     'project'             => 'TestProject',
     'merge'               => 1,
+    'step_results'        => $step_results,
 };
 
 my $res = exception { $tap = Test::Rail::Parser->new($opts) };
