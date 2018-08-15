@@ -333,7 +333,7 @@ sub new {
     #Make sure the step results field passed exists on the system
     my $sr_name = $tropts->{'step_results'};
     $tropts->{'step_results'} = $tr->getTestResultFieldByName($tropts->{'step_results'},$tropts->{'project_id'}) if defined $tropts->{'step_results'};
-    confess("Invalid step results name '$sr_name' passed.") if ref $tropts->{'step_results'} ne 'HASH' && $sr_name;
+    confess("Invalid step results value '$sr_name' passed. Check the spelling and confirm that your project can use the '$sr_name' custom result field.") if ref $tropts->{'step_results'} ne 'HASH' && $sr_name;
 
     $self->{'tr_opts'} = $tropts;
     $self->{'errors'}  = 0;
