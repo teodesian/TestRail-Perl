@@ -1158,6 +1158,40 @@ sub getCaseByID {
     return $self->_doRequest("index.php?/api/v2/get_case/$case_id");
 }
 
+=head2 getCaseFields
+
+Returns ARRAYREF of available test case custom fields.
+
+    $tr->getCaseFields();
+
+Output is cached in the case_fields parameter.  Cache is invalidated when addCaseField is called.
+
+=cut
+
+sub getCaseFields {
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+    return $self->{case_fields} if $self->{case_fields};
+
+    $self->{case_fields} = $self->_doRequest("index.php?/api/v2/get_case_fields");
+    return $self->{case_fields};
+}
+
+=head2 addCaseField(%options)
+
+Returns HASHREF describing the case field you just added.
+
+    $tr->addCaseField(%options)
+
+=cut
+
+sub addCaseField {
+    state $check = compile(Object,slurpy HashRef);
+    my ($self,$options) = $check->(@_);
+    $self->{case_fields} = undef;
+    return $self->_doRequest("index.php?/api/v2/add_case_field", 'POST', $options);
+}
+
 =head1 RUN METHODS
 
 =head2 B<createRun (project_id,suite_id,name,description,milestone_id,assigned_to_id,case_ids)>
