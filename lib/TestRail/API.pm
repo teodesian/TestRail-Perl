@@ -2386,6 +2386,20 @@ sub bulkAddResults {
     return $self->_doRequest("index.php?/api/v2/add_results/$run_id", 'POST', { 'results' => $results });
 }
 
+=head2 bulkAddResultsByCase(run_id,results)
+
+Basically the same as bulkAddResults, but instead of a test_id for each entry you use a case_id.
+
+=cut
+
+sub bulkAddResultsByCase {
+    state $check = compile(Object, Int, ArrayRef[HashRef]);
+    my ($self,$run_id, $results) = $check->(@_);
+
+    return $self->_doRequest("index.php?/api/v2/add_results_for_cases/$run_id", 'POST', { 'results' => $results });
+}
+
+
 =head2 B<getTestResults(test_id,limit,offset)>
 
 Get the recorded results for desired test, limiting output to 'limit' entries.
