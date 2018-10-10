@@ -743,10 +743,10 @@ sub getSections {
     my ($self,$project_id,$suite_id) = $check->(@_);
 
     #Cache sections to reduce requests in tight loops
-    return $self->{'sections'}->{$project_id} if $self->{'sections'}->{$project_id};
-    $self->{'sections'}->{$project_id} = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+    return $self->{'sections'}->{$suite_id} if $self->{'sections'}->{$suite_id};
+    $self->{'sections'}->{$suite_id} = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
 
-    return $self->{'sections'}->{$project_id};
+    return $self->{'sections'}->{$suite_id};
 }
 
 =head2 B<getSectionByID (section_id)>
