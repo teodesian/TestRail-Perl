@@ -90,7 +90,7 @@ requires:
 resources:
   bugtracker: https://github.com/teodesian/TestRail-Perl/issues
   homepage: https://github.com/teodesian/TestRail-Perl
-  repository: https://github.com/teodesian/TestRail-Perl.git
+  repository: git://github.com/teodesian/TestRail-Perl.git
 version: '0.044'
 x_contributors:
   - 'Mohammad S Anwar <mohammad.anwar@yahoo.com>'

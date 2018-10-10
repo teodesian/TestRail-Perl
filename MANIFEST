@@ -7,7 +7,9 @@ META.json
 META.yml
 Makefile.PL
 README
+SIGNATURE
 TestRail-API-0.044/.travis.yml
+TestRail-API-0.044/TestRail-API-0.044/.travis.yml
 bin/testrail-bulk-mark-results
 bin/testrail-cases
 bin/testrail-lock

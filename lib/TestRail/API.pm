@@ -2811,8 +2811,8 @@ Ryan Sherer <ryan.sherer@cpanel.net>
 
 =head1 SOURCE
 
-The development version is on github at L<http://https://github.com/teodesian/TestRail-Perl>
-and may be cloned from L<git://https://github.com/teodesian/TestRail-Perl.git>
+The development version is on github at L<http://github.com/teodesian/TestRail-Perl>
+and may be cloned from L<git://github.com/teodesian/TestRail-Perl.git>
 
 =head1 COPYRIGHT AND LICENSE
 

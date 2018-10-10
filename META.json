@@ -140,7 +140,7 @@
       "homepage" : "https://github.com/teodesian/TestRail-Perl",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/teodesian/TestRail-Perl.git",
+         "url" : "git://github.com/teodesian/TestRail-Perl.git",
          "web" : "https://github.com/teodesian/TestRail-Perl"
       }
    },
