@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # ABSTRACT: get information about cases inside various testsuites/sections.
 # PODNAME: TestRail::Bin::Cases
 

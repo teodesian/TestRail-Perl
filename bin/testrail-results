@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # ABSTRACT: List results for specified test(s).
 # PODNAME: TestRail::Bin::Results
 

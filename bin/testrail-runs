@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # ABSTRACT: List runs in a TestRail project matching the provided filters
 # PODNAME: TestRail::Bin::Runs
 

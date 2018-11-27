@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # ABSTRACT: Bulk mark entire runs/plans (or groups of tests therein) as the provided status.
 # PODNAME: TestRail::Bin::BulkMarkResults
 
