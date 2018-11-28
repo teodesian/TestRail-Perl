@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 # ABSTRACT: Lock a test in a TestRail, and return the test name if successful.
 # PODNAME: TestRail::Bin::Lock
 
