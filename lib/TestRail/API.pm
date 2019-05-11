@@ -2675,6 +2675,50 @@ sub translateConfigNamesToIds {
     return _X_in_my_Y($self,$configs,'id',@names);
 }
 
+=head1 REPORT METHODS
+
+=head2 getReports
+
+Return the ARRAYREF of reports available for the provided project.
+
+Requires you to mark a particular report as accessible in the API via the TestRail report interface.
+
+=over 4
+
+=item INTEGER C<PROJECT_ID> - Relevant project ID.
+
+=back
+
+=cut
+
+sub getReports {
+    state $check = compile(Object, Int);
+    my ($self,$project_id) = $check->(@_);
+    my $url = "index.php?/api/v2/get_reports/$project_id";
+    return $self->_doRequest($url,'GET');
+}
+
+=head2 runReport
+
+Compute the provided report using currently available data.
+
+Returns HASHREF describing URLs to access completed reports.
+
+=over 4
+
+=item INTEGER C<REPORT_ID> - Relevant report ID.
+
+=back
+
+=cut
+
+sub runReport {
+    state $check = compile(Object, Int);
+    my ($self,$report_id) = $check->(@_);
+    my $url = "index.php?/api/v2/run_report/$report_id";
+    return $self->_doRequest($url,'GET');
+}
+
 =head1 STATIC METHODS
 
 =head2 B<buildStepResults(content,expected,actual,status_id)>

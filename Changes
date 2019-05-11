@@ -1,5 +1,8 @@
 Revision history for Perl module TestRail::API
 
+0.045 2019-05-11 TEODESIAN
+    - Add getReports and runReport methods to TestRail::API
+
 0.044 2018-10-9 TEODESIAN
     - Add getCaseFields and addCaseField methods to TestRail::API
     - Correct argument POD for createRunInPlan
