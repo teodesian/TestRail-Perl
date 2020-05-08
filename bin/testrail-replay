@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+# ABSTRACT: List runs in a TestRail project matching the provided filters
+# PODNAME: TestRail::Bin::Replay
+
+=head1 SYNOPSIS
+
+  testrail-replay [OPTIONS] NAME
+
+  require `which testrail-runs`;
+  TestRail::Bin::Replay::run('args' => \@args);
+
+=head1 DESCRIPTION
+
+testrail-replay - Re-play the results of a test run or plan as though executed by prove.
+Optionally wait for results to come in.
+
+Can be used as the modulino TestRail::Bin::Replay.
+Has a single 'run' function which accepts a hash with the 'args' parameter being the array of arguments.
+
+=head1 PARAMETERS:
+
+=head2 MANDATORY PARAMETERS
+
+=over 4
+
+--apiurl     : full URL to get to TestRail index document
+
+--password   : Your TestRail Password, or a valid API key (TestRail 4.2 and above).
+
+--user       : Your TestRail User Name.
+
+-j --project : desired project name.
+
+=back
+
+All mandatory options not passed with the above switches, or in your ~/.testrailrc will be prompted for.
+
+=head2 OPTIONAL PARAMETERS
+
+=over 4
+
+-p --plan     : Instead of a run to look for, look for a plan with the provided NAME.
+
+-e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
+
+=back
+
+=head1 CONFIGURATION FILE
+
+In your \$HOME, (or the current directory, if your system has no concept of a home directory) put a file called .testrailrc with key=value syntax separated by newlines.
+Valid Keys are the same as documented by L<App::Prove::Plugin::TestRail>.
+All options specified thereby are overridden by passing the command-line switches above.
+
+=head1 MISCELLANEOUS OPTIONS:
+
+=over 4
+
+--help : show this output
+
+=back
+
+=cut
+
+package TestRail::Bin::Replay;
+
+use strict;
+use warnings;
+
+use TestRail::API;
+use TestRail::Utils;
+use TestRail::Utils::Find;
+
+use Getopt::Long qw{GetOptionsFromArray};
+use File::HomeDir qw{my_home};
+
+if (!caller()) {
+    my ($out,$code) = run('args' => \@ARGV);
+    print $out;
+    exit $code;
+}
+
+sub run {
+    my %params = @_;
+    my $opts = {};
+
+    # Parse config file
+    my $homedir = my_home() || '.';
+    if (-e $homedir . '/.testrailrc') {
+        $opts = TestRail::Utils::parseConfig($homedir);
+    }
+
+    GetOptionsFromArray($params{'args'},
+        'apiurl=s'     => \$opts->{'apiurl'},
+        'password=s'   => \$opts->{'password'},
+        'user=s'       => \$opts->{'user'},
+        'j|project=s'  => \$opts->{'project'},
+        'e|encoding=s' => \$opts->{'encoding'},
+        'p|plan'       => \$opts->{'plan'},
+        'h|help'       => \$opts->{'help'},
+    );
+
+    if ($opts->{help}) { return ('',TestRail::Utils::help()); }
+
+    $opts->{'browser'} = $params{'browser'};
+
+    TestRail::Utils::interrogateUser($opts,qw{apiurl user password project});
+
+    my $tr = TestRail::Utils::getHandle($opts);
+    my $project = $tr->getProjectByName($opts->{'project'});
+
+    my $subject = $ARGV[0];
+    my ($runs,$plan);
+
+    if ($opts->{'plan'}) {
+        $plan = $tr->getPlanByName($project->{'id'},$subject);
+        $runs = $tr->getChildRuns($plan);
+    } else {
+        my $run = $tr->getRunByName($project->{'id'},$subject);
+        push( @$runs, $run) if $run;
+    }
+
+    use Data::Dumper;
+    return (Dumper($runs),0);
+
+    return ("No runs found matching your criterion.\n",255);
+}
+
+1;
+__END__
+
+L<TestRail::API>
+
+L<File::HomeDir> for the finding of .testrailrc
+
+=head1 SPECIAL THANKS
+
+Thanks to cPanel Inc, for graciously funding the creation of this distribution.
