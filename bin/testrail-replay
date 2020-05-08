@@ -142,7 +142,8 @@ sub run {
     while (my $test = shift @tests) {
         my $results = $tr->getTestResults($test->{id},1);
         if ( !( ref $results eq 'ARRAY') || !@$results) {
-            push(@tests,$test) if !$opts->{watch}
+            push(@tests,$test) if $opts->{watch};
+            next;
         }
         my $result = $results->[0];
         next unless ref $result eq 'HASH';
@@ -154,7 +155,11 @@ sub run {
             $line .= ' not' if (grep { $result->{status_id} eq $_ } @bad_status_ids);
             print "# $opts->{apiurl}/index.php?/tests/view/$test->{id}\n";
             print "$line ok\n";
+            next;
         }
+        push(@tests,$test) if $opts->{watch};
+        # If we have to wait, back off a little to not slam the server
+        sleep 1;
     }
 
     return ("Done",0);
