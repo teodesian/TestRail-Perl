@@ -12,6 +12,7 @@ use TestRail::API;
 
 use IO::Interactive::Tiny ();
 use Term::ANSIColor 2.01 qw(colorstrip);
+use Term::ReadKey ();
 use Scalar::Util qw{blessed};
 
 =head1 SCRIPT HELPER FUNCTIONS
@@ -34,10 +35,19 @@ Wait for user input and return it.
 =cut
 
 sub userInput {
- local $| = 1;
- my $rt = <STDIN>;
- chomp $rt;
- return $rt;
+    my ( $echo_ok ) = @_;
+    my $input = "";
+
+    # I'm going to be super paranoid here and consider everything to be sensitive info by default.
+    Term::ReadKey::ReadMode('noecho') unless $echo_ok;
+    {
+        local $SIG{'INT'} = sub { Term::ReadKey::ReadMode(0); exit 130; };
+        $input = <STDIN>;
+        chomp($input) if $input;
+    }
+    Term::ReadKey::ReadMode(0) unless $echo_ok;
+    print "\n";
+    return $input;
 }
 
 =head2 interrogateUser($options,@keys)
@@ -53,7 +63,7 @@ sub interrogateUser {
     foreach my $key (@keys) {
         if (!$options->{$key}) {
             print "Type the $key for your TestRail install below:\n";
-            $options->{$key} = TestRail::Utils::userInput();
+            $options->{$key} = TestRail::Utils::userInput( $key ne 'password' );
             die "$key cannot be blank!" unless $options->{$key};
         }
     }
