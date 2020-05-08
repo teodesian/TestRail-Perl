@@ -131,6 +131,7 @@ sub run {
     my @tests;
     foreach my $run (@$runs) {
         my $tests = $tr->getTests($run->{id});
+        @$tests = map { $_->{config} = $run->{config}; $_ } @$tests;
         push( @tests, @{$tests}) if ref $tests eq 'ARRAY' && @$tests;
     }
 
@@ -147,10 +148,12 @@ sub run {
         next unless ref $result eq 'HASH';
         if (!grep { $result->{status_id} eq $_ } @retry_status_ids) {
             print $result->{comment}."\n" if $opts->{verbose};
-            my $line = "$test->{title} ...";
+            my $line = $test->{title};
+            $line .= " ($test->{config})" if $test->{config};
+            $line .= " ...";
             $line .= ' not' if (grep { $result->{status_id} eq $_ } @bad_status_ids);
-            print "$line ok\n";
             print "# $opts->{apiurl}/index.php?/tests/view/$test->{id}\n";
+            print "$line ok\n";
         }
     }
 
