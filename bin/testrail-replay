@@ -43,6 +43,10 @@ All mandatory options not passed with the above switches, or in your ~/.testrail
 
 -e --encoding : Character encoding of arguments.  Defaults to UTF-8. See L<Encode::Supported> for supported encodings.
 
+-v --verbose  : Print full test output rather than summaries with links to the testrail result.
+
+-w --watch    : Watch tests until all report results other than untested or re-test.
+
 =back
 
 =head1 CONFIGURATION FILE
@@ -96,6 +100,8 @@ sub run {
         'j|project=s'  => \$opts->{'project'},
         'e|encoding=s' => \$opts->{'encoding'},
         'p|plan'       => \$opts->{'plan'},
+        'v|verbose'    => \$opts->{'verbose'},
+        'w|watch'      => \$opts->{'watch'},
         'h|help'       => \$opts->{'help'},
     );
 
@@ -107,22 +113,48 @@ sub run {
 
     my $tr = TestRail::Utils::getHandle($opts);
     my $project = $tr->getProjectByName($opts->{'project'});
+    return ("No such project '$opts->{project}'",2) unless $project;
 
     my $subject = $ARGV[0];
     my ($runs,$plan);
 
     if ($opts->{'plan'}) {
         $plan = $tr->getPlanByName($project->{'id'},$subject);
-        $runs = $tr->getChildRuns($plan);
+        $runs = $tr->getChildRuns($plan) if $plan;
     } else {
         my $run = $tr->getRunByName($project->{'id'},$subject);
         push( @$runs, $run) if $run;
     }
 
-    use Data::Dumper;
-    return (Dumper($runs),0);
+    return ("No runs found matching your criterion.\n",1) unless ref $runs eq 'ARRAY' && @$runs;
 
-    return ("No runs found matching your criterion.\n",255);
+    my @tests;
+    foreach my $run (@$runs) {
+        my $tests = $tr->getTests($run->{id});
+        push( @tests, @{$tests}) if ref $tests eq 'ARRAY' && @$tests;
+    }
+
+    #TODO get status ids for untested/retest, check em
+    my @retry_status_ids = $tr->statusNamesToIds(qw{untested retest});
+    my @bad_status_ids   = $tr->statusNamesToIds(qw{failed todo_pass});
+
+    while (my $test = shift @tests) {
+        my $results = $tr->getTestResults($test->{id},1);
+        if ( !( ref $results eq 'ARRAY') || !@$results) {
+            push(@tests,$test) if !$opts->{watch}
+        }
+        my $result = $results->[0];
+        next unless ref $result eq 'HASH';
+        if (!grep { $result->{status_id} eq $_ } @retry_status_ids) {
+            print $result->{comment}."\n" if $opts->{verbose};
+            my $line = "$test->{title} ...";
+            $line .= ' not' if (grep { $result->{status_id} eq $_ } @bad_status_ids);
+            print "$line ok\n";
+            print "# $opts->{apiurl}/index.php?/tests/view/$test->{id}\n";
+        }
+    }
+
+    return ("Done",0);
 }
 
 1;
