@@ -139,6 +139,7 @@ sub run {
     my @retry_status_ids = $tr->statusNamesToIds(qw{untested retest});
     my @bad_status_ids   = $tr->statusNamesToIds(qw{failed todo_pass});
 
+    my $rc = 0;
     while (my $test = shift @tests) {
         my $results = $tr->getTestResults($test->{id},1);
         if ( !( ref $results eq 'ARRAY') || !@$results) {
@@ -152,7 +153,10 @@ sub run {
             my $line = $test->{title};
             $line .= " ($test->{config})" if $test->{config};
             $line .= " ...";
-            $line .= ' not' if (grep { $result->{status_id} eq $_ } @bad_status_ids);
+            if (grep { $result->{status_id} eq $_ } @bad_status_ids) {
+                $rc = 3;
+                $line .= ' not';
+            }
             print "# $opts->{apiurl}/index.php?/tests/view/$test->{id}\n";
             print "$line ok\n";
             next;
@@ -162,7 +166,7 @@ sub run {
         sleep 1;
     }
 
-    return ("Done",0);
+    return ("Done",$rc);
 }
 
 1;
