@@ -2430,6 +2430,36 @@ sub getTestResults {
     return $self->_doRequest($url);
 }
 
+=head2 B<getResultsForCase(run_id,case_id,limit,offset)>
+
+Get the recorded results for a test run and case combination., limiting output to 'limit' entries.
+
+=over 4
+
+=item INTEGER C<RUN_ID> - ID of desired run
+
+=item INTEGER C<CASE_ID> - ID of desired case
+
+=item POSITIVE INTEGER C<LIMIT> (OPTIONAL) - provide no more than this number of results.
+
+=item INTEGER C<OFFSET> (OPTIONAL) - Offset to begin viewing result set at.
+
+=back
+
+Returns ARRAYREF of result definition HASHREFs.
+
+=cut
+
+sub getResultsForCase {
+    state $check = compile(Object, Int, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
+    my ($self,$run_id,$case_id,$limit,$offset) = $check->(@_);
+
+    my $url = "index.php?/api/v2/get_results_for_case/$run_id/$case_id";
+    $url .= "&limit=$limit" if $limit;
+    $url .= "&offset=$offset" if defined($offset);
+    return $self->_doRequest($url);
+}
+
 =head1 CONFIGURATION METHODS
 
 =head2 B<getConfigurationGroups(project_id)>
