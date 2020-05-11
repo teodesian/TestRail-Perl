@@ -108,7 +108,6 @@ sub run {
     if ($opts->{help}) { return ('',TestRail::Utils::help()); }
 
     $opts->{'browser'} = $params{'browser'};
-
     TestRail::Utils::interrogateUser($opts,qw{apiurl user password project});
 
     my $tr = TestRail::Utils::getHandle($opts);

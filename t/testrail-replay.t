@@ -13,6 +13,8 @@ use Test::MockModule qw{strict};
 
 my $utilmock = Test::MockModule->new('TestRail::Utils');
 $utilmock->redefine('getHandle', sub { bless({},"TestRail::API") } );
+$utilmock->redefine('parseConfig', sub { {} });
+$utilmock->redefine('interrogateUser', sub {} );
 
 my $apimock = Test::MockModule->new('TestRail::API');
 $apimock->redefine('new', sub{ return bless({},shift) });
