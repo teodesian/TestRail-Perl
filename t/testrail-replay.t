@@ -6,7 +6,7 @@ use FindBin;
 use lib $FindBin::Bin.'/../bin';
 require 'testrail-replay';
 
-use Test::More 'tests' => 4;
+use Test::More 'tests' => 6;
 use Capture::Tiny qw{capture_merged};
 use Test::Fatal;
 use Test::MockModule qw{strict};
@@ -47,12 +47,41 @@ $apimock->redefine('getTestResults', sub {
     ];
 });
 
-
 #check doing things over all projects/plans/runs
 my @args = qw{--apiurl http://testrail.local --user test@fake.fake -password fake argument1 };
 my ($out, $code);
 my $captured = capture_merged { ($out,$code) = TestRail::Bin::Replay::run('args' => \@args) };
 subtest "Happy path" => sub {
+    like($captured, qr/fake\.test \.\.\. ok/, "Expected output stream");
+    like($out, qr/Done/,"Expected termination string");
+    is($code,0,"OK Exit code");
+};
+
+@args = qw{--apiurl http://testrail.local --user test@fake.fake -password fake --plan argument1 };
+$captured = capture_merged { ($out,$code) = TestRail::Bin::Replay::run('args' => \@args) };
+subtest "Happy path - plan mode" => sub {
+    like($captured, qr/fake\.test \.\.\. ok/, "Expected output stream");
+    like($out, qr/Done/,"Expected termination string");
+    is($code,0,"OK Exit code");
+};
+
+$apimock->redefine('getTestResults', sub {
+    return [
+        {
+            'elapsed' => '1s',
+            'status_id'  => 5
+        },
+        {
+            'elapsed' => '2s',
+            'status_id' => 1,
+            'comment'   => 'zippy'
+        }
+    ];
+});
+
+@args = qw{--apiurl http://testrail.local --user test@fake.fake -password fake --wait --plan argument1 };
+$captured = capture_merged { ($out,$code) = TestRail::Bin::Replay::run('args' => \@args) };
+subtest "Happy path - wait mode" => sub {
     like($captured, qr/fake\.test \.\.\. ok/, "Expected output stream");
     like($out, qr/Done/,"Expected termination string");
     is($code,0,"OK Exit code");
