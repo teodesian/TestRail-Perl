@@ -73,7 +73,7 @@ Creates new C<TestRail::API> object.
 
 =item STRING C<ENCODING> - The character encoding used by the caller.  Defaults to 'UTF-8', see L<Encode::Supported> and  for supported encodings.
 
-=item BOOLEAN C<DEBUG> (optional) - Print the JSON responses from TL with your requests. Default false.
+=item BOOLEAN C<DEBUG> (optional) - Print the JSON responses from TestRail with your requests. Default false.
 
 =item BOOLEAN C<DO_POST_REDIRECT> (optional) - Follow redirects on POST requests (most add/edit/delete calls are POSTs).  Default false.
 
@@ -299,7 +299,7 @@ sub getUsers {
 =head2 B<getUserByEmail(email)>
 
 Get user definition hash by ID, Name or Email.
-Returns user def HASHREF.
+Returns user definition HASHREF.
 
 For efficiency's sake, these methods cache the result of getUsers until you explicitly run it again.
 
@@ -471,7 +471,7 @@ Gets some project definition hash by it's name
 
 =back
 
-Returns desired project def HASHREF, false otherwise.
+Returns desired project definition HASHREF, false otherwise.
 
     $project = $tl->getProjectByName('FunProject');
 
@@ -505,7 +505,7 @@ Gets some project definition hash by it's ID
 
 =back
 
-Returns desired project def HASHREF, false otherwise.
+Returns desired project definition HASHREF, false otherwise.
 
     $projects = $tl->getProjectByID(222);
 
