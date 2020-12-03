@@ -116,6 +116,7 @@ sub load {
     $ENV{'TESTRAIL_PROJ'}      = $params->{project};
     $ENV{'TESTRAIL_RUN'}       = $params->{run};
     $ENV{'TESTRAIL_PLAN'}      = $params->{plan};
+    $ENV{'TESTRAIL_PLAN_ID'}   = $params->{plan_id};
     $ENV{'TESTRAIL_CONFIGS'}   = $params->{configs};
     $ENV{'TESTRAIL_VERSION'}   = $params->{version};
     $ENV{'TESTRAIL_STEPS'}     = $params->{step_results};
