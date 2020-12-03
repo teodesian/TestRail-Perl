@@ -79,6 +79,25 @@ Creates new C<TestRail::API> object.
 
 =item INTEGER C<MAX_TRIES> (optional) - Try requests up to X number of times if they fail with anything other than 401/403.  Useful with flaky external authenticators, or timeout issues.  Default 1.
 
+=item HASHREF C<USER_FETCH_OPTS> (optional) - Options relating to getUsers call done during new:
+
+=over 4
+
+=item BOOLEAN C<skip_userfetch> - Skip fetching all TR users during construction. Default false.
+
+This will save you some time on servers with quite a few users, especially if you don't
+particularly have a need to know about things related to TR users themselves.
+If you do need this info, you don't really save any time, however, as it will fetch them
+in the relevant subroutines that need this information.
+
+Also, on newer versions of TestRail, user fetching is not possible unless you either:
+* Are an administrator on the server
+* Provide the project_id (https://www.gurock.com/testrail/docs/api/reference/users)
+
+=item STRING C<project_id> - String or number corresponding to a project ID to use when fetching users.
+
+=back
+
 =back
 
 Returns C<TestRail::API> object if login is successful.
@@ -91,8 +110,8 @@ Does not do above checks if debug is passed.
 =cut
 
 sub new {
-    state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]], Optional[Maybe[Bool]], Optional[Maybe[Int]]);
-    my ($class,$apiurl,$user,$pass,$encoding,$debug, $do_post_redirect,$max_tries) = $check->(@_);
+    state $check = compile(ClassName, Str, Str, Str, Optional[Maybe[Str]], Optional[Maybe[Bool]], Optional[Maybe[Bool]], Optional[Maybe[Int]],Optional[Maybe[HashRef]]);
+    my ($class,$apiurl,$user,$pass,$encoding,$debug, $do_post_redirect,$max_tries,$userfetch_opts) = $check->(@_);
 
     die("Invalid URI passed to constructor") if !is_uri($apiurl);
     $debug //= 0;
@@ -108,6 +127,7 @@ sub new {
         user_cache       => [],
         configurations   => {},
         tr_fields        => undef,
+        tr_project_id    => $project_id,
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
         browser          => LWP::UserAgent->new(
@@ -139,19 +159,22 @@ sub new {
     bless( $self, $class );
     return $self if $self->debug; #For easy class testing without mocks
 
-    #Manually do the get_users call to check HTTP status
-    my $res = $self->_doRequest('index.php?/api/v2/get_users');
-    confess "Error: network unreachable" if !defined($res);
-    if ( (reftype($res) || 'undef') ne 'ARRAY') {
-      die "Unexpected return from _doRequest: $res" if !looks_like_number($res);
-      die "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly." if $res == -500;
-      die "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct" if $res == -403;
-      die "Bad user credentials!" if $res == -401;
-      die "HTTP error ".abs($res)." encountered while communicating with TestRail server.  Resolve issue and try again." if $res < 0;
-      die "Unknown error occurred: $res";
+    # Manually do the get_users call to check HTTP status...
+    # Allow users to skip the check if you have a zillion users etc,
+    # as apparently that is fairly taxing on TR itself.
+    if( !$userfetch_opts->{skip_usercache} ) {
+        my $res = $self->getUsers($userfetch_opts->{project_id});
+        confess "Error: network unreachable" if !defined($res);
+        if ( (reftype($res) || 'undef') ne 'ARRAY') {
+          confess "Unexpected return from _doRequest: $res" if !looks_like_number($res);
+          confess "Could not communicate with TestRail Server! Check that your URI is correct, and your TestRail installation is functioning correctly." if $res == -500;
+          confess "Could not list testRail users! Check that your TestRail installation has it's API enabled, and your credentials are correct" if $res == -403;
+          confess "Bad user credentials!" if $res == -401;
+          confess "HTTP error $res encountered while communicating with TestRail server.  Resolve issue and try again." if $res < 0;
+          confess "Unknown error occurred: $res";
+        }
+        confess "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
     }
-    die "No users detected on TestRail Install!  Check that your API is functioning correctly." if !scalar(@$res);
-    $self->{'user_cache'} = $res;
 
     return $self;
 }
@@ -283,10 +306,13 @@ Returns ARRAYREF of user definition HASHREFs.
 =cut
 
 sub getUsers {
-    state $check = compile(Object);
-    my ($self) = $check->(@_);
+    state $check = compile(Object,Optional[Maybe[Str]]);
+    my ($self,$project_id) = $check->(@_);
 
-    my $res = $self->_doRequest('index.php?/api/v2/get_users');
+    # Return shallow clone of user_cache if set.
+    return [ @$self->{'user_cache'} ] if $self->{'user_cache'};
+    my $maybe_project = $project_id ? "/$project_id" : '';
+    my $res = $self->_doRequest("index.php?/api/v2/get_users$maybe_project");
     return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
     $self->{'user_cache'} = $res;
     return clone($res);
@@ -305,14 +331,13 @@ For efficiency's sake, these methods cache the result of getUsers until you expl
 
 =cut
 
-#I'm just using the cache for the following methods because it's more straightforward and faster past 1 call.
 sub getUserByID {
     state $check = compile(Object, Int);
     my ($self,$user) = $check->(@_);
 
-    $self->getUsers() if !defined($self->{'user_cache'});
-    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
-    foreach my $usr (@{$self->{'user_cache'}}) {
+    my $users = $self->getUsers();
+    return $users if ref $users ne 'ARRAY';
+    foreach my $usr (@$users) {
         return $usr if $usr->{'id'} == $user;
     }
     return 0;
@@ -322,9 +347,9 @@ sub getUserByName {
     state $check = compile(Object, Str);
     my ($self,$user) = $check->(@_);
 
-    $self->getUsers() if !defined($self->{'user_cache'});
-    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
-    foreach my $usr (@{$self->{'user_cache'}}) {
+    my $users = $self->getUsers();
+    return $users if ref $users ne 'ARRAY';
+    foreach my $usr (@$users) {
         return $usr if $usr->{'name'} eq $user;
     }
     return 0;
@@ -334,9 +359,9 @@ sub getUserByEmail {
     state $check = compile(Object, Str);
     my ($self,$email) = $check->(@_);
 
-    $self->getUsers() if !defined($self->{'user_cache'});
-    return -500 if (!defined($self->{'user_cache'}) || (reftype($self->{'user_cache'}) || 'undef') ne 'ARRAY');
-    foreach my $usr (@{$self->{'user_cache'}}) {
+    my $users = $self->getUsers();
+    return $users if ref $users ne 'ARRAY';
+    foreach my $usr (@$users) {
         return $usr if $usr->{'email'} eq $email;
     }
     return 0;
