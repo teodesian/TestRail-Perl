@@ -151,6 +151,7 @@ sub new {
         'project_id'   => delete $opts->{'project_id'},
         'step_results' => delete $opts->{'step_results'},
         'plan'         => delete $opts->{'plan'},
+        'plan_id'      => delete $opts->{'plan_id'},
         'configs'      => delete $opts->{'configs'} // [],
         'testsuite_id' => delete $opts->{'testsuite_id'},
         'testsuite'    => delete $opts->{'testsuite'},
@@ -249,7 +250,11 @@ sub new {
 
     if ($tropts->{'plan'}) {
         #Attempt to find run, filtered by configurations
-        $plan = $tr->getPlanByName($tropts->{'project_id'},$tropts->{'plan'});
+        if ( $tropts->{'plan_id'} ) {
+          $plan = $tr->getPlanByID( $tropts->{'plan_id'} );
+        } else {
+          $plan = $tr->getPlanByName( $tropts->{'project_id'}, $tropts->{'plan'} );
+        }
         confess("Test plan provided is completed, and spawning was not indicated") if (ref $plan eq 'HASH') && $plan->{'is_completed'} && (!$tropts->{'testsuite_id'});
         if ($plan && !$plan->{'is_completed'}) {
             $tropts->{'plan'} = $plan;
