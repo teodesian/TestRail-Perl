@@ -310,7 +310,7 @@ sub getUsers {
     my ($self,$project_id) = $check->(@_);
 
     # Return shallow clone of user_cache if set.
-    return [ @{ $self->{'user_cache'} } ] if ref $self->{'user_cache'} eq 'ARRAY';
+    return [ @{ $self->{'user_cache'} } ] if ref $self->{'user_cache'} eq 'ARRAY' && scalar(@{$self->{'user_cache'}});
     my $maybe_project = $project_id ? "/$project_id" : '';
     my $res = $self->_doRequest("index.php?/api/v2/get_users$maybe_project");
     return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
