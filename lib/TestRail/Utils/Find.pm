@@ -27,7 +27,7 @@ use TestRail::Utils;
 =head2 findRuns
 
 Find runs based on the options HASHREF provided.
-See the documentation for L<testrail-runs>, as the long argument names there correspond to hash keys.
+See the documentation for testrail-runs, as the long argument names there correspond to hash keys.
 
 The primary routine of testrail-runs.
 
