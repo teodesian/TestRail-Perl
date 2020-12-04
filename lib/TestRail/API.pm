@@ -127,7 +127,7 @@ sub new {
         user_cache       => [],
         configurations   => {},
         tr_fields        => undef,
-        tr_project_id    => $project_id,
+        tr_project_id    => $userfetch_opts->{'project_id'},
         default_request  => undef,
         global_limit     => 250, #Discovered by experimentation
         browser          => LWP::UserAgent->new(
@@ -310,7 +310,7 @@ sub getUsers {
     my ($self,$project_id) = $check->(@_);
 
     # Return shallow clone of user_cache if set.
-    return [ @$self->{'user_cache'} ] if $self->{'user_cache'};
+    return [ @{ $self->{'user_cache'} } ] if ref $self->{'user_cache'} eq 'ARRAY';
     my $maybe_project = $project_id ? "/$project_id" : '';
     my $res = $self->_doRequest("index.php?/api/v2/get_users$maybe_project");
     return -500 if !$res || (reftype($res) || 'undef') ne 'ARRAY';
