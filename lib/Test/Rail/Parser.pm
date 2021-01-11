@@ -170,7 +170,17 @@ sub new {
 
     #Allow natural confessing from constructor
     #Force-on POST redirects for maximum compatibility
-    my $tr = TestRail::API->new($tropts->{'apiurl'},$tropts->{'user'},$tropts->{'pass'},$tropts->{'encoding'},$tropts->{'debug'},1,$tropts->{max_tries});
+    #Also ensure all opts that need string type have it when undef
+    my $tr = TestRail::API->new(
+        $tropts->{'apiurl'} // '',
+        $tropts->{'user'} // '',
+        $tropts->{'pass'} // '',
+        $tropts->{'encoding'} // '',
+        $tropts->{'debug'},
+        1,
+        $tropts->{max_tries},
+        { 'skip_userdata_cache' => 1 },
+    );
     $tropts->{'testrail'} = $tr;
     $tr->{'browser'} = $tropts->{'browser'} if defined($tropts->{'browser'}); #allow mocks
     $tr->{'debug'} = 0; #Always suppress in production
@@ -188,6 +198,9 @@ sub new {
         confess("No such project with ID $tropts->{project_id}!") if !$tropts->{'project'};
     }
     $tropts->{'project_id'} = $tropts->{'project'}->{'id'};
+
+    # Ok, let's cache the users since we have the project ID now
+    $tr->getUsers($tropts->{'project_id'});
 
     #Discover possible test statuses
     $tropts->{'statuses'} = $tr->getPossibleTestStatuses();
