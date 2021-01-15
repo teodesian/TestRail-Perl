@@ -179,7 +179,7 @@ sub new {
         $tropts->{'debug'},
         1,
         $tropts->{max_tries},
-        { 'skip_userdata_cache' => 1 },
+        { 'skip_usercache' => 1 },
     );
     $tropts->{'testrail'} = $tr;
     $tr->{'browser'} = $tropts->{'browser'} if defined($tropts->{'browser'}); #allow mocks
