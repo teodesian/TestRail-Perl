@@ -1219,6 +1219,80 @@ sub addCaseField {
     return $self->_doRequest("index.php?/api/v2/add_case_field", 'POST', $options);
 }
 
+=head1 PRIORITY METHODS
+
+=head2 B<getPriorities ()>
+
+Gets possible priorities.
+
+Returns ARRAYREF of priority definition HASHREFs.
+
+    $tr->getPriorities();
+
+=cut
+
+sub getPriorities {
+    state $check = compile(Object);
+    my ($self) = $check->(@_);
+    return clone($self->{'priority_cache'}) if defined($self->{'priority_cache'});
+
+    my $priorities = $self->_doRequest("index.php?/api/v2/get_priorities");
+    return -500 if !$priorities || (reftype($priorities) || 'undef') ne 'ARRAY';
+    $self->{'priority_cache'} = $priorities;
+
+    return clone $priorities;
+}
+
+=head2 B<getPriorityByName (name)>
+
+Gets priority by name.
+
+=over 4
+
+=item STRING C<NAME> - Name of desired priority
+
+=back
+
+Returns priority definition HASHREF.
+Dies if named priority does not exist.
+
+    $tr->getPriorityByName();
+
+=cut
+
+sub getPriorityByName {
+    state $check = compile(Object, Str);
+    my ($self,$name) = $check->(@_);
+
+    my $priorities = $self->getPriorities();
+    return -500 if !$priorities || (reftype($priorities) || 'undef') ne 'ARRAY';
+    foreach my $priority (@$priorities) {
+        return $priority if $priority->{'name'} eq $name;
+    }
+    confess("No such priority '$name'!");
+}
+
+=head2 priorityNamesToIds(names)
+
+Convenience method to translate a list of priority names to TestRail priority IDs.
+
+=over 4
+
+=item ARRAY C<NAMES> - Array of priority names to translate to IDs.
+
+=back
+
+Returns ARRAY of priority IDs in the same order as the priority names passed.
+
+Throws an exception in the case of one (or more) of the names not corresponding to a valid priority.
+
+=cut
+
+sub priorityNamesToIds {
+    my ($self,@names) = @_;
+    return _X_in_my_Y($self,$self->getPriorities(),'id',@names);
+};
+
 =head1 RUN METHODS
 
 =head2 B<createRun (project_id,suite_id,name,description,milestone_id,assigned_to_id,case_ids)>
