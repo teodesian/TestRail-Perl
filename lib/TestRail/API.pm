@@ -1374,25 +1374,47 @@ This is due to the maximum result set limit enforced by testrail.
 
 =item INTEGER C<PROJECT_ID> - ID of parent project
 
+=item HASHREF C<FILTERS> - (optional) dictionary of filters, with keys corresponding to the documented filters for get_runs (other than limit/offset).
+
 =back
 
 Returns ARRAYREF of run definition HASHREFs.
 
     $allRuns = $tr->getRuns(6969);
 
+Possible filters:
+
+=over 4
+
+=item created_after (UNIX timestamp)
+
+=item created_before (UNIX timestamp)
+
+=item created_by (csv of ints) IDs of users plans were created by
+
+=item is_completed (bool)
+
+=item milestone_id (csv of ints) IDs of milestone assigned to plans
+
+=item refs_filter (string) A single Reference ID (e.g. TR-a, 4291, etc.)
+
+=item suite_id (csv of ints) A comma-separated list of test suite IDs to filter by.
+
+=back
+
 =cut
 
 sub getRuns {
-    state $check = compile(Object, Int);
-    my ($self,$project_id) = $check->(@_);
+    state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
+    my ($self,$project_id,$filters) = $check->(@_);
 
-    my $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},0);
+    my $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},0,$filters);
     return $initial_runs unless (reftype($initial_runs) || 'undef') eq 'ARRAY';
     my $runs = [];
     push(@$runs,@$initial_runs);
     my $offset = 1;
     while (scalar(@$initial_runs) == $self->{'global_limit'}) {
-        $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset));
+        $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset),$filters);
         push(@$runs,@$initial_runs);
         $offset++;
     }
@@ -1411,6 +1433,8 @@ Get some runs for specified project.
 
 =item INTEGER C<OFFSET> - Page of runs to return.
 
+=item HASHREF C<FILTERS> - (optional) other filters to apply to the requests.  See getRuns for more information.
+
 =back
 
 Returns ARRAYREF of run definition HASHREFs.
@@ -1420,13 +1444,17 @@ Returns ARRAYREF of run definition HASHREFs.
 =cut
 
 sub getRunsPaginated {
-    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]]);
-    my ($self,$project_id,$limit,$offset) = $check->(@_);
+    state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]], Optional[Maybe[HashRef]]);
+    my ($self,$project_id,$limit,$offset,$filters) = $check->(@_);
+    $filters //= {};
 
     confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
     my $apiurl = "index.php?/api/v2/get_runs/$project_id";
     $apiurl .= "&offset=$offset" if defined($offset);
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
+    foreach my $key (keys(%$filters)) {
+        $apiurl .= "&$key=$filters->{$key}";
+    }
     return $self->_doRequest($apiurl);
 }
 
@@ -1792,9 +1820,9 @@ Possible filters:
 
 sub getPlans {
     state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
-    my ($self,$project_id, $filters) = $check->(@_);
+    my ($self,$project_id,$filters) = $check->(@_);
 
-    my $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},0);
+    my $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},0,$filters);
     return $initial_plans unless (reftype($initial_plans) || 'undef') eq 'ARRAY';
     my $plans = [];
     push(@$plans,@$initial_plans);
@@ -1831,7 +1859,7 @@ Returns ARRAYREF of plan definition HASHREFs.
 
 sub getPlansPaginated {
     state $check = compile(Object, Int, Optional[Maybe[Int]], Optional[Maybe[Int]], Optional[Maybe[HashRef]]);
-    my ($self,$project_id,$limit,$offset, $filters) = $check->(@_);
+    my ($self,$project_id,$limit,$offset,$filters) = $check->(@_);
     $filters //= {};
 
     confess("Limit greater than ".$self->{'global_limit'}) if $limit > $self->{'global_limit'};
