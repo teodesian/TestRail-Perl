@@ -7,7 +7,7 @@ use lib "$FindBin::Bin/lib";
 use TestRail::API;
 use Test::LWP::UserAgent::TestRailMock;
 
-use Test::More tests => 95;
+use Test::More tests => 96;
 use Test::Fatal;
 use Test::Deep;
 use Scalar::Util ();
@@ -88,6 +88,7 @@ my $new_project = $tr->createProject($project_name,'Robo-Signed Soviet 5 Year Pr
 is($new_project->{'name'},$project_name,"Can create new project");
 
 ok($tr->getProjects(),"Get Projects returns list");
+ok($tr->getProjects({ is_completed => 1 }),"Get Projects returns a filtered list");
 is($tr->getProjectByName($project_name)->{'name'},$project_name,"Can get project by name");
 my $pjid = $tr->getProjectByID($new_project->{'id'});
 is(Scalar::Util::reftype($pjid) eq 'HASH' ? $pjid->{'id'} : $pjid,$new_project->{'id'},"Can get project by id");
