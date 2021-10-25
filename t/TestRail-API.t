@@ -128,12 +128,9 @@ my $case_filters = {
 };
 
 ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters),"Can get case listing");
+ok($tr->getCases($new_project->{'id'},$new_suite->{'id'},{'hokum' => 'bogus'}),"Passing bogus filter returns cases");
 is($tr->getCaseByName($new_project->{'id'}, $new_suite->{'id'},  $case_name, $case_filters)->{'title'},$case_name,"Can get case by name");
 is($tr->getCaseByID($new_case->{'id'})->{'id'},$new_case->{'id'},"Can get case by ID");
-
-#Negative case
-$case_filters->{'hokum'} = 'bogus';
-isnt(exception {$tr->getCases($new_project->{'id'},$new_suite->{'id'},$case_filters)},undef,"Passing bogus filter croaks");
 
 #Test RUN methods
 my $run_name = 'SEND T-1000 INFILTRATION UNITS BACK IN TIME';

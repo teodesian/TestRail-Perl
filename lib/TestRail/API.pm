@@ -2937,14 +2937,9 @@ sub _convert_filters_to_string {
 
     $filters //= {};
 
-    my @valid_keys = qw{ is_completed limit offset created_after created_before filter refs section_id updated_after updated_before refs_filter defects_filter };
-    my @valid_arrayref_keys = qw{ created_by milestone_id priority_id template_id type_id updated_by suite_id status_id };
-
     my $filter_string = '';
     foreach my $filter (keys(%$filters)) {
-        confess("Invalid filter key '$filter' passed") unless grep {$_ eq $filter} (@valid_keys, @valid_arrayref_keys);
         if (ref $filters->{$filter} eq 'ARRAY') {
-            confess "$filter cannot be an ARRAYREF" if grep {$_ eq $filter} @valid_keys;
             $filter_string .= "&$filter=".join(',',@{$filters->{$filter}});
         } else {
             $filter_string .= "&$filter=".$filters->{$filter} if defined($filters->{$filter});
