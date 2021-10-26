@@ -2,12 +2,12 @@ use strict;
 use warnings;
 
 use Test::More tests => 2;
-use Test::MockModule;
+use Test::MockModule ;
 
 use TestRail::API;
 
 my $mock = Test::MockModule->new('TestRail::API');
-$mock->redefine('_doRequest', sub { shift; return shift; } );
+$mock->mock('_doRequest', sub { shift; return shift; } );
 
 my $obj = bless ({},'TestRail::API');
 
