@@ -482,20 +482,19 @@ for details as to the allowable filter keys.
 sub getProjects {
     state $check = compile(Object,Optional[Maybe[HashRef]]);
     my ($self,$filters) = $check->(@_);
-    
+
     my $result = $self->_doRequest('index.php?/api/v2/get_projects' . _convert_filters_to_string($filters) );
 
     #Save state for future use, if needed
-    return -500 if !$result || (reftype($result) || 'undef') ne 'ARRAY';
-    $self->{'testtree'} = $result;
+    my $projects = $result->{'projects'};
+    return -500 if !$projects || (reftype($projects) || 'undef') ne 'ARRAY';
+    $self->{'testtree'} = $projects;
 
-    #Note that it's a project for future reference by recursive tree search
-    return -500 if !$result || (reftype($result) || 'undef') ne 'ARRAY';
-    foreach my $pj (@{$result}) {
+    foreach my $pj (@{$projects}) {
         $pj->{'type'} = 'project';
     }
 
-    return $result;
+    return $projects;
 }
 
 =head2 B<getProjectByName ($project)>
@@ -783,7 +782,8 @@ sub getSections {
 
     #Cache sections to reduce requests in tight loops
     return $self->{'sections'}->{$suite_id} if $self->{'sections'}->{$suite_id};
-    $self->{'sections'}->{$suite_id} = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+    my $response = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
+    $self->{'sections'}->{$suite_id} = $response->{'sections'};
 
     return $self->{'sections'}->{$suite_id};
 }
@@ -1124,7 +1124,8 @@ sub getCases {
     my $url = "index.php?/api/v2/get_cases/$project_id&suite_id=$suite_id";
     $url .= _convert_filters_to_string($filters);
 
-    return $self->_doRequest($url);
+    my $response = $self->_doRequest($url);
+    return $response->{'cases'};
 }
 
 =head2 B<getCaseByName (project_id,suite_id,name,filters)>
@@ -1451,7 +1452,8 @@ sub getRunsPaginated {
     $apiurl .= "&offset=$offset" if defined($offset);
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     $apiurl .= _convert_filters_to_string($filters);
-    return $self->_doRequest($apiurl);
+    my $response = $self->_doRequest($apiurl);
+    return $response->{'runs'};
 }
 
 =head2 B<getRunByName (project_id,name)>
@@ -1621,7 +1623,8 @@ sub getRunResultsPaginated {
     $apiurl .= "&offset=$offset" if defined($offset);
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     $apiurl .= _convert_filters_to_string($filters);
-    return $self->_doRequest($apiurl);
+    my $response = $self->_doRequest($apiurl);
+    return $response->{'results'};
 }
 
 =head1 RUN AS CHILD OF PLAN METHODS
@@ -1863,7 +1866,8 @@ sub getPlansPaginated {
     $apiurl .= "&offset=$offset" if defined($offset);
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     $apiurl .= _convert_filters_to_string($filters);
-    return $self->_doRequest($apiurl);
+    my $response = $self->_doRequest($apiurl);
+    return $response->{'plans'};
 }
 
 =head2 B<getPlanByName (project_id,name)>
@@ -2128,7 +2132,8 @@ sub getMilestones {
     state $check = compile(Object, Int, Optional[Maybe[HashRef]]);
     my ($self,$project_id, $filters) = $check->(@_);
 
-    return $self->_doRequest("index.php?/api/v2/get_milestones/$project_id" . _convert_filters_to_string($filters));
+    my $response = $self->_doRequest("index.php?/api/v2/get_milestones/$project_id" . _convert_filters_to_string($filters));
+    return $response->{'milestones'};
 }
 
 =head2 B<getMilestoneByName (project_id,name)>
@@ -2212,7 +2217,8 @@ sub getTests {
 
     my $query_string = '';
     $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
-    my $results = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
+    my $response = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
+    my $results = $response->{'tests'};
     @$results = grep {my $aid = $_->{'assignedto_id'}; grep {defined($aid) && $aid == $_} @$assignedto_ids} @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
 
     #Cache stuff for getTestByName
@@ -2564,7 +2570,8 @@ sub getTestResults {
     $url .= "&limit=$limit" if $limit;
     $url .= "&offset=$offset" if defined($offset);
     $url .= _convert_filters_to_string($filters);
-    return $self->_doRequest($url);
+    my $response = $self->_doRequest($url);
+    return $response->{'results'};
 }
 
 =head2 B<getResultsForCase(run_id,case_id,limit,offset,filters)>
@@ -2603,7 +2610,8 @@ sub getResultsForCase {
     $url .= "&limit=$limit" if $limit;
     $url .= "&offset=$offset" if defined($offset);
     $url .= _convert_filters_to_string($filters);
-    return $self->_doRequest($url);
+    my $response = $self->_doRequest($url);
+    return $response->{'results'};
 }
 
 =head1 CONFIGURATION METHODS
