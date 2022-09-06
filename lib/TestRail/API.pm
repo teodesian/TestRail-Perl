@@ -484,10 +484,11 @@ sub getProjects {
     my ($self,$filters) = $check->(@_);
 
     my $result = $self->_doRequest('index.php?/api/v2/get_projects' . _convert_filters_to_string($filters) );
-
-    #Save state for future use, if needed
+    return -500 if !$result || (reftype($result) || 'undef') ne 'HASH';
     my $projects = $result->{'projects'};
     return -500 if !$projects || (reftype($projects) || 'undef') ne 'ARRAY';
+
+    #Save state for future use, if needed
     $self->{'testtree'} = $projects;
 
     foreach my $pj (@{$projects}) {
@@ -783,7 +784,11 @@ sub getSections {
     #Cache sections to reduce requests in tight loops
     return $self->{'sections'}->{$suite_id} if $self->{'sections'}->{$suite_id};
     my $response = $self->_doRequest("index.php?/api/v2/get_sections/$project_id&suite_id=$suite_id");
-    $self->{'sections'}->{$suite_id} = $response->{'sections'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $sections = $response->{'sections'};
+    return -500 if !$sections || (reftype($sections) || 'undef') ne 'ARRAY';
+
+    $self->{'sections'}->{$suite_id} = $sections;
 
     return $self->{'sections'}->{$suite_id};
 }
@@ -1125,7 +1130,10 @@ sub getCases {
     $url .= _convert_filters_to_string($filters);
 
     my $response = $self->_doRequest($url);
-    return $response->{'cases'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $cases = $response->{'cases'};
+    return -500 if !$cases || (reftype($cases) || 'undef') ne 'ARRAY';
+    return $cases;
 }
 
 =head2 B<getCaseByName (project_id,suite_id,name,filters)>
@@ -1415,6 +1423,7 @@ sub getRuns {
     my $offset = 1;
     while (scalar(@$initial_runs) == $self->{'global_limit'}) {
         $initial_runs = $self->getRunsPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset),$filters);
+        return $initial_runs unless (reftype($initial_runs) || 'undef') eq 'ARRAY';
         push(@$runs,@$initial_runs);
         $offset++;
     }
@@ -1453,7 +1462,10 @@ sub getRunsPaginated {
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     $apiurl .= _convert_filters_to_string($filters);
     my $response = $self->_doRequest($apiurl);
-    return $response->{'runs'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $runs = $response->{'runs'};
+    return -500 if !$runs || (reftype($runs) || 'undef') ne 'ARRAY';
+    return $runs;
 }
 
 =head2 B<getRunByName (project_id,name)>
@@ -1604,6 +1616,7 @@ sub getRunResults {
     my $offset = 1;
     while (scalar(@$initial_results) == $self->{'global_limit'}) {
         $initial_results = $self->getRunResultsPaginated($run_id,$self->{'global_limit'},($self->{'global_limit'} * $offset),$filters);
+        return $initial_results unless (reftype($initial_results) || 'undef') eq 'ARRAY';
         push(@$results,@$initial_results);
         $offset++;
     }
@@ -1829,6 +1842,7 @@ sub getPlans {
     my $offset = 1;
     while (scalar(@$initial_plans) == $self->{'global_limit'}) {
         $initial_plans = $self->getPlansPaginated($project_id,$self->{'global_limit'},($self->{'global_limit'} * $offset),$filters);
+        return $initial_plans unless (reftype($initial_plans) || 'undef') eq 'ARRAY';
         push(@$plans,@$initial_plans);
         $offset++;
     }
@@ -1867,7 +1881,10 @@ sub getPlansPaginated {
     $apiurl .= "&limit=$limit" if $limit; #You have problems if you want 0 results
     $apiurl .= _convert_filters_to_string($filters);
     my $response = $self->_doRequest($apiurl);
-    return $response->{'plans'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $plans = $response->{'plans'};
+    return -500 if !$plans || (reftype($plans) || 'undef') ne 'ARRAY';
+    return $plans;
 }
 
 =head2 B<getPlanByName (project_id,name)>
@@ -2133,7 +2150,10 @@ sub getMilestones {
     my ($self,$project_id, $filters) = $check->(@_);
 
     my $response = $self->_doRequest("index.php?/api/v2/get_milestones/$project_id" . _convert_filters_to_string($filters));
-    return $response->{'milestones'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $milestones = $response->{'milestones'};
+    return -500 if !$milestones || (reftype($milestones) || 'undef') ne 'ARRAY';
+    return $milestones;
 }
 
 =head2 B<getMilestoneByName (project_id,name)>
@@ -2218,7 +2238,11 @@ sub getTests {
     my $query_string = '';
     $query_string = '&status_id='.join(',',@$status_ids) if defined($status_ids) && scalar(@$status_ids);
     my $response = $self->_doRequest("index.php?/api/v2/get_tests/$run_id$query_string");
+
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
     my $results = $response->{'tests'};
+    return -500 if !$results || (reftype($results) || 'undef') ne 'ARRAY';
+
     @$results = grep {my $aid = $_->{'assignedto_id'}; grep {defined($aid) && $aid == $_} @$assignedto_ids} @$results if defined($assignedto_ids) && scalar(@$assignedto_ids);
 
     #Cache stuff for getTestByName
@@ -2571,7 +2595,10 @@ sub getTestResults {
     $url .= "&offset=$offset" if defined($offset);
     $url .= _convert_filters_to_string($filters);
     my $response = $self->_doRequest($url);
-    return $response->{'results'};
+    return -500 if !$response || (reftype($response) || 'undef') ne 'HASH';
+    my $results = $response->{'results'};
+    return -500 if !$results || (reftype($results) || 'undef') ne 'ARRAY';
+    return $results;
 }
 
 =head2 B<getResultsForCase(run_id,case_id,limit,offset,filters)>
